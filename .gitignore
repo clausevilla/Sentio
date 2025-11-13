@@ -1,8 +1,38 @@
 # Editor-specific
 .idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.history
 
-# Python cache
-__pycache__/
+# Python / Django
+*.log
+*.pot
+*.pyc
+__pycache__
 
 # Apple specific
 .DS_Store
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Environments
+.env
+.venv
+venv/
