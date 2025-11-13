@@ -15,7 +15,7 @@
 [coverage-url]: https://git.chalmers.se/courses/dit826/2025/team1/-/jobs
 
 [release-badge]: https://git.chalmers.se/courses/dit826/2025/team1/-/badges/release.svg
-[release-url]: [/2025-group-09](https://git.chalmers.se/courses/dit826/2025/team1)/-/releases
+[release-url]: https://git.chalmers.se/courses/dit826/2025/team1/-/releases
 
 
 ## Table of Content
