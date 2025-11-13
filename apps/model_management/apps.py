@@ -3,4 +3,4 @@ from django.apps import AppConfig
 
 class ModelManagementConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'model_management'
+    name = 'apps.model_management'
