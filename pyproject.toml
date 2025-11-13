@@ -1,0 +1,5 @@
+[tool.ruff]
+line-length = 88 # Ruff's default line length is 88
+
+[tool.ruff.format]
+quote-style = "single" # Ruff's default is double quotes, Django prefers single quotes
