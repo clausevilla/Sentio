@@ -24,7 +24,7 @@
 - [Usage](#usage)
 - [Environment Settings](#environment-settings)
 - [Authors](#authors)
-- [Project Planning] (#project-planning)
+- [Project Planning](#project-planning)
 - [License](#license)
 
 
@@ -104,7 +104,7 @@ DJANGO_SETTINGS_MODULE=sentio.settings.production python manage.py runserver
 - Karl Byland
 
 ## Project Planning
-The project planning markdown file is located at [team1/docs/project_planning.md](docs/project-planning.md).
+The project planning markdown file is located at [team1/docs/project_planning.md](docs/project_planning.md).
 
 ## License
 This project is licensed under the MIT License. See the `LICENSE` file for details.
