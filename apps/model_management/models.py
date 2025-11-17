@@ -65,7 +65,7 @@ class DatasetRecord(models.Model):
     features = models.JSONField(default=dict)
 
     # Indicates dataset type (train/test/unlabeled)
-    dataset_type=models.CharField(max_length=10, choices=DATASET_OPTIONS, default='train')
+    dataset_type=models.CharField(max_length=10, choices=DATASET_OPTIONS, default='unlabeled')
 
     # Tracking
     data_upload = models.ForeignKey(
