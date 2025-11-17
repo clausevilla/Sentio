@@ -18,12 +18,13 @@
 [release-url]: https://git.chalmers.se/courses/dit826/2025/team1/-/releases
 
 
-## Table of Content
+## Table of Contents
 - [Description](#description)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Environment Settings](#environment-settings)
 - [Authors](#authors)
+- [Project Planning](#project-planning)
 - [License](#license)
 
 
@@ -101,6 +102,9 @@ DJANGO_SETTINGS_MODULE=sentio.settings.production python manage.py runserver
 - Julia McCall
 - Claudia Sevilla Eslava
 - Karl Byland
+
+## Project Planning
+The project planning markdown file is located at [team1/docs/project_planning.md](docs/project_planning.md).
 
 ## License
 This project is licensed under the MIT License. See the `LICENSE` file for details.
