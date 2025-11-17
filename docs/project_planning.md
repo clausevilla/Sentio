@@ -16,16 +16,18 @@
 |---------------------|-------------|-----------|------------|-------|
 | Select topic | All members | Yes | Yes | |
 | Brainstorm | All members | Yes | Yes | |
-| Set up simple ML toy model | Karl Byland | | | |
+| Set up simple ML toy model | Karl Byland | Yes | | |
 | Design initial database schema for the project (create an initial data file, set up SQLite) | Claudia Sevilla Eslava | Yes | | |
-| Initiate Django project structures (set up project skeleton in GitLab, separate admin, user, model, connect APIs, software architecture) | Marcus Berggren | Yes | | |
-| Finalize report for Assignment 1 | Julia McCall | Yes | | |
+| Initiate Django project structures (set up project skeleton in GitLab, separate admin, user, model, connect APIs, software architecture) | Marcus Berggren | Yes | Yes | |
+| Finalize report for Assignment 1 | Julia McCall | Yes | Yes | |
 | Set up initial frontend design | Lian Shi | Yes | | |
 | Create project markdown file | Julia McCall | Yes | Yes | |
 
 ## Week 3
 | Feature Description | Responsible | Delivered | Integrated | Notes |
 |---------------------|-------------|-----------|------------|-------|
-| Set up data cleaning pipeline | Julia McCall, Marcus Berggren | | | |
+| Begin data cleaning pipeline setup | Julia McCall | | | |
 | Set up CI pipeline | Claudia Sevilla Eslava | | | |
 | Set up frontend under Django framework | Lian Shi | | | |
+| Research RNN for potential model | Karl Byland | | | |
+| Research BERT for potential model | Marcus Berggren | | | |
