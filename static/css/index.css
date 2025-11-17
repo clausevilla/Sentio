@@ -1,0 +1,21 @@
+/* home page center */
+.hero-section,
+.features-section,
+.how-it-works {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.about-section,
+.cta-section {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* */
+#features,
+#how-it-works {
+    scroll-margin-top: 30px;
+}

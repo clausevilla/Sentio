@@ -1,10 +1,172 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Home - Sentio{% endblock title %}
+{% block title %}Sentio - Stress Detection System{% endblock %}
 
-{% block page_content %}
-<div class="text-center mt-5">
-    <h1>Sentio</h1>
-    <p class="lead">Analyze text for stress levels and emotional tone</p>
-</div>
-{% endblock page_content %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/index.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <h1 class="hero-title">
+        <i class="fas fa-brain"></i> Understand Your Stress Levels with AI
+    </h1>
+    <p class="hero-subtitle">
+        Analyze text to detect stress levels and key emotional indicators. Get instant insights powered by machine learning.
+    </p>
+    <div class="hero-buttons">
+        {% if user.is_authenticated %}
+            <a href="{% url 'predictions:input' %}" class="btn btn-primary">
+                <i class="fas fa-chart-line"></i> Start Analysis
+            </a>
+            <a href="{% url 'accounts:history' %}" class="btn btn-secondary">
+                <i class="fas fa-history"></i> View My History
+            </a>
+        {% else %}
+            <a href="{% url 'accounts:register' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Get Started Free
+            </a>
+            <a href="{% url 'accounts:login' %}" class="btn btn-secondary">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="features-section">
+    <h2 class="text-center" style="font-size: 2.5rem; margin-bottom: 1rem;">Why Use Our System?</h2>
+    <p class="text-center" style="color: #666; margin-bottom: 3rem;">
+        Discover how our AI-powered platform helps you understand and manage stress through text analysis
+    </p>
+
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h3 class="feature-title">AI-Powered Analysis</h3>
+            <p class="feature-description">
+                Our advanced machine learning model trained on thousands of social media posts accurately identifies stress patterns and emotional indicators in your text.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3 class="feature-title">Privacy First</h3>
+            <p class="feature-description">
+                Your data is securely encrypted and stored. Only you can access your personal stress analysis history. We never share your information with third parties.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3 class="feature-title">Track Progress</h3>
+            <p class="feature-description">
+                Monitor your stress levels over time with interactive visualizations and historical data to see trends and improvements in your mental well-being.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-lightbulb"></i>
+            </div>
+            <h3 class="feature-title">Personalized Insights</h3>
+            <p class="feature-description">
+                Receive detailed breakdowns of anxiety levels, negative emotions, and self-focus patterns along with personalized recommendations for stress management.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <h3 class="feature-title">Instant Results</h3>
+            <p class="feature-description">
+                Get your stress analysis in under 2 seconds. Our optimized system provides real-time feedback so you can make immediate improvements to your mental health.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <h3 class="feature-title">Research-Backed</h3>
+            <p class="feature-description">
+                Built on the Dreaddit dataset and validated research, our system uses scientifically proven methods for stress detection.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section id="how-it-works" class="how-it-works">
+    <h2>How It Works</h2>
+    <div class="steps-container">
+        <div class="step">
+            <div class="step-number">1</div>
+            <h3>Input Your Text</h3>
+            <p>Paste any text you want to analyze - from social media posts to personal journal entries. Our system accepts up to 5000 characters for each input.</p>
+        </div>
+
+        <div class="step">
+            <div class="step-number">2</div>
+            <h3>AI Analysis</h3>
+            <p>Our machine learning model analyzes linguistic patterns, sentiment, and emotional indicators to detect stress levels with high accuracy.</p>
+        </div>
+
+        <div class="step">
+            <div class="step-number">3</div>
+            <h3>Get Insights</h3>
+            <p>Receive a comprehensive report including overall stress percentage, key indicators (anxiety, negativity, self-focus), and personalized recommendations.</p>
+        </div>
+
+        <div class="step">
+            <div class="step-number">4</div>
+            <h3>Track Over Time</h3>
+            <p>Build a history of your analyses to identify patterns and monitor improvements in your mental health journey.</p>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section class="about-section">
+    <div class="about-content card">
+        <h2><i class="fas fa-info-circle"></i> About This System</h2>
+        <p>
+            Our Stress Detection System was developed as part of an AI research project to help individuals better understand their mental health through text analysis. The system leverages natural language processing and machine learning techniques to identify stress patterns in written communication.
+        </p>
+        <p>
+            The underlying model was trained on the Dreaddit dataset, which contains thousands of Reddit posts from various mental health and support communities. By analyzing linguistic features such as first-person pronoun usage, negative emotion words, anxiety indicators, and social connection patterns, our system can accurately predict stress levels with over 80% accuracy.
+        </p>
+        <p>
+            Whether you're monitoring your own mental health, trying to understand emotional patterns in your communication, or simply curious about the stress indicators in your writing, our system provides valuable insights backed by advanced AI technology.
+        </p>
+    </div>
+    <div class="disclaimer">
+        <strong>⚠️ Important</strong><br>
+        This tool analyzes text for stress patterns only. It is NOT a medical diagnostic tool and should not replace professional mental health advice.
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <h2>Ready to Understand Your Stress?</h2>
+    <p>Join users who are taking control of their mental health with AI-powered insights</p>
+    {% if user.is_authenticated %}
+        <a href="{% url 'predictions:input' %}" class="btn">
+            <i class="fas fa-chart-line"></i> Start Your Analysis Now
+        </a>
+    {% else %}
+        <a href="{% url 'accounts:register' %}" class="btn">
+            <i class="fas fa-user-plus"></i> Create Free Account
+        </a>
+    {% endif %}
+</section>
+{% endblock %}
