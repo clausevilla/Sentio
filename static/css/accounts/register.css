@@ -1,0 +1,162 @@
+/*register page style*/
+.register_container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    max-width: 1200px;
+    margin: 4rem auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(74, 124, 89, 0.2);
+    overflow: hidden;
+    min-height: 600px;
+}
+
+.register_left {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    color: white;
+    padding: 3rem 4rem 4rem 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.register_left h2 {
+    font-size: 2.5rem;
+    color: white;
+    margin-bottom: 3rem;
+    margin-top: 1rem;
+    font-weight: 700;
+}
+
+.register_left p {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 2rem;
+    line-height: 1.7;
+}
+
+.register_left .feature-list {
+    list-style: none;
+    padding: 0;
+}
+.register_left .feature-list li {
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+    position: relative;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.register_left .feature-list li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: white;
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+.register_right {
+    padding: 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: white;
+}
+
+.register_right h2 {
+    font-size: 2rem;
+    color: var(--color-text-dark);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.register_right .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.register_right label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    font-size: 0.95rem;
+}
+
+.register_right .form-control {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    border: 2px solid #D4E1DD;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.3s;
+    background: white;
+}
+
+.register_right .form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+}
+
+.register_right .btn-primary {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+}
+
+.register_right .text-center {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--color-text);
+}
+
+.register_right .text-center a {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.register_right .text-center a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 968px) {
+    .register_container {
+        grid-template-columns: 1fr;
+        margin: 2rem 1rem;
+    }
+
+    .register_left {
+        padding: 3rem 2rem;
+    }
+
+    .register_left h1 {
+        font-size: 2rem;
+    }
+
+    .register_right {
+        padding: 3rem 2rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .register_left {
+        padding: 2rem 1.5rem;
+    }
+
+    .register_left h1 {
+        font-size: 1.8rem;
+    }
+
+    .register_right {
+        padding: 2rem 1.5rem;
+    }
+
+    .register_right h2 {
+        font-size: 1.5rem;
+    }
+}

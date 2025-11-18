@@ -40,7 +40,7 @@
                 {% else %}
                     <li><a href="{% url 'accounts:login' %}">Login</a></li>
                 {% endif %}
-                <li><a href="{% url 'predictions:input' %}" class="btn btn-primary">Try Now</a></li>
+                <li><a href="{% url 'accounts:register' %}" class="btn btn-secondary">Sign Up</a></li>
             </ul>
         </div>
     </nav>
@@ -78,6 +78,13 @@
             </div>
 
 
+            <div class="footer-section">
+                <h3>Product</h3>
+                <ul>
+                    <li><a href="{% url 'about' %}">About Sentio</a></li>
+
+                </ul>
+            </div>
         </div>
         <div class="footer-bottom">
             <p>&copy; 2025 Sentio. Built with Django & Scikit-learn. Based on Dreaddit dataset.</p>

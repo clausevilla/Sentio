@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}About Sentio - AI Stress Detection System{% endblock %}
+
+{% block meta_description %}Learn about Sentio's AI-powered stress detection system, built on the Dreaddit dataset with advanced NLP and machine learning techniques.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/about.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- About Hero -->
+<section class="about-hero">
+    <h1><i class="fas fa-info-circle"></i> About Sentio</h1>
+    <p>Understanding the science and technology behind our AI-powered stress detection system</p>
+</section>
+
+<!-- About Content -->
+<div class="about-content">
+    <!-- Overview Section -->
+    <div class="about-section">
+        <h2><i class="fas fa-book-open"></i> Our Mission</h2>
+        <p>
+            Our Stress Detection System was developed as part of an AI research project to help individuals better understand their mental health through text analysis. The system leverages natural language processing and machine learning techniques to identify stress patterns in written communication.
+        </p>
+        <p>
+            We believe that early detection and awareness of stress can lead to better mental health outcomes. By providing accessible, AI-powered analysis tools, we aim to help people recognize stress patterns in their communication and take proactive steps toward better mental wellbeing.
+        </p>
+    </div>
+
+    <!-- Technology Section -->
+    <div class="about-section">
+        <h2><i class="fas fa-microchip"></i> The Technology</h2>
+
+        <h3>The Dreaddit Dataset</h3>
+        <p>
+            The underlying model was trained on the Dreaddit dataset, which contains thousands of Reddit posts from various communities. This dataset provides real-world examples of how people express stress in their daily communication.
+        </p>
+
+        <h3>Machine Learning Approach</h3>
+        <p>
+            Our system analyzes linguistic features to predict stress levels with about 80% accuracy. Key features include:
+        </p>
+        <ul>
+            <li><strong>First-person pronoun usage:</strong> Patterns in how people refer to themselves when stressed</li>
+            <li><strong>Negative emotion words:</strong> Detection of negative sentiment and emotional language</li>
+            <li><strong>Anxiety indicators:</strong> Specific linguistic markers associated with anxious states</li>
+            <li><strong>Social connection patterns:</strong> Analysis of social language and isolation indicators</li>
+        </ul>
+
+        <h3>Three Key Indicators</h3>
+        <p>Our model provides insights into three critical dimensions:</p>
+        <ul>
+            <li><strong>Anxiety Level:</strong> Measures worry-related language and uncertainty expressions</li>
+            <li><strong>Negative Emotions:</strong> Detects presence of sadness, anger, and frustration</li>
+            <li><strong>Self-Focus:</strong> Analyzes introspective language and self-referential patterns</li>
+        </ul>
+    </div>
+
+    <!-- Tech Stack Section -->
+    <div class="about-section">
+        <h2><i class="fas fa-code"></i> Technical Stack</h2>
+        <p>Built with modern, production-ready technologies:</p>
+
+        <div class="tech-stack">
+            <div class="tech-item">
+                <i class="fab fa-python"></i>
+                <h4>Python</h4>
+                <p>Core programming language</p>
+            </div>
+            <div class="tech-item">
+                <i class="fas fa-brain"></i>
+                <h4>Scikit-learn</h4>
+                <p>Machine learning framework</p>
+            </div>
+            <div class="tech-item">
+                <i class="fas fa-server"></i>
+                <h4>Django</h4>
+                <p>Web framework</p>
+            </div>
+            <div class="tech-item">
+                <i class="fas fa-database"></i>
+                <h4>SQLite</h4>
+                <p>Database storage</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Section -->
+    <div class="about-section">
+        <h2><i class="fas fa-shield-alt"></i> Privacy & Security</h2>
+        <p>
+            Your privacy is our top priority. All data is securely stored and encrypted. We never share your personal information or analysis results with third parties. Only you can access your stress analysis history.
+        </p>
+        <p>
+            If you choose to create an account, you can track your progress over time. However, the system also works without an account for one-time analyses.
+        </p>
+    </div>
+
+    <!-- Use Cases Section -->
+    <div class="about-section">
+        <h2><i class="fas fa-lightbulb"></i> Who Can Benefit</h2>
+        <p>Our stress detection system is designed for:</p>
+        <ul>
+            <li><strong>Individuals:</strong> Monitor your own mental health and identify stress patterns in your communication</li>
+            <li><strong>Mental Health Awareness:</strong> Gain insights into emotional patterns and stress indicators</li>
+            <li><strong>Researchers:</strong> Explore the application of NLP in mental health analysis</li>
+            <li><strong>Students & Educators:</strong> Learn about AI applications in healthcare and wellbeing</li>
+        </ul>
+    </div>
+
+    <!-- Disclaimer Section -->
+    <div class="about-section" style="background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); border-left: 5px solid #E07A5F;">
+        <h2><i class="fas fa-exclamation-triangle"></i> Important Disclaimer</h2>
+        <p>
+            <strong>This tool analyzes text for stress patterns only.</strong> It is NOT a medical diagnostic tool and should not replace professional mental health advice.
+        </p>
+        <p>
+            If you're experiencing severe stress, anxiety, depression, or having thoughts of self-harm, please seek help from a qualified mental health professional immediately.
+        </p>
+        <p>
+            <strong>Emergency Resources:</strong>
+        </p>
+        <ul>
+            <li>Medical Emergency (Sweden): Call 112 or your local emergency number</li>
+            <li>Medical Non-Emergency Helpline (Sweden): Call 1177</li>
+            <li>Suicide Prevention Hotline (Sweden): Call 90101</li>
+
+        </ul>
+    </div>
+</div>
+{% endblock %}

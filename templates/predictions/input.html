@@ -1,0 +1,27 @@
+{%extends 'base.html'%}
+{%load static%}
+
+{%block title%}Analyze Text - Sentio{%endblock%}.
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/predictions/input.css' %}">
+{% endblock %}
+
+{%block content%}
+<section class="input-section">
+    <div class="container">
+        <h2 class="section-title">Text Stress Analysis</h2>
+        <p class="section-subtitle">Enter your text below to analyze stress levels and emotional
+            indicators.</p>
+        <form method="post" action="{% url 'predictions:input' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="inputText">Your Text</label>
+                <textarea id="inputText" name="input_text" class="form-control" rows="8"
+                    placeholder="Type or paste your text here..." required>{{ input_text }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Analyze Stress</button>
+        </form>
+    </div>
+</section>
+{%endblock%}
