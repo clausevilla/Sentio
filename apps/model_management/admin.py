@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import DataUpload, ModelVersion, TrainingJob
+from .models import DataUpload, ModelVersion, TrainingJob, DatasetRecord
 
 """
 Admin configurations for the model management, possible to create, read, update, delete objects in the admin panel.
@@ -30,3 +30,10 @@ class DataUploadAdmin(admin.ModelAdmin):
 class TrainingJobAdmin(admin.ModelAdmin):
     list_display = ['id', 'status', 'started_at', 'completed_at', 'initiated_by']
     list_filter = ['status', 'started_at']
+
+
+@admin.register(DatasetRecord)
+class DatasetRecordAdmin(admin.ModelAdmin):
+    list_display = ['id', 'dataset_type', 'data_upload', 'subreddit', 'label']
+    list_filter = ['dataset_type', 'data_upload']
+    search_fields = ['text', 'subreddit']
