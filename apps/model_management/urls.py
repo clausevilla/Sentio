@@ -2,4 +2,6 @@
 
 app_name = 'model_management'
 
-urlpatterns = []
+urlpatterns = [
+    
+]

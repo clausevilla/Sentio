@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Analysis Results - Sentio{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/predictions/result.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="results-section">
+    <div class="container">
+        <div class="page-header">
+            <h1>Analysis Results</h1>
+            <p>Based on NLP analysis of your text</p>
+        </div>
+
+        <!-- Alert Box (if needed) -->
+        {% if mental_state != 'normal' and confidence >= 70 %}
+        <div class="alert alert-warning">
+            <h3>⚠️ Mental Health Indicator Detected</h3>
+            <p>Your text shows patterns associated with {{ mental_state_label }}. Please review the personalized recommendations below and consider reaching out to a mental health professional if needed.</p>
+        </div>
+        {% endif %}
+
+        <!-- Main Classification Card -->
+        <div class="classification-card">
+            <h2 class="card-title">Mental State Classification</h2>
+
+            <div class="score-container">
+                <svg class="circular-progress" width="220" height="220">
+                    <circle class="progress-background" cx="110" cy="110" r="95"></circle>
+                    <circle class="progress-bar" id="progressBar" cx="110" cy="110" r="95"></circle>
+                </svg>
+                <div class="score-content">
+                    <div class="score-text" id="scoreText">{{ confidence }}%</div>
+                    <div class="score-subtitle">Confidence</div>
+                </div>
+            </div>
+
+            <div class="mental-state-badge {{ mental_state }}" id="mentalStateBadge">
+                <span class="state-icon">{{ state_icon }}</span>
+                <span class="state-label">{{ mental_state_label }}</span>
+            </div>
+
+            <div class="state-description">
+                <p>{{ state_description }}</p>
+            </div>
+        </div>
+
+        <!-- Key Indicators Grid -->
+        <div class="indicators-grid">
+            <div class="indicator-card">
+                <div class="indicator-header">
+                    <span class="indicator-icon">😰</span>
+                    <span class="indicator-name">Anxiety Level</span>
+                </div>
+                <div class="indicator-bar-container">
+                    <div class="indicator-bar anxiety-bar" style="width: {{ anxiety_level }}%;"></div>
+                </div>
+                <div class="indicator-value">{{ anxiety_level }}%</div>
+                <p class="indicator-desc">Measures worry, fear, and anxious language patterns</p>
+            </div>
+
+            <div class="indicator-card">
+                <div class="indicator-header">
+                    <span class="indicator-icon">😔</span>
+                    <span class="indicator-name">Negative Emotions</span>
+                </div>
+                <div class="indicator-bar-container">
+                    <div class="indicator-bar negativity-bar" style="width: {{ negativity_level }}%;"></div>
+                </div>
+                <div class="indicator-value">{{ negativity_level }}%</div>
+                <p class="indicator-desc">Detects sad, angry, or pessimistic emotional content</p>
+            </div>
+
+            <div class="indicator-card">
+                <div class="indicator-header">
+                    <span class="indicator-icon">💬</span>
+                    <span class="indicator-name">Emotional Intensity</span>
+                </div>
+                <div class="indicator-bar-container">
+                    <div class="indicator-bar intensity-bar" style="width: {{ emotional_intensity }}%;"></div>
+                </div>
+                <div class="indicator-value">{{ emotional_intensity }}%</div>
+                <p class="indicator-desc">Overall emotional expression strength in the text</p>
+            </div>
+        </div>
+
+        <!-- Category Probabilities -->
+        <div class="probabilities-card">
+            <h3>Classification Probabilities</h3>
+            <div class="probability-list">
+                {% for category, probability in category_probabilities.items %}
+                <div class="probability-item">
+                    <div class="prob-header">
+                        <span class="prob-label">{{ category|title }}</span>
+                        <span class="prob-value">{{ probability }}%</span>
+                    </div>
+                    <div class="prob-bar-container">
+                        <div class="prob-bar" style="width: {{ probability }}%; background: {% if category == mental_state %}var(--color-primary){% else %}#E0E0E0{% endif %};"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Analyzed Text -->
+        <div class="analyzed-text-card">
+            <h3>📝 Analyzed Text</h3>
+            <div class="text-content">{{ analyzed_text }}</div>
+            <div class="text-meta">
+                <span>Word count: {{ word_count }}</span>
+                <span>•</span>
+                <span>Character count: {{ char_count }}</span>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        {% if recommendations %}
+        <div class="recommendations-card">
+            <h2>💚 Personalized Recommendations</h2>
+            <ul class="recommendation-list">
+                {% for recommendation in recommendations %}
+                <li>{{ recommendation }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{% url 'predict' %}" class="btn btn-primary">
+                <span>🔄 Analyze New Text</span>
+            </a>
+            <a href="{% url 'history' %}" class="btn btn-secondary">
+                <span>📊 View History</span>
+            </a>
+            <button class="btn btn-secondary" onclick="window.print()">
+                <span>🖨️ Print Results</span>
+            </button>
+        </div>
+    </div>
+</section>
+
+<script src="{% static 'js/predictions/result.js' %}"></script>
+
+{% endblock %}

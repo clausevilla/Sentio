@@ -12,9 +12,8 @@
 <section class="hero-section">
     <div class="hero-content">
         <div class="hero-text">
-            <h1>Understand Your <span class="highlight">Stress</span> with AI</h1>
-            <p>Analyze text to detect stress levels and key emotional indicators. Get instant insights for better mental health awareness.</p>
-            <div class="hero-buttons">
+            <h1>Understand Your <span class="highlight">Mental Health</span> with AI</h1>
+            <p>Analyze text to dectect mental health state and key emotional indicators. Get instant insights for better mental health awareness.</p>            <div class="hero-buttons">
                 {% if user.is_authenticated %}
                     <a href="{% url 'predictions:input' %}" class="btn btn-primary">
                         <i class="fas fa-chart-line"></i> Start Analysis
@@ -39,7 +38,7 @@
 <section id="features" class="features-section">
     <div class="container">
         <h2 class="section-title">Why Choose Sentio?</h2>
-        <p class="section-subtitle">AI-powered insights trained on real Reddit stress data</p>
+        <p class="section-subtitle">AI-powered insights for comprehensive mental health analysis</p>
 
         <div class="features-grid">
             <div class="feature-card">
@@ -47,23 +46,23 @@
                     <i class="fas fa-robot"></i>
                 </div>
                 <h3>Accurate Detection</h3>
-                <p>Our ML model analyzes text to predict stress levels with high accuracy, trained on thousands of Reddit posts from stress-related communities.</p>
+                <p>Our ML model analyzes text to identify 7 different mental health states with 75% accuracy, trained on thousands of social media posts.</p>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-bullseye"></i>
                 </div>
-                <h3>Three Key Indicators</h3>
-                <p>Get detailed insights into anxiety levels, negative emotions, and self-focus patterns that contribute to your stress.</p>
+                <h3>Seven Mental Health States</h3>
+                <p>Identifies Normal, Depression, Suicidal thoughts, Anxiety, Stress, Bi-Polar patterns, and Personality Disorder indicators in your text.</p>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-lightbulb"></i>
                 </div>
-                <h3>Personalized Advice</h3>
-                <p>Receive tailored recommendations when high stress is detected to help improve your mental wellbeing.</p>
+            <h3>Personalized Advice</h3>
+            <p>Receive category-specific recommendations and crisis resources when mental health concerns are detected.</p>
             </div>
 
             <div class="feature-card">
@@ -78,8 +77,8 @@
                 <div class="feature-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
-                <h3>Track Progress</h3>
-                <p>View your stress history with time-series graphs to monitor trends and improvements over time.</p>
+            <h3>Track Progress</h3>
+            <p>View your mental health history with visualizations to monitor patterns and changes across all categories over time.</p>
             </div>
 
             <div class="feature-card">
@@ -109,19 +108,20 @@
             <div class="step">
                 <div class="step-number">2</div>
                 <h3>AI Analysis</h3>
-                <p>Our NLP model analyzes linguistic patterns, emotional content, and stress indicators in your text.</p>
+                <p>Our NLP model analyzes linguistic patterns and emotional content to classify your text into one of 7 mental health states.</p>
             </div>
 
             <div class="step">
                 <div class="step-number">3</div>
-                <h3>Get Insights</h3>
-                <p>Receive a stress score, detailed breakdowns, and personalized recommendations for your wellbeing.</p>
+            <h3>Get Insights</h3>
+            <p>Receive your mental health classification, confidence scores, and personalized recommendations.</p>
+
             </div>
 
             <div class="step">
                 <div class="step-number">4</div>
                 <h3>Track Trends</h3>
-                <p>Monitor your stress levels over time with visual charts and historical data (optional account).</p>
+                <p>Monitor your mental health patterns over time with visual charts showing state distribution and trends (optional account).</p>
             </div>
         </div>
     </div>
@@ -133,12 +133,12 @@
     <div class="container">
         <div class="stats-grid">
             <div class="stat">
-                <h3>3,500+</h3>
-                <p>Training Samples</p>
+                <h3>7</h3>
+                <p>Mental Health Categories</p>
             </div>
             <div class="stat">
                 <h3>75%</h3>
-                <p>Prediction Accuracy</p>
+                <p>Classification Accuracy</p>
             </div>
             <div class="stat">
                 <h3>&lt;2s</h3>
@@ -155,7 +155,7 @@
 <!-- CTA Section -->
 <section class="cta-section">
     <div class="container">
-        <h2>Ready to Understand Your Stress?</h2>
+        <h2>Ready to Understand Your Mental Health?</h2>
         <p>Start analyzing your text in seconds</p>
         {% if user.is_authenticated %}
             <a href="{% url 'predictions:input' %}" class="btn btn-primary">
@@ -174,8 +174,7 @@
     <div class="container">
         <div class="disclaimer">
             <strong>⚠️ Important Medical Disclaimer</strong><br>
-            This tool analyzes text for stress patterns only. It is NOT a medical diagnostic tool and should not replace professional mental health advice. If you're experiencing severe stress, anxiety, or depression, please consult with a qualified healthcare professional.
-        </div>
+This tool analyzes text to identify potential mental health patterns. It is NOT a medical diagnostic tool and does NOT provide medical advice. Results should not be used for self-diagnosis or to replace professional mental health care.        </div>
     </div>
 </section>
 
