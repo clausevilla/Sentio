@@ -4,7 +4,7 @@
 {% block title %}Analysis History - Sentio{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/predictions/history.css' %}">
+<link rel="stylesheet" href="{% static 'css/accounts/history.css' %}">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 {% endblock %}
 
@@ -179,10 +179,12 @@
                 <div class="empty-icon">📊</div>
                 <h3>No Analysis History</h3>
                 <p>You haven't analyzed any text yet. Start by analyzing your first text!</p>
-                <a href="{% url 'predict' %}" class="btn-primary">Analyze Text</a>
+                <a href="{% url 'predictions:input' %}" class="btn-primary">Analyze Text</a>
             </div>
             {% endif %}
         </div>
+
+
     </div>
 </section>
 

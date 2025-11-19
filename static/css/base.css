@@ -233,6 +233,215 @@ a:hover {
     animation: slideInRight 0.6s ease forwards;
 }
 
+ /* REQUIRED STYLES FOR MOBILE MENU AND FOOTER */
+
+/* ========================================
+   NAVIGATION STYLES
+   ======================================== */
+
+nav {
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+
+.logo {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+/* Desktop Navigation Links */
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+}
+
+.nav-links li {
+    margin: 0;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #333;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover {
+    color: #7FAF93;
+}
+
+/* Mobile Menu Toggle Button */
+.mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: #333;
+}
+
+/* ========================================
+   MOBILE STYLES (IMPORTANT!)
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Show hamburger button on mobile */
+    .mobile-menu-toggle {
+        display: block;
+    }
+
+    /* Hide nav links by default on mobile */
+    .nav-links {
+        position: fixed;
+        top: 70px; /* Below navbar */
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        background: #fff;
+        padding: 1rem;
+        gap: 1rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+
+        /* Hidden by default */
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition: max-height 0.3s ease, opacity 0.3s ease;
+    }
+
+    /* Show nav links when active */
+    .nav-links.active {
+        max-height: 500px;
+        opacity: 1;
+    }
+
+    .nav-links li {
+        width: 100%;
+        text-align: center;
+    }
+
+    .nav-links a {
+        display: block;
+        padding: 0.75rem 1rem;
+    }
+}
+
+/* ===================================
+   Footer
+   =================================== */
+
+footer {
+    background: var(--color-text);
+    color: white;
+    padding: 3rem 2rem 1.5rem;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 3rem;
+    margin-bottom: 2rem;
+}
+
+.footer-section h3 {
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: var(--color-primary-lighter);
+}
+
+.footer-section p {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.footer-section ul {
+    list-style: none;
+}
+
+.footer-section ul li {
+    margin-bottom: 0.6rem;
+}
+
+.footer-section a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: color var(--transition-base);
+}
+
+.footer-section a:hover {
+    color: var(--color-primary-lighter);
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: var(--font-xs);
+}
+
+.footer-bottom p {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+}
+
+.fooer-bottom i {
+    color: var(--color-primary-lighter);
+}
+
+/* ========================================
+   MAIN CONTENT WRAPPER (IMPORTANT!)
+   ======================================== */
+
+/* Ensure main content doesn't overlap footer */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+main {
+    flex: 1; /* This makes main content grow to push footer down */
+    width: 100%;
+}
+
+
+
+
+/* ========================================
+   CONTAINER
+   ======================================== */
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+
+
 /* ===================================
    Responsive
    =================================== */
@@ -257,5 +466,19 @@ a:hover {
 
     .container {
         padding: 0 var(--spacing-sm);
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-container {
+        padding: 1rem;
+    }
+
+    footer {
+        padding: 2rem 1rem 1rem;
+    }
+
+    .footer-content {
+        grid-template-columns: 1fr;
     }
 }

@@ -87,23 +87,17 @@
             </div>
         </div>
 
-        <!-- Category Probabilities -->
-        <div class="probabilities-card">
-            <h3>Classification Probabilities</h3>
-            <div class="probability-list">
-                {% for category, probability in category_probabilities.items %}
-                <div class="probability-item">
-                    <div class="prob-header">
-                        <span class="prob-label">{{ category|title }}</span>
-                        <span class="prob-value">{{ probability }}%</span>
-                    </div>
-                    <div class="prob-bar-container">
-                        <div class="prob-bar" style="width: {{ probability }}%; background: {% if category == mental_state %}var(--color-primary){% else %}#E0E0E0{% endif %};"></div>
-                    </div>
-                </div>
-                {% endfor %}
+        <!-- Save Results CTA if not logged in -->
+        {% if not user.is_authenticated %}
+        <div class="save-results-cta no-print">
+            <h3>💾 Want to Save These Results?</h3>
+            <p>Create a free account to track your mental state over time, view historical trends, and get personalized insights!</p>
+            <div class="cta-buttons">
+                <a href="03_register.html" class="btn btn-primary">✨ Create Free Account</a>
+                <a href="02_login.html" class="btn btn-secondary">Already have an account? Sign In</a>
             </div>
         </div>
+        {% endif %}
 
         <!-- Analyzed Text -->
         <div class="analyzed-text-card">
@@ -115,6 +109,8 @@
                 <span>Character count: {{ char_count }}</span>
             </div>
         </div>
+
+
 
         <!-- Recommendations -->
         {% if recommendations %}
@@ -130,13 +126,13 @@
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <a href="{% url 'predict' %}" class="btn btn-primary">
+            <a href="{% url 'predictions:input' %}" class="btn btn-large-action">
                 <span>🔄 Analyze New Text</span>
             </a>
-            <a href="{% url 'history' %}" class="btn btn-secondary">
+            <a href="{% url 'accounts:history' %}" class="btn btn-large-action">
                 <span>📊 View History</span>
             </a>
-            <button class="btn btn-secondary" onclick="window.print()">
+            <button class="btn btn-large" onclick="window.print()">
                 <span>🖨️ Print Results</span>
             </button>
         </div>

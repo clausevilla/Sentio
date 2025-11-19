@@ -123,6 +123,39 @@
     text-decoration: underline;
 }
 
+/* ===================================
+   Password Toggle Icon Fix
+   =================================== */
+
+.form-group {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute !important;
+    right: 12px !important;
+    bottom: 12px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: #666;
+    font-size: 1.2rem;
+    z-index: 10;
+    transition: color 0.3s;
+}
+
+.password-toggle:hover {
+    color: #333;
+}
+
+.password-toggle:focus {
+    outline: none;
+    color: #7FAF93;
+}
+
 /* Responsive Design */
 @media (max-width: 968px) {
     .register_container {

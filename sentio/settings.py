@@ -119,7 +119,18 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# For development
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+# For production (after running collectstatic)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
