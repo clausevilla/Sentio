@@ -1,4 +1,4 @@
-// accounts/history.js - Analysis history page with charts and filtering
+// hiostory .js - Account history page functionality
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize trend chart
@@ -16,7 +16,7 @@ function initializeTrendChart() {
     const canvas = document.getElementById('trendChart');
     if (!canvas) return;
 
-    // Get data from Django template (you'll need to pass this from your view)
+    // !!! Remember to implement actual data fetching logic later !!!
     // For now, using example data structure
     const chartData = {
         labels: [], // Dates
@@ -24,29 +24,43 @@ function initializeTrendChart() {
             {
                 label: 'Normal',
                 data: [],
-                borderColor: '#7FAF93',
-                backgroundColor: 'rgba(127, 175, 147, 0.1)',
+                borderColor: '#27AE60',
+                backgroundColor: 'rgba(39, 174, 96, 0.1)',
                 tension: 0.4
             },
             {
                 label: 'Depression',
                 data: [],
-                borderColor: '#4A90E2',
-                backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                borderColor: '#2874A6',
+                backgroundColor: 'rgba(40, 116, 166, 0.1)',
                 tension: 0.4
             },
             {
                 label: 'Anxiety',
                 data: [],
-                borderColor: '#FFA500',
-                backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                borderColor: '#F39C12',
+                backgroundColor: 'rgba(243, 156, 18, 0.1)',
                 tension: 0.4
             },
             {
                 label: 'Stress',
                 data: [],
-                borderColor: '#FF6B6B',
-                backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                borderColor: '#E74C3C',
+                backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                tension: 0.4
+            },
+            {
+                label: 'Suicidal',
+                data: [],
+                borderColor: '#7D3C98',
+                backgroundColor: 'rgba(125, 60, 152, 0.1)',
+                tension: 0.4
+            },
+            {
+                label: 'Bipolar',
+                data: [],
+                borderColor: '#D68910',
+                backgroundColor: 'rgba(214, 137, 16, 0.1)',
                 tension: 0.4
             }
         ]

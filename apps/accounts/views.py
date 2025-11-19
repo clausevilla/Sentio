@@ -2,6 +2,10 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 
 
+import json
+from datetime import datetime, timedelta
+
+
 def login_view(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -18,7 +22,7 @@ def login_view(request):
     return render (request, "accounts/login.html")
 
 
-
+ # @login_required
 def logout_view(request):
     return render(request, 'home')
 
@@ -26,5 +30,79 @@ def logout_view(request):
 def register_view(request):
     return render(request, 'accounts/register.html', {})
 
+
+
+ # @login_required
 def history_view(request):
+
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!! ADD THESE TWO LINES !!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #chart_data = get_chart_data(request.user, 'week')
+
+
     return render(request, 'accounts/history.html')
+
+
+
+
+
+def get_chart_data(user, period='week'):
+    """
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!! GENERATES REAL DATA FOR THE CHART !!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    """
+    from .models import MentalHealthAnalysis  # ← YOUR MODEL NAME
+
+    now = datetime.now()
+    if period == 'week':
+        start_date = now - timedelta(days=7)
+        labels = [(start_date + timedelta(days=i)).strftime('%a') for i in range(7)]
+    elif period == 'month':
+        start_date = now - timedelta(days=30)
+        labels = [(start_date + timedelta(days=i*5)).strftime('%b %d') for i in range(6)]
+    else:
+        start_date = now - timedelta(days=90)
+        labels = [(start_date + timedelta(days=i*15)).strftime('%b %d') for i in range(6)]
+
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!! INITIALIZE ALL 6 STATES WITH ZEROS !!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    chart_data = {
+        'labels': labels,
+        'normal': [0] * len(labels),
+        'depression': [0] * len(labels),
+        'anxiety': [0] * len(labels),
+        'stress': [0] * len(labels),
+        'suicidal': [0] * len(labels),
+        'bipolar': [0] * len(labels),
+    }
+
+    # Get analyses from database
+    analyses = MentalHealthAnalysis.objects.filter(
+        user=user,
+        created_at__gte=start_date,
+        created_at__lte=now
+    ).order_by('created_at')
+
+    # Count occurrences
+    for analysis in analyses:
+        if period == 'week':
+            label = analysis.created_at.strftime('%a')
+        elif period == 'month':
+            days_diff = (analysis.created_at.date() - start_date.date()).days
+            index = min(days_diff // 5, len(labels) - 1)
+            label = labels[index]
+        else:
+            days_diff = (analysis.created_at.date() - start_date.date()).days
+            index = min(days_diff // 15, len(labels) - 1)
+            label = labels[index]
+
+        if label in labels:
+            idx = labels.index(label)
+            state = analysis.mental_state  # ← YOUR FIELD NAME
+            if state in chart_data:
+                chart_data[state][idx] += 1
+
+    return chart_data
