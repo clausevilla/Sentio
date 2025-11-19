@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile - Sentio{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/accounts/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="text-center mb-xl">
+            <h1>👤 My Profile</h1>
+            <p style="color: var(--color-text-light); font-size: var(--font-lg);">Manage your account settings</p>
+        </div>
+
+        <!-- Success/Error Messages -->
+        <div id="messageContainer"></div>
+
+        <div class="profile-grid">
+            <!-- Account Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>ℹ️ Account Information</h2>
+                </div>
+                <div class="card-body">
+                    <div class="info-row">
+                        <span class="info-label">Username</span>
+                        <span class="info-value">{{ user.username }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Email</span>
+                        <span class="info-value">{{ user.email }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Member Since</span>
+                        <span class="info-value">{{ user.date_joined|date:"F d, Y" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Total Analyses</span>
+                        <span class="info-value">{{ total_analyses }} predictions</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Change Password -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>🔒 Change Password</h2>
+                </div>
+                <div class="card-body">
+                    <form id="changePasswordForm">
+                        {% csrf_token %}
+
+                        <div class="form-group">
+                            <label for="currentPassword" class="form-label">Current Password</label>
+                            <input
+                                type="password"
+                                id="currentPassword"
+                                name="currentPassword"
+                                class="form-input"
+                                required
+                            >
+                            <span class="form-error" id="currentPasswordError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <input
+                                type="password"
+                                id="newPassword"
+                                name="newPassword"
+                                class="form-input"
+                                required
+                            >
+                            <span class="form-help">At least 8 characters with uppercase, lowercase, and numbers</span>
+                            <span class="form-error" id="newPasswordError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                            <input
+                                type="password"
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                class="form-input"
+                                required
+                            >
+                            <span class="form-error" id="confirmPasswordError"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block">
+                            Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="card danger-card">
+                <div class="card-header">
+                    <h2>⚠️ Danger Zone</h2>
+                </div>
+                <div class="card-body">
+                    <div class="danger-action">
+                        <h3>🗑️ Delete All Data</h3>
+                        <p>Permanently delete all your analysis history. Your account will remain active.</p>
+                        <button class="btn btn-danger" onclick="openDeleteDataModal()">
+                            Delete All Data
+                        </button>
+                    </div>
+
+                    <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e0e0e0;">
+
+                    <div class="danger-action">
+                        <h3>❌ Delete Account</h3>
+                        <p>Permanently delete your account and all data. This cannot be undone.</p>
+                        <button class="btn btn-danger" onclick="openDeleteAccountModal()">
+                            Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Delete Data Modal -->
+<div id="deleteDataModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Delete All Data</h2>
+            <button class="modal-close" onclick="closeDeleteDataModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="alert alert-warning">
+                <strong>⚠️ Warning:</strong> This will permanently delete all your stress predictions and history. Your account will remain active.
+            </div>
+
+            <form id="deleteDataForm">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Type <strong>DELETE ALL DATA</strong> to confirm:</label>
+                    <input
+                        type="text"
+                        id="deleteDataConfirm"
+                        class="form-input"
+                        placeholder="DELETE ALL DATA"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Enter your password:</label>
+                    <input
+                        type="password"
+                        id="deleteDataPassword"
+                        class="form-input"
+                        required
+                    >
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeDeleteDataModal()" style="flex: 1;">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger" id="confirmDeleteDataBtn" disabled style="flex: 1;">
+                        Delete All Data
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div id="deleteAccountModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Delete Account</h2>
+            <button class="modal-close" onclick="closeDeleteAccountModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="alert alert-error">
+                <strong>⚠️ FINAL WARNING:</strong> This will permanently delete your account, including your username, all data, and access to Sentio. You cannot undo this action.
+            </div>
+
+            <form id="deleteAccountForm">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Type <strong>DELETE MY ACCOUNT</strong> to confirm:</label>
+                    <input
+                        type="text"
+                        id="deleteAccountConfirm"
+                        class="form-input"
+                        placeholder="DELETE MY ACCOUNT"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Enter your password:</label>
+                    <input
+                        type="password"
+                        id="deleteAccountPassword"
+                        class="form-input"
+                        required
+                    >
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeDeleteAccountModal()" style="flex: 1;">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger" id="confirmDeleteAccountBtn" disabled style="flex: 1;">
+                        Delete Forever
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/accounts/profile.js' %}"></script>
+{% endblock %}

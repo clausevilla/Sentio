@@ -30,6 +30,8 @@ def logout_view(request):
 def register_view(request):
     return render(request, 'accounts/register.html', {})
 
+def profile_view(request) :
+    return render(request, 'accounts/profile.html')
 
 
  # @login_required
