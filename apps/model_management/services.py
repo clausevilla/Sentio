@@ -25,6 +25,9 @@ def import_csv_dataset(file_path, data_upload, dataset_type='train', batch_size=
             label = row.get('status', '').strip().lower()
             category_id = CATEGORY_MAP.get(label, None)
 
+            if category_id is None: # Handle personality_disorder category (not in map)
+                continue # Skip the record
+
             one_hot_categories = {
                 "normal": 0,
                 "depression": 0,
