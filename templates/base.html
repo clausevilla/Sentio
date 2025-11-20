@@ -31,7 +31,9 @@
             <ul class="nav-links" id="navLinks">
                 <li><a href="{% url 'home' %}#features">Features</a></li>
                 <li><a href="{% url 'home' %}#how-it-works">How It Works</a></li>
+
                 {% if user.is_authenticated %}
+                    <li><a href="{% url 'predictions:input' %}">Analyze Text</a></li>
                     <li><a href="{% url 'accounts:history' %}">History</a></li>
                     {% if user.is_staff %}
                         <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
@@ -39,9 +41,11 @@
                     <li><a href="{% url 'accounts:profile' %}">Profile</a></li>
                     <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
                 {% else %}
+                    <li><a href="{% url 'predictions:input' %}">Try Now</a></li>
                     <li><a href="{% url 'accounts:login' %}">Login</a></li>
+                    <li><a href="{% url 'accounts:register' %}" class="btn btn-secondary">Sign Up</a></li>
                 {% endif %}
-                <li><a href="{% url 'accounts:register' %}" class="btn btn-secondary">Sign Up</a></li>
+
             </ul>
         </div>
     </nav>
