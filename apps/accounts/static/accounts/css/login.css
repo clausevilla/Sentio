@@ -1,0 +1,214 @@
+/* Login Page Styles */
+
+.login-section {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #E8F2EE 0%, #F6F6E9 100%);
+}
+
+.login-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    max-width: 1200px;
+    width: 100%;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(74, 124, 89, 0.2);
+    overflow: hidden;
+    min-height: 600px;
+}
+
+.login-left {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    color: white;
+    padding: 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-left h1 {
+    font-size: 2.5rem;
+    color: white;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+.login-left p {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 2rem;
+    line-height: 1.7;
+}
+
+.login-left .feature-list {
+    list-style: none;
+    padding: 0;
+}
+
+.login-left .feature-list li {
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+    position: relative;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.login-left .feature-list li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: white;
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+
+.login-right {
+    padding: 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: white;
+}
+
+.login-right h2 {
+    font-size: 2rem;
+    color: var(--color-text-dark);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.login-right .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.login-right label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    font-size: 0.95rem;
+}
+
+.login-right .form-control {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    border: 2px solid #D4E1DD;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.3s;
+    background: white;
+}
+
+.login-right .form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+}
+
+.login-right .btn-primary {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+}
+
+.login-right .register-link {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.login-right .register-link p {
+    color: var(--color-text);
+    margin: 0;
+}
+
+.login-right .register-link a {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.login-right .register-link a:hover {
+    text-decoration: underline;
+}
+
+/* ===================================
+   Password Toggle Icon Fix
+   =================================== */
+
+.form-group {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute !important;
+    right: 12px !important;
+    bottom: 12px !important;
+    top: 50% !important;
+    transform: translateY(-50%) ;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: #666;
+    font-size: 1.2rem;
+    z-index: 10;
+    transition: color 0.3s;
+}
+
+.password-toggle:hover {
+    color: #333;
+}
+
+.password-toggle:focus {
+    outline: none;
+    color: #7FAF93;
+}
+
+
+/* Responsive Design */
+@media (max-width: 968px) {
+    .login-container {
+        grid-template-columns: 1fr;
+    }
+
+    .login-left {
+        padding: 3rem 2rem;
+    }
+
+    .login-left h1 {
+        font-size: 2rem;
+    }
+
+    .login-right {
+        padding: 3rem 2rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .login-section {
+        padding: 1rem;
+    }
+
+    .login-left {
+        padding: 2rem 1.5rem;
+    }
+
+    .login-left h1 {
+        font-size: 1.8rem;
+    }
+
+    .login-right {
+        padding: 2rem 1.5rem;
+    }
+
+    .login-right h2 {
+        font-size: 1.5rem;
+    }
+}

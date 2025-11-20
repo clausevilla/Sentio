@@ -6,6 +6,9 @@ SECRET_KEY = 'django-insecure-t35qj&0r68chrbu%kdn-4_ovfgqo&@1p8snqtj$3^*-3lnt0w_
 DEBUG = True
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 DATABASES = {

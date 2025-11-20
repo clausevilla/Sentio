@@ -1,0 +1,308 @@
+/* ===================================
+   Sentio - Components
+   reusable UI components styled with Sentio design system
+   =================================== */
+
+/* ===================================
+   Buttons
+   =================================== */
+
+.btn {
+    display: inline-block;
+    padding: 0.7rem 1.6rem;
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: var(--font-sm);
+    transition: all var(--transition-base);
+    border: none;
+    cursor: pointer;
+    text-align: center;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(74, 124, 89, 0.25);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 124, 89, 0.35);
+    color: white;
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary-light);
+}
+
+.btn-secondary:hover {
+    background: var(--color-bg-mint);
+    transform: translateY(-2px);
+    color: var(--color-primary);
+}
+
+.btn-large {
+    padding: 1rem 2.5rem;
+    font-size: var(--font-lg);
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+/* ===================================
+   Cards
+   =================================== */
+
+.card {
+    background: var(--color-bg-white);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-base);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.feature-card {
+    background: var(--color-bg-cream);
+    padding: 2.5rem;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base);
+    border: 2px solid transparent;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+}
+
+.feature-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    font-size: 2.2rem;
+    box-shadow: 0 5px 15px rgba(74, 124, 89, 0.25);
+}
+
+.feature-card h3 {
+    font-size: 1.5rem;
+    color: var(--color-text-dark);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.feature-card p {
+    color: var(--color-text-light);
+    line-height: 1.7;
+    font-size: var(--font-base);
+}
+
+/* ===================================
+   Forms
+   =================================== */
+
+.form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    font-size: var(--font-sm);
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    border: 2px solid #D4E1DD;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-base);
+    font-family: inherit;
+    transition: all var(--transition-base);
+    background: white;
+    color: var(--color-text);
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.form-error {
+    color: var(--color-coral);
+    font-size: var(--font-xs);
+    margin-top: 0.3rem;
+}
+
+.form-help {
+    font-size: var(--font-xs);
+    color: var(--color-text-light);
+    margin-top: 0.3rem;
+}
+
+
+
+/* ===================================
+   Stats Display
+   =================================== */
+
+.stats-section {
+    padding: var(--spacing-3xl) var(--spacing-lg);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    color: white;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 3rem;
+    text-align: center;
+}
+
+.stat h3 {
+    font-size: 3.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+.stat p {
+    font-size: var(--font-lg);
+    opacity: 0.95;
+    color: white;
+}
+
+/* ===================================
+   Grids
+   =================================== */
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-lg);
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-lg);
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2.5rem;
+}
+
+/* ===================================
+   Alerts & Messages
+   =================================== */
+
+.alert {
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-md);
+    border-left: 4px solid;
+}
+
+.alert-success {
+    background: #E8F5E9;
+    color: #2E7D32;
+    border-color: #4CAF50;
+}
+
+.alert-error {
+    background: #FFEBEE;
+    color: #C62828;
+    border-color: #EF5350;
+}
+
+.alert-warning {
+    background: #FFF3E0;
+    color: #E65100;
+    border-color: #FF9800;
+}
+
+.alert-info {
+    background: var(--color-bg-mint);
+    color: var(--color-primary);
+    border-color: var(--color-primary-light);
+}
+
+/* ===================================
+   Loading Spinner
+   =================================== */
+
+.spinner {
+    border: 3px solid var(--color-bg-mint);
+    border-top: 3px solid var(--color-primary);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ===================================
+   Responsive
+   =================================== */
+
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+    }
+
+    .mobile-menu-toggle {
+        display: block;
+    }
+
+    .nav-links.active {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .grid-2,
+    .grid-3 {
+        grid-template-columns: 1fr;
+    }
+
+    .stat h3 {
+        font-size: 2.5rem;
+    }
+}

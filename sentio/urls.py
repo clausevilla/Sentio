@@ -19,10 +19,18 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
 
+from . import views
+
 urlpatterns = [
     path('', TemplateView.as_view(template_name='index.html'), name='home'),  # Homepage
-    path('accounts/', include('apps.accounts.urls')),
+    path('about/', views.about, name='about'),
+    path(
+        'accounts/', include(('apps.accounts.urls', 'accounts'), namespace='accounts')
+    ),
     path('management/', include('apps.model_management.urls')),
-    path('predictions/', include('apps.predictions.urls')),
+    path(
+        'predictions/',
+        include(('apps.predictions.urls', 'predictions'), namespace='predictions'),
+    ),
     path('admin/', admin.site.urls),
 ]

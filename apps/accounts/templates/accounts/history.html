@@ -1,0 +1,184 @@
+{% extends 'base.html' %} {% load static %}
+
+{% block title %}Analysis History - Sentio{% endblock %} {% block extra_css %}
+
+<link rel="stylesheet" href="{% static 'accounts/css/history.css' %}" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %} {% block content %}
+<section class="history-section">
+    <div class="container">
+        <div class="page-header">
+            <h1>Analysis History</h1>
+            <p>Track your mental health patterns over time</p>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-primary">
+                    <span>📊</span>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ total_analyses }}</div>
+                    <div class="stat-label">Total Analyses</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-success">
+                    <span>✅</span>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ normal_count }}</div>
+                    <div class="stat-label">Normal States</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-warning">
+                    <span>⚠️</span>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ concern_count }}</div>
+                    <div class="stat-label">States of Concern</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-info">
+                    <span>📅</span>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ last_analysis }}</div>
+                    <div class="stat-label">Last Analysis</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mental State Distribution -->
+        <div class="chart-card">
+            <h2 class="card-title">Mental State Distribution</h2>
+            <div class="distribution-grid">
+                {% for state, count in state_distribution.items %}
+                <div class="distribution-item">
+                    <div class="dist-header">
+                        <span class="dist-icon">{{ state.icon }}</span>
+                        <span class="dist-label">{{ state.label }}</span>
+                    </div>
+                    <div class="dist-bar-container">
+                        <div class="dist-bar {{ state.class }}" style="width: {{ state.percentage }}%;"></div>
+                    </div>
+                    <div class="dist-value">{{ count }} ({{ state.percentage }}%)</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Trend Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h2>Mental Health Trend</h2>
+                <div class="time-filter">
+                    <button class="filter-btn active" data-period="week">Week</button>
+                    <button class="filter-btn" data-period="month">Month</button>
+                    <button class="filter-btn" data-period="all">All Time</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- History List -->
+        <div class="history-list-card">
+            <div class="list-header">
+                <h2>Recent Analyses</h2>
+                <div class="filter-controls">
+                    <select id="stateFilter" class="state-filter">
+                        <option value="all">All States</option>
+                        <option value="normal">Normal</option>
+                        <option value="depression">Depression</option>
+                        <option value="anxiety">Anxiety</option>
+                        <option value="stress">Stress</option>
+                        <option value="suicidal">Suicidal</option>
+                        <option value="bipolar">Bipolar</option>
+                    </select>
+                </div>
+            </div>
+
+            {% if analyses %}
+            <div class="history-list">
+                {% for analysis in analyses %}
+                <div class="history-item" data-state="{{ analysis.mental_state }}">
+                    <div class="item-header">
+                        <div class="item-date">
+                            <span class="date-icon">📅</span>
+                            <span>{{ analysis.created_at|date:"M d, Y - H:i" }}</span>
+                        </div>
+                        <div class="item-badge badge-{{ analysis.mental_state }}">
+                            <span>{{ analysis.get_mental_state_display }}</span>
+                            <span class="badge-confidence">{{ analysis.confidence }}%</span>
+                        </div>
+                    </div>
+
+                    <div class="item-text">{{ analysis.text|truncatewords:30 }}</div>
+
+                    <div class="item-indicators">
+                        <div class="indicator-tag">
+                            <span class="tag-icon">😰</span>
+                            <span>Anxiety: {{ analysis.anxiety_level }}%</span>
+                        </div>
+                        <div class="indicator-tag">
+                            <span class="tag-icon">😔</span>
+                            <span>Negativity: {{ analysis.negativity_level }}%</span>
+                        </div>
+                        <div class="indicator-tag">
+                            <span class="tag-icon">💬</span>
+                            <span>Intensity: {{ analysis.emotional_intensity }}%</span>
+                        </div>
+                    </div>
+
+                    <div class="item-actions">
+                        <a href="{% url 'analysis_detail' analysis.id %}" class="btn-view">
+                            <span>View Details</span>
+                            <span>→</span>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                <a href="?page=1" class="page-link">« First</a>
+                <a href="?page={{ page_obj.previous_page_number }}" class="page-link">‹ Previous</a>
+                {% endif %}
+
+                <span class="page-current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="page-link">Next ›</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}" class="page-link">Last »</a>
+                {% endif %}
+            </div>
+            {% endif %} {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <h3>No Analysis History</h3>
+                <p>
+                    You haven't analyzed any text yet. Start by analyzing your first text!
+                </p>
+                <a href="{% url 'predictions:input' %}" class="btn-primary">Analyze Text</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<script src="{% static 'accounts/js/history.js' %}"></script>
+{% endblock %}

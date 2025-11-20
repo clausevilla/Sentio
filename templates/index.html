@@ -1,10 +1,187 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Home - Sentio{% endblock title %}
+{% block title %}Sentio - AI-Powered Stress Detection{% endblock %}
 
-{% block page_content %}
-<div class="text-center mt-5">
-    <h1>Sentio</h1>
-    <p class="lead">Analyze text for stress levels and emotional tone</p>
-</div>
-{% endblock page_content %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/index.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section with VIDEO Background -->
+<section class="hero-section">
+
+    <!-- !!! VIDEO BACKGROUND ELEMENT !!! -->
+    <video autoplay muted loop playsinline class="hero-video">
+        <source src="{% static 'videos/hero.mp4' %}" type="video/mp4">
+
+    </video>
+
+    <!-- Overlay for text readability -->
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1>Understand Your <span class="highlight">Mental Health</span> with AI</h1>
+            <p>Analyze text to detect mental health state and key emotional indicators. Get instant insights for better mental health awareness.</p>
+            <div class="hero-buttons">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'predictions:input' %}" class="btn btn-primary">
+                        <i class="fas fa-chart-line"></i> Start Analysis
+                    </a>
+                    <a href="#how-it-works" class="btn btn-secondary">Learn More</a>
+                {% else %}
+                    <a href="{% url 'predictions:input' %}" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Try Now
+                    </a>
+                    <a href="#how-it-works" class="btn btn-secondary">Learn More</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="features-section">
+    <div class="container">
+        <h2 class="section-title">Why Choose Sentio?</h2>
+        <p class="section-subtitle">AI-powered insights for comprehensive mental health analysis</p>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3>Accurate Detection</h3>
+                <p>Our ML model analyzes text to identify 7 different mental health states with 75% accuracy, trained on thousands of social media posts.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <h3>Six Mental Health States</h3>
+                <p>Identifies Normal, Depression, Suicidal thoughts, Anxiety, Stress, Bi-Polar indicators in your text.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <h3>Personalized Advice</h3>
+                <p>Receive category-specific recommendations and crisis resources when mental health concerns are detected.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>Privacy First</h3>
+                <p>Your data is secure and private. We take your mental health privacy seriously with encrypted storage.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3>Track Progress</h3>
+                <p>View your mental health history with visualizations to monitor patterns and changes across all categories over time.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3>Instant Results</h3>
+                <p>Get predictions in under 2 seconds. Process up to 5000 characters quickly and efficiently.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section id="how-it-works" class="how-it-works">
+    <div class="container">
+        <h2 class="section-title">How It Works</h2>
+        <p class="section-subtitle">Simple, fast, and scientifically backed</p>
+
+        <div class="steps-container">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Paste Your Text</h3>
+                <p>Copy text from social media posts, messages, or write your own content (up to 5000 characters).</p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>AI Analysis</h3>
+                <p>Our NLP model analyzes linguistic patterns and emotional content to classify your text into one of 6 mental health states.</p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Get Insights</h3>
+                <p>Receive your mental health classification, confidence scores, and personalized recommendations.</p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <h3>Track Trends</h3>
+                <p>Monitor your mental health patterns over time with visual charts showing state distribution and trends (optional account).</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat">
+                <h3>6</h3>
+                <p>Mental Health Categories</p>
+            </div>
+            <div class="stat">
+                <h3>75%</h3>
+                <p>Classification Accuracy</p>
+            </div>
+            <div class="stat">
+                <h3>&lt;2s</h3>
+                <p>Processing Time</p>
+            </div>
+            <div class="stat">
+                <h3>5,000</h3>
+                <p>Max Characters</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <h2>Ready to Understand Your Mental Health?</h2>
+        <p>Start analyzing your text in seconds</p>
+        {% if user.is_authenticated %}
+            <a href="{% url 'predictions:input' %}" class="btn btn-primary">
+                <i class="fas fa-chart-line"></i> Start Your Analysis Now
+            </a>
+        {% else %}
+            <a href="{% url 'accounts:register' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Get Started Free
+            </a>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Disclaimer Section -->
+<section class="disclaimer-section">
+    <div class="container">
+        <div class="disclaimer">
+            <strong>⚠️ Important Medical Disclaimer</strong><br>
+            This tool analyzes text to identify potential mental health patterns. It is NOT a medical diagnostic tool and does NOT provide medical advice. Results should not be used for self-diagnosis or to replace professional mental health care.
+        </div>
+    </div>
+</section>
+
+{% endblock %}
