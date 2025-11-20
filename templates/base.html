@@ -36,6 +36,7 @@
                     {% if user.is_staff %}
                         <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
                     {% endif %}
+                    <li><a href="{% url 'accounts:profile' %}">Profile</a></li>
                     <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
                 {% else %}
                     <li><a href="{% url 'accounts:login' %}">Login</a></li>
