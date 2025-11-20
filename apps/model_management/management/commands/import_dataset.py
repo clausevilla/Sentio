@@ -5,7 +5,7 @@ from apps.model_management.services import import_csv_dataset
 class Command(BaseCommand):     #Import CSV dataset into DatasetRecord
     def add_arguments(self, parser):
         parser.add_argument('file_path', type=str)
-        parser.add_argument('--dataset_type', type=str, default='train')
+        parser.add_argument('--dataset_type', type=str, default='train', choices=['train', 'test', 'unlabeled'])
 
     def handle(self, *args, **options):
         file_path = options['file_path']

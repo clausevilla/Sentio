@@ -10,8 +10,8 @@ This is intended to be an interim solution until a dedicated admin UI is develop
 
 @admin.register(ModelVersion)
 class ModelVersionAdmin(admin.ModelAdmin):
-    list_display = ['version_name', 'created_at', 'is_active', 'accuracy', 'created_by']
-    list_filter = ['is_active', 'created_at']
+    list_display = ['version_name', 'created_at', 'accuracy', 'created_by']
+    list_filter = ['created_at']
 
 
 @admin.register(DataUpload)
@@ -34,6 +34,7 @@ class TrainingJobAdmin(admin.ModelAdmin):
 
 @admin.register(DatasetRecord)
 class DatasetRecordAdmin(admin.ModelAdmin):
-    list_display = ['id', 'dataset_type', 'data_upload', 'subreddit', 'label']
+    list_display = ['id', 'label', 'data_upload', 'dataset_type']
     list_filter = ['dataset_type', 'data_upload']
-    search_fields = ['text', 'subreddit']
+    search_fields = ['text']
+    ordering = ['id']  #orders by ascending id
