@@ -1,28 +1,26 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
-
-
-import json
 from datetime import datetime, timedelta
+
+from django.contrib.auth import authenticate, login
+from django.shortcuts import redirect, render
 
 
 def login_view(request):
-    if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
 
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect("prediction:input")
+            return redirect('prediction:input')
         else:
-            context ={"error": "Invalid username of password"}
-            return render(request, "accounts/login.html", context)
+            context = {'error': 'Invalid username of password'}
+            return render(request, 'accounts/login.html', context)
 
-    return render (request, "accounts/login.html")
+    return render(request, 'accounts/login.html')
 
 
- # @login_required
+# @login_required
 def logout_view(request):
     return render(request, 'home')
 
@@ -30,23 +28,19 @@ def logout_view(request):
 def register_view(request):
     return render(request, 'accounts/register.html', {})
 
-def profile_view(request) :
+
+def profile_view(request):
     return render(request, 'accounts/profile.html')
 
 
- # @login_required
+# @login_required
 def history_view(request):
-
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # !!! ADD THESE TWO LINES !!!
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    #chart_data = get_chart_data(request.user, 'week')
-
+    # chart_data = get_chart_data(request.user, 'week')
 
     return render(request, 'accounts/history.html')
-
-
-
 
 
 def get_chart_data(user, period='week'):
@@ -63,10 +57,14 @@ def get_chart_data(user, period='week'):
         labels = [(start_date + timedelta(days=i)).strftime('%a') for i in range(7)]
     elif period == 'month':
         start_date = now - timedelta(days=30)
-        labels = [(start_date + timedelta(days=i*5)).strftime('%b %d') for i in range(6)]
+        labels = [
+            (start_date + timedelta(days=i * 5)).strftime('%b %d') for i in range(6)
+        ]
     else:
         start_date = now - timedelta(days=90)
-        labels = [(start_date + timedelta(days=i*15)).strftime('%b %d') for i in range(6)]
+        labels = [
+            (start_date + timedelta(days=i * 15)).strftime('%b %d') for i in range(6)
+        ]
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # !!! INITIALIZE ALL 6 STATES WITH ZEROS !!!
@@ -83,9 +81,7 @@ def get_chart_data(user, period='week'):
 
     # Get analyses from database
     analyses = MentalHealthAnalysis.objects.filter(
-        user=user,
-        created_at__gte=start_date,
-        created_at__lte=now
+        user=user, created_at__gte=start_date, created_at__lte=now
     ).order_by('created_at')
 
     # Count occurrences
