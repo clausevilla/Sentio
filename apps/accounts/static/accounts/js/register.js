@@ -1,6 +1,6 @@
 // accounts/register.js - Registration page with validation
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const registerForm = document.querySelector('form[action*="register"]');
     const usernameInput = document.getElementById('username');
     const emailInput = document.getElementById('email');
@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const password2Input = document.getElementById('password2');
 
     if (registerForm) {
-        registerForm.addEventListener('submit', function(e) {
+        registerForm.addEventListener('submit', function (e) {
             let isValid = true;
 
             // Clear previous errors
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Real-time password strength indicator
     if (password1Input) {
         // Update strength on input change by calling updatePasswordStrength
-        password1Input.addEventListener('input', function() {
+        password1Input.addEventListener('input', function () {
             updatePasswordStrength(this.value);
         });
 
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Real-time password match indicator
     if (password2Input && password1Input) {
-        password2Input.addEventListener('input', function() {
+        password2Input.addEventListener('input', function () {
 
             clearError(this);
             clearSuccess(this);
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Clear errors on input
     [usernameInput, emailInput, password1Input, password2Input].forEach(input => {
         if (input) {
-            input.addEventListener('input', function() {
+            input.addEventListener('input', function () {
                 clearError(this);
                 clearSuccess(this);
             });
@@ -280,7 +280,7 @@ function addPasswordToggles() {
             formGroup.style.position = 'relative';
             formGroup.appendChild(toggleButton);
 
-            toggleButton.addEventListener('click', function() {
+            toggleButton.addEventListener('click', function () {
                 const type = input.type === 'password' ? 'text' : 'password';
                 input.type = type;
                 this.innerHTML = type === 'password'

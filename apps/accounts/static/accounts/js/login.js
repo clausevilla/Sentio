@@ -1,12 +1,12 @@
 // accounts/login.js - Login page functionality
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.querySelector('form[action*="login"]');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
 
     if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
+        loginForm.addEventListener('submit', function (e) {
             let isValid = true;
 
             // Clear previous errors
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add input event listeners to clear errors on input
     [usernameInput, passwordInput].forEach(input => {
         if (input) {
-            input.addEventListener('input', function() {
+            input.addEventListener('input', function () {
                 clearError(this);
             });
         }
@@ -99,7 +99,7 @@ function addPasswordToggle() {
         formGroup.style.position = 'relative';
         formGroup.appendChild(toggleButton);
 
-        toggleButton.addEventListener('click', function() {
+        toggleButton.addEventListener('click', function () {
             const type = passwordInput.type === 'password' ? 'text' : 'password';
             passwordInput.type = type;
             this.innerHTML = type === 'password'

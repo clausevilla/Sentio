@@ -1,63 +1,69 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Sentio - Login{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/accounts/login.css' %}">
-{% endblock %}
-{% block content %}
+{% extends 'base.html' %} {% load static %} {% block title %}Sentio - Login{%
+endblock %} {% block extra_css %}
+<link rel="stylesheet" href="{% static 'accounts/css/login.css' %}" />
+{% endblock %} {% block content %}
 <section class="login-section">
-
-    <div class="login-container">
-
-        <!-- Left Side -->
-        <div class="login-left">
-            <h1>Welcome Back!</h1>
-            <p>Continue your journey to better mental health awareness with Sentio.</p>
-            <ul class="feature-list">
-                <li>AI-powered mental health state detection</li>
-                <li>Track your progress over time</li>
-                <li>Personalized recommendations</li>
-                <li>Secure & private analysis</li>
-            </ul>
-        </div>
-
-        <!-- Right Side -->
-         <div class="login-right">
-            <h2>Login to Your Account</h2>
-
-            <!-- Alert messages -->
-            {% if messages %}
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} show">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            {% endif %}
-
-            <form method="post" action="{% url 'accounts:login' %}">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" class="form-control" required placeholder="Enter your username">
-
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" class="form-control" required placeholder="Enter your password">
-                </div>
-                <button type="submit" class="btn btn-primary">Login</button>
-            </form>
-
-            <div class="register-link">
-                <p>Don't have an account? <a href="{% url 'accounts:register' %}">Register here</a>.</p>
-            </div>
-        </div>
+  <div class="login-container">
+    <!-- Left Side -->
+    <div class="login-left">
+      <h1>Welcome Back!</h1>
+      <p>
+        Continue your journey to better mental health awareness with Sentio.
+      </p>
+      <ul class="feature-list">
+        <li>AI-powered mental health state detection</li>
+        <li>Track your progress over time</li>
+        <li>Personalized recommendations</li>
+        <li>Secure & private analysis</li>
+      </ul>
     </div>
+
+    <!-- Right Side -->
+    <div class="login-right">
+      <h2>Login to Your Account</h2>
+
+      <!-- Alert messages -->
+      {% if messages %} {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} show">{{ message }}</div>
+      {% endfor %} {% endif %}
+
+      <form method="post" action="{% url 'accounts:login' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="form-control"
+            required
+            placeholder="Enter your username"
+          />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-control"
+            required
+            placeholder="Enter your password"
+          />
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+      </form>
+
+      <div class="register-link">
+        <p>
+          Don't have an account?
+          <a href="{% url 'accounts:register' %}">Register here</a>.
+        </p>
+      </div>
+    </div>
+  </div>
 </section>
 
-
-<script src="{% static 'js/accounts/login.js' %}"></script>
+<script src="{% static 'accounts/js/login.js' %}"></script>
 
 {% endblock %}

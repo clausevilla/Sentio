@@ -1,6 +1,6 @@
 // predictions/result.js - Analysis results page with animations
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Animate circular progress bar
     animateProgressBar();
 
@@ -121,7 +121,7 @@ function animateNumber(element, start, end, duration) {
 }
 
 // Add print-specific styling
-window.addEventListener('beforeprint', function() {
+window.addEventListener('beforeprint', function () {
     // Reset animations for printing
     const progressBar = document.getElementById('progressBar');
     if (progressBar) {

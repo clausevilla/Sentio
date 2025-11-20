@@ -4,7 +4,7 @@
 {% block title %}Analysis Results - Sentio{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/predictions/result.css' %}">
+<link rel="stylesheet" href="{% static 'predictions/css/result.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -19,7 +19,10 @@
         {% if mental_state != 'normal' and confidence >= 70 %}
         <div class="alert alert-warning">
             <h3>⚠️ Mental Health Indicator Detected</h3>
-            <p>Your text shows patterns associated with {{ mental_state_label }}. Please review the personalized recommendations below and consider reaching out to a mental health professional if needed.</p>
+            <p>Your text shows patterns associated with {{ mental_state_label
+                }}. Please review the personalized recommendations below and
+                consider reaching out to a mental health professional if
+                needed.</p>
         </div>
         {% endif %}
 
@@ -29,16 +32,20 @@
 
             <div class="score-container">
                 <svg class="circular-progress" width="220" height="220">
-                    <circle class="progress-background" cx="110" cy="110" r="95"></circle>
-                    <circle class="progress-bar" id="progressBar" cx="110" cy="110" r="95"></circle>
+                    <circle class="progress-background" cx="110" cy="110"
+                        r="95"></circle>
+                    <circle class="progress-bar" id="progressBar" cx="110"
+                        cy="110" r="95"></circle>
                 </svg>
                 <div class="score-content">
-                    <div class="score-text" id="scoreText">{{ confidence }}%</div>
+                    <div class="score-text" id="scoreText">{{ confidence
+                        }}%</div>
                     <div class="score-subtitle">Confidence</div>
                 </div>
             </div>
 
-            <div class="mental-state-badge {{ mental_state }}" id="mentalStateBadge">
+            <div class="mental-state-badge {{ mental_state }}"
+                id="mentalStateBadge">
                 <span class="state-icon">{{ state_icon }}</span>
                 <span class="state-label">{{ mental_state_label }}</span>
             </div>
@@ -56,10 +63,12 @@
                     <span class="indicator-name">Anxiety Level</span>
                 </div>
                 <div class="indicator-bar-container">
-                    <div class="indicator-bar anxiety-bar" style="width: {{ anxiety_level }}%;"></div>
+                    <div class="indicator-bar anxiety-bar"
+                        style="width: {{ anxiety_level }}%;"></div>
                 </div>
                 <div class="indicator-value">{{ anxiety_level }}%</div>
-                <p class="indicator-desc">Measures worry, fear, and anxious language patterns</p>
+                <p class="indicator-desc">Measures worry, fear, and anxious
+                    language patterns</p>
             </div>
 
             <div class="indicator-card">
@@ -68,10 +77,12 @@
                     <span class="indicator-name">Negative Emotions</span>
                 </div>
                 <div class="indicator-bar-container">
-                    <div class="indicator-bar negativity-bar" style="width: {{ negativity_level }}%;"></div>
+                    <div class="indicator-bar negativity-bar"
+                        style="width: {{ negativity_level }}%;"></div>
                 </div>
                 <div class="indicator-value">{{ negativity_level }}%</div>
-                <p class="indicator-desc">Detects sad, angry, or pessimistic emotional content</p>
+                <p class="indicator-desc">Detects sad, angry, or pessimistic
+                    emotional content</p>
             </div>
 
             <div class="indicator-card">
@@ -80,10 +91,12 @@
                     <span class="indicator-name">Emotional Intensity</span>
                 </div>
                 <div class="indicator-bar-container">
-                    <div class="indicator-bar intensity-bar" style="width: {{ emotional_intensity }}%;"></div>
+                    <div class="indicator-bar intensity-bar"
+                        style="width: {{ emotional_intensity }}%;"></div>
                 </div>
                 <div class="indicator-value">{{ emotional_intensity }}%</div>
-                <p class="indicator-desc">Overall emotional expression strength in the text</p>
+                <p class="indicator-desc">Overall emotional expression strength
+                    in the text</p>
             </div>
         </div>
 
@@ -91,10 +104,13 @@
         {% if not user.is_authenticated %}
         <div class="save-results-cta no-print">
             <h3>💾 Want to Save These Results?</h3>
-            <p>Create a free account to track your mental state over time, view historical trends, and get personalized insights!</p>
+            <p>Create a free account to track your mental state over time, view
+                historical trends, and get personalized insights!</p>
             <div class="cta-buttons">
-                <a href="03_register.html" class="btn btn-primary">✨ Create Free Account</a>
-                <a href="02_login.html" class="btn btn-secondary">Already have an account? Sign In</a>
+                <a href="03_register.html" class="btn btn-primary">✨ Create Free
+                    Account</a>
+                <a href="02_login.html" class="btn btn-secondary">Already have
+                    an account? Sign In</a>
             </div>
         </div>
         {% endif %}
@@ -110,8 +126,6 @@
             </div>
         </div>
 
-
-
         <!-- Recommendations -->
         {% if recommendations %}
         <div class="recommendations-card">
@@ -126,7 +140,8 @@
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <a href="{% url 'predictions:input' %}" class="btn btn-large-action">
+            <a href="{% url 'predictions:input' %}"
+                class="btn btn-large-action">
                 <span>🔄 Analyze New Text</span>
             </a>
             <a href="{% url 'accounts:history' %}" class="btn btn-large-action">
@@ -139,6 +154,6 @@
     </div>
 </section>
 
-<script src="{% static 'js/predictions/result.js' %}"></script>
+<script src="{% static 'predictions/js/result.js' %}"></script>
 
 {% endblock %}

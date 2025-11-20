@@ -1,6 +1,6 @@
 // hiostory .js - Account history page functionality
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Initialize trend chart
     initializeTrendChart();
 
@@ -109,7 +109,7 @@ function setupStateFilter() {
     const stateFilter = document.getElementById('stateFilter');
     if (!stateFilter) return;
 
-    stateFilter.addEventListener('change', function() {
+    stateFilter.addEventListener('change', function () {
         const selectedState = this.value;
         const historyItems = document.querySelectorAll('.history-item');
 
@@ -129,7 +129,7 @@ function setupTimeFilter() {
     const filterButtons = document.querySelectorAll('.filter-btn');
 
     filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             // Update active state
             filterButtons.forEach(btn => btn.classList.remove('active'));
             this.classList.add('active');

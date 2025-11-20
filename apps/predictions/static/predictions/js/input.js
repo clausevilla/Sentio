@@ -1,6 +1,31 @@
 // predictions/input.js - Text analysis input page functionality
 
-document.addEventListener('DOMContentLoaded', function() {
+
+
+function showAlert(message) {
+    const alert = document.getElementById('customAlert');
+    const alertMsg = document.getElementById('alertMessage');
+
+    if (alert && alertMsg) {
+        alertMsg.textContent = message;
+        alert.style.display = 'block';
+        alert.classList.add('show');
+
+        setTimeout(() => {
+            alert.classList.remove('show');
+            setTimeout(() => alert.style.display = 'none', 300);
+        }, 5000);
+    }
+}
+
+document.getElementById('alertClose')?.addEventListener('click', () => {
+    const alert = document.getElementById('customAlert');
+    alert.classList.remove('show');
+    setTimeout(() => alert.style.display = 'none', 300);
+});
+
+
+document.addEventListener('DOMContentLoaded', function () {
     const textInput = document.getElementById('textInput');
     const charCount = document.getElementById('charCount');
     const analyzeBtn = document.getElementById('analyzeBtn');
@@ -21,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Character counter
     if (textInput && charCount) {
-        textInput.addEventListener('input', function() {
+        textInput.addEventListener('input', function () {
             const length = this.value.length;
             charCount.textContent = `${length} / 5000`;
 
@@ -39,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Example buttons
     const exampleButtons = document.querySelectorAll('.btn-example');
     exampleButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             const example = this.getAttribute('data-example');
             if (examples[example] && textInput) {
                 textInput.value = examples[example];
@@ -51,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Clear button
     if (clearBtn && textInput) {
-        clearBtn.addEventListener('click', function(e) {
+        clearBtn.addEventListener('click', function (e) {
             e.preventDefault();
             textInput.value = '';
             textInput.dispatchEvent(new Event('input'));
@@ -61,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form submission
     if (analysisForm) {
-        analysisForm.addEventListener('submit', function(e) {
+        analysisForm.addEventListener('submit', function (e) {
             // Show loading overlay
             if (loadingOverlay) {
                 loadingOverlay.style.display = 'flex';
@@ -70,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Validate text length
             if (textInput && textInput.value.trim().length < 10) {
                 e.preventDefault();
-                alert('Please enter at least 10 characters of text to analyze.');
+                showAlert('Please enter at least 10 characters of text to analyze.');
                 if (loadingOverlay) {
                     loadingOverlay.style.display = 'none';
                 }
@@ -86,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Auto-resize textarea
     if (textInput) {
-        textInput.addEventListener('input', function() {
+        textInput.addEventListener('input', function () {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
         });

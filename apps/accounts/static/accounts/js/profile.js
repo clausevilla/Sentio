@@ -1,5 +1,5 @@
 // ===================================
-// Simple Profile Page 
+// Simple Profile Page
 // ===================================
 
 // Get CSRF token for Django
@@ -62,7 +62,7 @@ function validatePassword(password) {
 }
 
 // Change Password Form
-document.getElementById('changePasswordForm')?.addEventListener('submit', async function(e) {
+document.getElementById('changePasswordForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     // Clear errors
@@ -140,13 +140,13 @@ function closeDeleteDataModal() {
 }
 
 // Enable delete button when text matches
-document.getElementById('deleteDataConfirm')?.addEventListener('input', function(e) {
+document.getElementById('deleteDataConfirm')?.addEventListener('input', function (e) {
     const btn = document.getElementById('confirmDeleteDataBtn');
     btn.disabled = e.target.value !== 'DELETE ALL DATA';
 });
 
 // Delete Data Form
-document.getElementById('deleteDataForm')?.addEventListener('submit', async function(e) {
+document.getElementById('deleteDataForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const password = document.getElementById('deleteDataPassword').value;
@@ -202,13 +202,13 @@ function closeDeleteAccountModal() {
 }
 
 // Enable delete button when text matches
-document.getElementById('deleteAccountConfirm')?.addEventListener('input', function(e) {
+document.getElementById('deleteAccountConfirm')?.addEventListener('input', function (e) {
     const btn = document.getElementById('confirmDeleteAccountBtn');
     btn.disabled = e.target.value !== 'DELETE MY ACCOUNT';
 });
 
 // Delete Account Form
-document.getElementById('deleteAccountForm')?.addEventListener('submit', async function(e) {
+document.getElementById('deleteAccountForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const password = document.getElementById('deleteAccountPassword').value;
@@ -255,16 +255,16 @@ document.getElementById('deleteAccountForm')?.addEventListener('submit', async f
 });
 
 // Close modal when clicking outside
-document.getElementById('deleteDataModal')?.addEventListener('click', function(e) {
+document.getElementById('deleteDataModal')?.addEventListener('click', function (e) {
     if (e.target === this) closeDeleteDataModal();
 });
 
-document.getElementById('deleteAccountModal')?.addEventListener('click', function(e) {
+document.getElementById('deleteAccountModal')?.addEventListener('click', function (e) {
     if (e.target === this) closeDeleteAccountModal();
 });
 
 // Close with Escape key
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
         closeDeleteDataModal();
         closeDeleteAccountModal();

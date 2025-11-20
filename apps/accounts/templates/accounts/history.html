@@ -1,14 +1,9 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Analysis History - Sentio{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/accounts/history.css' %}">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-{% endblock %}
-
-{% block content %}
+{% extends 'base.html' %} {% load static %} {% block title %}Analysis History -
+Sentio{% endblock %} {% block extra_css %}
+<link rel="stylesheet" href="{% static 'accounts/css/history.css' %}" />
+<script
+    src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %} {% block content %}
 <section class="history-section">
     <div class="container">
         <div class="page-header">
@@ -70,9 +65,12 @@
                         <span class="dist-label">{{ state.label }}</span>
                     </div>
                     <div class="dist-bar-container">
-                        <div class="dist-bar {{ state.class }}" style="width: {{ state.percentage }}%;"></div>
+                        <div
+                            class="dist-bar {{ state.class }}"
+                            style="width: {{ state.percentage }}%;"></div>
                     </div>
-                    <div class="dist-value">{{ count }} ({{ state.percentage }}%)</div>
+                    <div class="dist-value">{{ count }} ({{ state.percentage
+                        }}%)</div>
                 </div>
                 {% endfor %}
             </div>
@@ -83,9 +81,12 @@
             <div class="chart-header">
                 <h2>Mental Health Trend</h2>
                 <div class="time-filter">
-                    <button class="filter-btn active" data-period="week">Week</button>
-                    <button class="filter-btn" data-period="month">Month</button>
-                    <button class="filter-btn" data-period="all">All Time</button>
+                    <button class="filter-btn active"
+                        data-period="week">Week</button>
+                    <button class="filter-btn"
+                        data-period="month">Month</button>
+                    <button class="filter-btn" data-period="all">All
+                        Time</button>
                 </div>
             </div>
             <div class="chart-container">
@@ -113,21 +114,24 @@
             {% if analyses %}
             <div class="history-list">
                 {% for analysis in analyses %}
-                <div class="history-item" data-state="{{ analysis.mental_state }}">
+                <div class="history-item"
+                    data-state="{{ analysis.mental_state }}">
                     <div class="item-header">
                         <div class="item-date">
                             <span class="date-icon">📅</span>
-                            <span>{{ analysis.created_at|date:"M d, Y - H:i" }}</span>
+                            <span>{{ analysis.created_at|date:"M d, Y - H:i"
+                                }}</span>
                         </div>
-                        <div class="item-badge badge-{{ analysis.mental_state }}">
+                        <div
+                            class="item-badge badge-{{ analysis.mental_state }}">
                             <span>{{ analysis.get_mental_state_display }}</span>
-                            <span class="badge-confidence">{{ analysis.confidence }}%</span>
+                            <span class="badge-confidence">{{
+                                analysis.confidence }}%</span>
                         </div>
                     </div>
 
-                    <div class="item-text">
-                        {{ analysis.text|truncatewords:30 }}
-                    </div>
+                    <div class="item-text">{{ analysis.text|truncatewords:30
+                        }}</div>
 
                     <div class="item-indicators">
                         <div class="indicator-tag">
@@ -136,16 +140,19 @@
                         </div>
                         <div class="indicator-tag">
                             <span class="tag-icon">😔</span>
-                            <span>Negativity: {{ analysis.negativity_level }}%</span>
+                            <span>Negativity: {{ analysis.negativity_level
+                                }}%</span>
                         </div>
                         <div class="indicator-tag">
                             <span class="tag-icon">💬</span>
-                            <span>Intensity: {{ analysis.emotional_intensity }}%</span>
+                            <span>Intensity: {{ analysis.emotional_intensity
+                                }}%</span>
                         </div>
                     </div>
 
                     <div class="item-actions">
-                        <a href="{% url 'analysis_detail' analysis.id %}" class="btn-view">
+                        <a href="{% url 'analysis_detail' analysis.id %}"
+                            class="btn-view">
                             <span>View Details</span>
                             <span>→</span>
                         </a>
@@ -159,34 +166,38 @@
             <div class="pagination">
                 {% if page_obj.has_previous %}
                 <a href="?page=1" class="page-link">« First</a>
-                <a href="?page={{ page_obj.previous_page_number }}" class="page-link">‹ Previous</a>
+                <a href="?page={{ page_obj.previous_page_number }}"
+                    class="page-link">‹ Previous</a>
                 {% endif %}
 
                 <span class="page-current">
-                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    Page {{ page_obj.number }} of {{
+                    page_obj.paginator.num_pages }}
                 </span>
 
                 {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" class="page-link">Next ›</a>
-                <a href="?page={{ page_obj.paginator.num_pages }}" class="page-link">Last »</a>
+                <a href="?page={{ page_obj.next_page_number }}"
+                    class="page-link">Next ›</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}"
+                    class="page-link">Last »</a>
                 {% endif %}
             </div>
-            {% endif %}
-
-            {% else %}
+            {% endif %} {% else %}
             <!-- Empty State -->
             <div class="empty-state">
                 <div class="empty-icon">📊</div>
                 <h3>No Analysis History</h3>
-                <p>You haven't analyzed any text yet. Start by analyzing your first text!</p>
-                <a href="{% url 'predictions:input' %}" class="btn-primary">Analyze Text</a>
+                <p>
+                    You haven't analyzed any text yet. Start by analyzing your
+                    first text!
+                </p>
+                <a href="{% url 'predictions:input' %}"
+                    class="btn-primary">Analyze Text</a>
             </div>
             {% endif %}
         </div>
-
-
     </div>
 </section>
 
-<script src="{% static 'js/accounts/history.js' %}"></script>
+<script src="{% static 'accounts/js/history.js' %}"></script>
 {% endblock %}
