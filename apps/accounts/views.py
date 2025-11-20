@@ -5,6 +5,7 @@ from django.shortcuts import redirect, render
 
 
 def login_view(request):
+    #TODO NEED TO DOUBLE CHECK IMPLEMENTATION AFTER IMPLEMENTING USER LOGIN AND AUTHENTICATION
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -22,33 +23,33 @@ def login_view(request):
 
 # @login_required
 def logout_view(request):
+    #TODO NEED TO MAKE SURE SESSION EXPIRES
     return render(request, 'home')
 
 
 def register_view(request):
+    #TODO NEED TO SEND USER REGISTRATION DATA
     return render(request, 'accounts/register.html', {})
 
 
 def profile_view(request):
+    #TODO NEED TO FETCH DATA AND SEND USER INFO
     return render(request, 'accounts/profile.html')
 
 
 # @login_required
 def history_view(request):
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!! ADD THESE TWO LINES !!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # TODO IMPLEMENT THE METHOD
     # chart_data = get_chart_data(request.user, 'week')
 
     return render(request, 'accounts/history.html')
 
 
+
 def get_chart_data(user, period='week'):
-    """
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !!! GENERATES REAL DATA FOR THE CHART !!!
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    """
+
+    # TODO GET REAL DATA FROM OUR DATABASE
+
     from .models import MentalHealthAnalysis  # ← YOUR MODEL NAME
 
     now = datetime.now()
@@ -66,9 +67,7 @@ def get_chart_data(user, period='week'):
             (start_date + timedelta(days=i * 15)).strftime('%b %d') for i in range(6)
         ]
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!! INITIALIZE ALL 6 STATES WITH ZEROS !!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # TODO CHECK ALL FOLLOWING CODE, NEED TO USE REAL MENTAL STATE LABLES FROM DATABASE
     chart_data = {
         'labels': labels,
         'normal': [0] * len(labels),
@@ -79,7 +78,7 @@ def get_chart_data(user, period='week'):
         'bipolar': [0] * len(labels),
     }
 
-    # Get analyses from database
+    # TODO Get analyses from database 
     analyses = MentalHealthAnalysis.objects.filter(
         user=user, created_at__gte=start_date, created_at__lte=now
     ).order_by('created_at')
