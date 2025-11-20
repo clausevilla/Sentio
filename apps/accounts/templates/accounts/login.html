@@ -1,5 +1,7 @@
-{% extends 'base.html' %} {% load static %} {% block title %}Sentio - Login{%
-endblock %} {% block extra_css %}
+{% extends 'base.html' %} {% load static %}
+
+{% block title %}Sentio - Login{%endblock %} {% block extra_css %}
+
 <link rel="stylesheet" href="{% static 'accounts/css/login.css' %}" />
 {% endblock %} {% block content %}
 <section class="login-section">
@@ -37,8 +39,7 @@ endblock %} {% block extra_css %}
             name="username"
             class="form-control"
             required
-            placeholder="Enter your username"
-          />
+            placeholder="Enter your username" />
         </div>
         <div class="form-group">
           <label for="password">Password</label>
@@ -48,8 +49,7 @@ endblock %} {% block extra_css %}
             name="password"
             class="form-control"
             required
-            placeholder="Enter your password"
-          />
+            placeholder="Enter your password" />
         </div>
         <button type="submit" class="btn btn-primary">Login</button>
       </form>
