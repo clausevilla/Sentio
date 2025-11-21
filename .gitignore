@@ -14,6 +14,9 @@ __pycache__
 # Apple specific
 .DS_Store
 
+#Anaconda
+anaconda_projects/
+
 # Unit test / coverage reports
 htmlcov/
 .tox/
