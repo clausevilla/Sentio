@@ -38,12 +38,15 @@ class DataUpload(models.Model):
     is_validated = models.BooleanField(default=False)
     validation_errors = models.TextField(null=True, blank=True)
 
+    def __str__(self):  #Print the date data was added
+        return f"{self.uploaded_at.strftime('%Y-%m-%d')}"
+
 class DatasetRecord(models.Model):
     """
-    Dataset record with raw text, label, and pre-computed features.
+    Dataset record with raw text, category label, and numeric category ID (0-6).
 
-    Stores both text (for custom feature extraction) and pre-computed
-    linguistic features from the CSV (for experimentation).
+    Stores both text (for custom feature extraction) and pre-computed categories
+    from the CSV.
     """
 
     DATASET_OPTIONS = (             # Used to separate the training data from the test data
@@ -52,20 +55,21 @@ class DatasetRecord(models.Model):
         ('unlabeled', 'Unlabeled'),
     )
 
-    # Raw data
     text = models.TextField()
-    label = models.IntegerField()  # Target variable (0-4 stress level)
+    label = models.CharField(max_length=50) # Category label (Anxiety, depression, stress, etc.)
 
-    # Metadata
-    subreddit = models.CharField(max_length=100, blank=True)
-    confidence = models.FloatField(null=True, blank=True)
+    category_id = models.IntegerField(null=True, blank=True) # Numeric category id (0-5) corresponding to the label
 
-    # Pre-computed features from Dreaddit (LIWC, sentiment, syntax, etc.)
-    # Stored as JSON for flexibility
-    features = models.JSONField(default=dict)
+    # One hot encoded columns for each category (0 or 1)
+    normal = models.IntegerField(default=0)
+    depression = models.IntegerField(default=0)
+    suicidal = models.IntegerField(default=0)
+    anxiety = models.IntegerField(default=0)
+    bipolar = models.IntegerField(default=0)
+    stress = models.IntegerField(default=0)
 
     # Indicates dataset type (train/test/unlabeled)
-    dataset_type=models.CharField(max_length=10, choices=DATASET_OPTIONS, default='unlabeled')
+    dataset_type=models.CharField(max_length=10, choices=DATASET_OPTIONS, default='train')
 
     # Tracking
     data_upload = models.ForeignKey(
@@ -73,12 +77,12 @@ class DatasetRecord(models.Model):
         on_delete=models.CASCADE,
         related_name='records'
     )
-    is_active = models.BooleanField(default=True)
     imported_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         indexes = [
-            models.Index(fields=['data_upload', 'is_active']),
+            models.Index(fields=['category_id']),
+            models.Index(fields=['data_upload']),
             models.Index(fields=['label']),
         ]
 
