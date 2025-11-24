@@ -228,7 +228,7 @@ def run_cleaning_pipeline(data_upload_id):
     # Connects the cleaning pipeline to the database for the next pipeline to pick up
     try:
         records = []
-        for _, row in df.iterrows():
+        for _, row in df_combined.iterrows():
             records.append(
                 DatasetRecord(
                     data_upload=upload_instance,
