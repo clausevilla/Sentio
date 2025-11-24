@@ -136,11 +136,7 @@ function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// Simple password strength check
-function isStrongPassword(password) {
-    // At least one uppercase, one lowercase, one number
-    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/.test(password);
-}
+
 
 // Update password strength indicator according to the password entered
 function updatePasswordStrength(password) {

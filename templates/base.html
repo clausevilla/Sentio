@@ -1,55 +1,178 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{% block meta_description %}Sentio - AI-powered stress detection for better mental health awareness{% endblock %}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="{% block meta_description %}Sentio - AI-powered stress detection for better mental health awareness{% endblock %}" />
     <title>{% block title %}Sentio - AI Stress Detection{% endblock %}</title>
 
     <!-- Base CSS -->
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
-    <link rel="stylesheet" href="{% static 'css/components.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/components.css' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
     <!-- Page-specific CSS -->
     {% block extra_css %}{% endblock %}
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}" />
 </head>
+
 <body>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer">
+        {% if messages %}
+        {% for message in messages %}
+        {% if message.tags == 'success' or message.tags == 'info' or message.tags == 'warning' %}
+        <div class="toast {{ message.tags }}" onclick="this.classList.add('hiding'); setTimeout(() => this.remove(), 300);">
+            <div class="toast-icon">
+                {% if message.tags == 'success' %}
+                <i class="fas fa-check-circle"></i>
+                {% elif message.tags == 'warning' %}
+                <i class="fas fa-exclamation-triangle"></i>
+                {% else %}
+                <i class="fas fa-info-circle"></i>
+                {% endif %}
+            </div>
+            <div class="toast-content">
+                <div class="toast-title">
+                    {% if message.tags == 'success' %}Success{% elif message.tags == 'warning' %}Warning{% else %}Info{% endif %}
+                </div>
+                <div class="toast-message">{{ message }}</div>
+            </div>
+            <button class="toast-close" onclick="event.stopPropagation(); this.parentElement.classList.add('hiding'); setTimeout(() => this.parentElement.remove(), 300);">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="toast-progress"></div>
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+    </div>
+
     <!-- Navigation -->
     <nav>
         <div class="nav-container">
-            <a href="{% url 'home' %}" class="logo">Sentio</a>
+            <a href="{% url 'home' %}" class="logo">
+                <i class="fas fa-brain"></i> Sentio
+            </a>
 
-            <button class="mobile-menu-toggle" id="mobileMenuToggle">
-                ☰
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu" aria-expanded="false">
+                <i class="fas fa-bars" id="menuIconOpen"></i>
+                <i class="fas fa-times" id="menuIconClose" style="display: none;"></i>
             </button>
 
             <ul class="nav-links" id="navLinks">
-                <li><a href="{% url 'home' %}#features">Features</a></li>
-                <li><a href="{% url 'home' %}#how-it-works">How It Works</a></li>
+                <li>
+                    <a href="{% url 'home' %}#features">
+                        <i class="fas fa-star"></i>
+                        <span>Features</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'home' %}#how-it-works">
+                        <i class="fas fa-cogs"></i>
+                        <span>How It Works</span>
+                    </a>
+                </li>
 
                 {% if user.is_authenticated %}
-                    <li><a href="{% url 'predictions:input' %}">Analyze Text</a></li>
-                    <li><a href="{% url 'accounts:history' %}">History</a></li>
-                    {% if user.is_staff %}
-                        <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
-                    {% endif %}
-                    <li><a href="{% url 'accounts:profile' %}">Profile</a></li>
-                    <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
-                {% else %}
-                    <li><a href="{% url 'predictions:input' %}">Try Now</a></li>
-                    <li><a href="{% url 'accounts:login' %}">Login</a></li>
-                    <li><a href="{% url 'accounts:register' %}" class="btn btn-secondary">Sign Up</a></li>
+                <li>
+                    <a href="{% url 'predictions:input' %}">
+                        <i class="fas fa-brain"></i>
+                        <span>Analyze</span>
+                    </a>
+                </li>
+                {% if user.is_staff %}
+                <li>
+                    <a href="{% url 'admin_dashboard' %}">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
                 {% endif %}
 
+                <!-- DESKTOP ONLY: User Icon Dropdown -->
+                <li class="user-dropdown desktop-only">
+                    <button class="user-icon-btn" id="userDropdownToggle" aria-label="User menu" type="button">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+                    <div class="user-dropdown-menu" id="userDropdownMenu">
+                        <div class="dropdown-header">
+                            <i class="fas fa-user"></i>
+                            <span>{{ user.username }}</span>
+                        </div>
+
+                        <div class="dropdown-divider"></div>
+                        <a href="{% url 'accounts:history' %}" class="dropdown-item">
+                            <i class="fas fa-history"> </i>
+                            <span>History</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="{% url 'accounts:profile' %}" class="dropdown-item">
+                            <i class="fas fa-user-cog"></i>
+                            <span>Profile</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="{% url 'accounts:logout' %}" class="dropdown-item logout-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </li>
+
+                <!-- MOBILE ONLY: Flat menu items (no dropdown) -->
+                <li class="mobile-only-item mobile-user-header">
+                    <div class="mobile-username">
+                        <i class="fas fa-user"></i>
+                        <span>{{ user.username }}</span>
+                    </div>
+                </li>
+                <li class="mobile-only-item">
+                    <a href="{% url 'accounts:history' %}">
+                        <i class="fas fa-history"></i>
+                        <span>History</span>
+                    </a>
+                </li>
+                <li class="mobile-only-item">
+                    <a href="{% url 'accounts:profile' %}">
+                        <i class="fas fa-user-cog"></i>
+                        <span>Profile</span>
+                    </a>
+                </li>
+                <li class="mobile-only-item">
+                    <a href="{% url 'accounts:logout' %}" class="logout-link">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
+
+                {% else %}
+                <!-- Not logged in -->
+                <li>
+                    <a href="{% url 'predictions:input' %}">
+                        <i class="fas fa-play-circle"></i>
+                        <span>Try Now</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'accounts:login' %}">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Login</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-nav-signup">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Sign Up</span>
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </div>
     </nav>
-
 
     <!-- Main Content -->
     <main>
@@ -66,31 +189,29 @@
             <div class="footer-section">
                 <h3>Product</h3>
                 <ul>
-                    <li><a href="{% url 'home' %}#features">Features</a></li>
-                    <li><a href="{% url 'home' %}#how-it-works">How It Works</a></li>
-                    <li><a href="{% url 'predictions:input' %}">Try Now</a></li>
+                    <li><a href="{% url 'home' %}#features"><i class="fas fa-star"></i> Features</a></li>
+                    <li><a href="{% url 'home' %}#how-it-works"><i class="fas fa-cogs"></i> How It Works</a></li>
+                    <li><a href="{% url 'predictions:input' %}"><i class="fas fa-play-circle"></i> Try Now</a></li>
                 </ul>
             </div>
-
-
             <div class="footer-section">
-                <h3>Product</h3>
+                <h3>About</h3>
                 <ul>
-                    <li><a href="{% url 'about' %}">About Sentio</a></li>
-
+                    <li><a href="{% url 'about' %}"><i class="fas fa-info-circle"></i> About Sentio</a></li>
                 </ul>
             </div>
         </div>
         <div class="footer-bottom">
             <p>&copy; 2025 Sentio. Built with Django & Scikit-learn. Multi-class mental health text analysis.</p>
-            <p><i class="fas fa-shield-alt"></i> Your mental health data is private and secure - we never share your information.</p>
+            <p><i class="fas fa-shield-alt"></i> Your mental health data is private and secure.</p>
         </div>
     </footer>
 
-    <!-- Base JavaScript -->
+    <!-- Main JavaScript -->
     <script src="{% static 'js/main.js' %}"></script>
 
     <!-- Page-specific JavaScript -->
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>

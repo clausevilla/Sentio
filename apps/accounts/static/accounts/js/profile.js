@@ -45,15 +45,7 @@ function validatePassword(password) {
     if (password.length < 8) {
         errors.push('Password must be at least 8 characters');
     }
-    if (!/[A-Z]/.test(password)) {
-        errors.push('Must contain uppercase letter');
-    }
-    if (!/[a-z]/.test(password)) {
-        errors.push('Must contain lowercase letter');
-    }
-    if (!/\d/.test(password)) {
-        errors.push('Must contain number');
-    }
+
 
     return {
         isValid: errors.length === 0,

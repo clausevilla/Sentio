@@ -38,8 +38,11 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label">Member Since</span>
-                        <span class="info-value">{{
-                            user.date_joined|date:"F d, Y" }}</span>
+                        <span class="info-value">{{user.date_joined|date:"F d, Y" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Last login</span>
+                        <span class="info-value">{{user.last_login|date:"F d, Y - H:i"}}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Total Analyses</span>
@@ -80,8 +83,7 @@
                                 name="newPassword"
                                 class="form-input"
                                 required>
-                            <span class="form-help">At least 8 characters with
-                                uppercase, lowercase, and numbers</span>
+                            <span class="form-help">At least 8 characters</span>
                             <span class="form-error"
                                 id="newPasswordError"></span>
                         </div>
