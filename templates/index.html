@@ -32,9 +32,9 @@
                     <a href="#how-it-works" class="btn btn-secondary">Learn More</a>
                 {% else %}
                     <a href="{% url 'predictions:input' %}" class="btn btn-primary">
-                        <i class="fas fa-user-plus"></i> Try Now
+                        <i class="fas fa-play-circle"></i> Try Now
                     </a>
-                    <a href="#how-it-works" class="btn btn-secondary">Learn More</a>
+                    <a href="#how-it-works" class="btn btn-secondary"><i class="fas fa-book"></i>Learn More</a>
                 {% endif %}
             </div>
         </div>
@@ -164,7 +164,7 @@
         <p>Start analyzing your text in seconds</p>
         {% if user.is_authenticated %}
             <a href="{% url 'predictions:input' %}" class="btn btn-primary">
-                <i class="fas fa-chart-line"></i> Start Your Analysis Now
+                <i class="fas fa-chart-line"></i> Analysis Now
             </a>
         {% else %}
             <a href="{% url 'accounts:register' %}" class="btn btn-primary">

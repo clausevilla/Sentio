@@ -96,7 +96,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
                 <div class="strength-text"></div>
             `;
-            formGroup.appendChild(strengthIndicator);
+            const inputWrapper = password1Input.closest('.input-wrapper');
+            inputWrapper.insertAdjacentElement('afterend', strengthIndicator);
         }
     }
 
@@ -127,8 +128,25 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Add show/hide password toggles
-    addPasswordToggles();
+    // handle password toggles to password fields
+
+document.querySelectorAll('.password-toggle').forEach(function(toggle) {
+    toggle.addEventListener('click', function() {
+        const input = this.closest('.input-wrapper').querySelector('input');
+        const icon = this.querySelector('i');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    });
+});
+
 });
 
 // Simple email format validation to check if email is valid
@@ -256,34 +274,4 @@ function clearErrors() {
     });
 }
 
-// Add show/hide password toggles to password fields
-function addPasswordToggles() {
-    const passwordInputs = [
-        document.getElementById('password1'),
-        document.getElementById('password2')
-    ];
-
-    passwordInputs.forEach(input => {
-        if (!input) return;
-
-        const toggleButton = document.createElement('button');
-        toggleButton.type = 'button';
-        toggleButton.className = 'password-toggle';
-        toggleButton.innerHTML = '<i class="fas fa-eye"></i>';
-
-        const formGroup = input.closest('.form-group');
-        if (formGroup) {
-            formGroup.style.position = 'relative';
-            formGroup.appendChild(toggleButton);
-
-            toggleButton.addEventListener('click', function () {
-                const type = input.type === 'password' ? 'text' : 'password';
-                input.type = type;
-                this.innerHTML = type === 'password'
-                    ? '<i class="fas fa-eye"></i>'
-                    : '<i class="fas fa-eye-slash"></i>';
-            });
-        }
-    });
-}
 

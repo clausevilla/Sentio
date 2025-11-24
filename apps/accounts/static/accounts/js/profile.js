@@ -1,6 +1,10 @@
 // ===================================
 // Simple Profile Page
 // ===================================
+console.log('Toast element:', document.getElementById('dynamicToast'));
+console.log('Toast icon:', document.getElementById('toastIcon'));
+console.log('Toast title:', document.getElementById('toastTitle'));
+console.log('Toast message:', document.getElementById('toastMessage'));
 
 // Get CSRF token for Django
 function getCookie(name) {
@@ -20,22 +24,64 @@ function getCookie(name) {
 
 const csrftoken = getCookie('csrftoken');
 
-// Show message
+// Show toast message - creates toast dynamically
 function showMessage(message, type = 'success') {
-    const container = document.getElementById('messageContainer');
-    const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+    // Remove any existing dynamic toast
+    const existingToast = document.getElementById('dynamicToast');
+    if (existingToast) {
+        existingToast.remove();
+    }
 
-    container.innerHTML = `
-        <div class="alert ${alertClass}">
-            ${message}
+    // Set icon and title based on type
+    let icon = 'fa-check-circle';
+    let title = 'Success';
+    if (type === 'error') {
+        icon = 'fa-exclamation-circle';
+        title = 'Error';
+    } else if (type === 'warning') {
+        icon = 'fa-exclamation-triangle';
+        title = 'Warning';
+    }
+
+    // Create toast HTML
+    const toast = document.createElement('div');
+    toast.id = 'dynamicToast';
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <div class="toast-icon">
+            <i class="fas ${icon}"></i>
         </div>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="hideToast()">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="toast-progress"></div>
     `;
 
-    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Add to toast container
+    const container = document.getElementById('toastContainer');
+    if (container) {
+        container.appendChild(toast);
+    } else {
+        document.body.appendChild(toast);
+    }
 
+    // Auto-hide after 3 seconds
+    setTimeout(hideToast, 3000);
+}
+
+// Hide toast
+function hideToast() {
+    const toast = document.getElementById('dynamicToast');
+    if (!toast) return;
+
+    toast.classList.add('hiding');
     setTimeout(() => {
-        container.innerHTML = '';
-    }, 5000);
+        toast.remove();
+    }, 300);
 }
 
 // Password validation
@@ -145,7 +191,8 @@ document.getElementById('deleteDataForm')?.addEventListener('submit', async func
     const confirmation = document.getElementById('deleteDataConfirm').value;
 
     if (confirmation !== 'DELETE ALL DATA') {
-        alert('Please type the confirmation text exactly.');
+        showMessage('Please type the confirmation text exactly.', 'error');
+        closeDeleteDataModal();
         return;
     }
 
@@ -169,14 +216,17 @@ document.getElementById('deleteDataForm')?.addEventListener('submit', async func
             }, 2000);
         } else {
             if (data.error === 'incorrect_password') {
-                alert('Incorrect password. Please try again.');
+                showMessage('Incorrect password. Please try again.', 'error');
+                closeDeleteDataModal();
             } else {
-                alert(data.message || 'Failed to delete data');
+                showMessage(data.message || 'Failed to delete data', 'error');
+                closeDeleteDataModal();
             }
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred. Please try again.');
+        showMessage('An error occurred. Please try again.', 'error');
+        closeDeleteDataModal();
     }
 });
 
@@ -207,7 +257,8 @@ document.getElementById('deleteAccountForm')?.addEventListener('submit', async f
     const confirmation = document.getElementById('deleteAccountConfirm').value;
 
     if (confirmation !== 'DELETE MY ACCOUNT') {
-        alert('Please type the confirmation text exactly.');
+        showMessage('Please type the confirmation text exactly.', 'warning');
+        closeDeleteAccountModal();
         return;
     }
 
@@ -231,18 +282,22 @@ document.getElementById('deleteAccountForm')?.addEventListener('submit', async f
         const data = await response.json();
 
         if (response.ok) {
-            alert('Your account has been deleted. Redirecting...');
+            showMessage('Your account has been deleted. Redirecting...', 'success');
+            closeDeleteAccountModal();
             window.location.href = '/';
         } else {
             if (data.error === 'incorrect_password') {
-                alert('Incorrect password. Please try again.');
+                showMessage('Incorrect password. Please try again.', 'error');
+                closeDeleteAccountModal();
             } else {
-                alert(data.message || 'Failed to delete account');
+                showMessage(data.message || 'Failed to delete account', 'error');
+                closeDeleteAccountModal();
             }
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred. Please try again.');
+        showMessage('An error occurred. Please try again.', 'error');
+        closeDeleteAccountModal();
     }
 });
 

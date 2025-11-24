@@ -38,11 +38,13 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label">Member Since</span>
-                        <span class="info-value">{{user.date_joined|date:"F d, Y" }}</span>
+                        <span
+                            class="info-value">{{user.date_joined|date:"F d, Y"}}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Last login</span>
-                        <span class="info-value">{{user.last_login|date:"F d, Y - H:i"}}</span>
+                        <span
+                            class="info-value">{{user.last_login|date:"F d, Y - H:i"}}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Total Analyses</span>
@@ -243,6 +245,7 @@
         </div>
     </div>
 </div>
+
 
 {% endblock %}
 

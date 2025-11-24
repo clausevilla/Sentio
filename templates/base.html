@@ -50,6 +50,7 @@
         {% endif %}
         {% endfor %}
         {% endif %}
+
     </div>
 
     <!-- Navigation -->
@@ -85,14 +86,7 @@
                         <span>Analyze</span>
                     </a>
                 </li>
-                {% if user.is_staff %}
-                <li>
-                    <a href="{% url 'admin_dashboard' %}">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                {% endif %}
+
 
                 <!-- DESKTOP ONLY: User Icon Dropdown -->
                 <li class="user-dropdown desktop-only">
