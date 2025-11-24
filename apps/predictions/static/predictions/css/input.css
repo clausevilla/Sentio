@@ -7,21 +7,20 @@
     min-height: calc(100vh - 200px);
 }
 
-.section-title {
+.page-header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.page-header h1 {
     font-size: var(--font-3xl);
     color: var(--color-text-dark);
-    text-align: center;
     margin-bottom: var(--spacing-sm);
 }
 
-.section-subtitle {
-    text-align: center;
+.page-header p {
     font-size: var(--font-lg);
     color: var(--color-text-light);
-    margin-bottom: var(--spacing-xl);
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
 }
 
 /* Alert Style */

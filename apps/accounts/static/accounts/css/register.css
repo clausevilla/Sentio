@@ -3,8 +3,8 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     max-width: 1200px;
-    margin: 4rem auto;
-    background: white;
+    margin: 2rem auto;
+
     border-radius: 20px;
     box-shadow: 0 10px 40px rgba(74, 124, 89, 0.2);
     overflow: hidden;
@@ -134,8 +134,8 @@
 .password-toggle {
     position: absolute !important;
     right: 12px !important;
-    bottom: 12px !important;
-    top: 50% !important;
+    bottom: 40% !important;
+    top: 55% !important;
     transform: translateY(-50%) !important;
     background: none;
     border: none;
