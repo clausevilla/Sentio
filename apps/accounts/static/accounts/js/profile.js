@@ -210,10 +210,10 @@ document.getElementById('deleteDataForm')?.addEventListener('submit', async func
 
         if (response.ok) {
             closeDeleteDataModal();
-            showMessage('✅ All your data has been deleted', 'success');
+            showMessage('All your data has been deleted', 'success');
             setTimeout(() => {
                 window.location.reload();
-            }, 2000);
+            }, 3000);
         } else {
             if (data.error === 'incorrect_password') {
                 showMessage('Incorrect password. Please try again.', 'error');
@@ -262,13 +262,6 @@ document.getElementById('deleteAccountForm')?.addEventListener('submit', async f
         return;
     }
 
-    // Final confirmation
-    const finalConfirm = confirm(
-        'FINAL WARNING: This will permanently delete your account and all data. Continue?'
-    );
-
-    if (!finalConfirm) return;
-
     try {
         const response = await fetch('/accounts/api/delete-account/', {
             method: 'POST',
@@ -282,9 +275,12 @@ document.getElementById('deleteAccountForm')?.addEventListener('submit', async f
         const data = await response.json();
 
         if (response.ok) {
-            showMessage('Your account has been deleted. Redirecting...', 'success');
             closeDeleteAccountModal();
-            window.location.href = '/';
+            showMessage('Your account has been deleted. Redirecting...', 'success');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 3000);
+
         } else {
             if (data.error === 'incorrect_password') {
                 showMessage('Incorrect password. Please try again.', 'error');
