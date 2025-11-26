@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -34,7 +35,7 @@ class LogisticRegressionModel:
         args:
             config: Optional dict override DEFAULT_CONFIG
         """
-        self.config = {**self.DEFAULT_CONFIG, **(config or {})}
+        self.config = self._merge_config(config or {})
         self.pipeline = None
         self.build()
 
@@ -73,13 +74,16 @@ class LogisticRegressionModel:
         self.pipeline.fit(X_train, y_train)
         return self
 
-    def evaluate(self, X_test: pd.Series, y_test: pd.Series) -> Dict[str, float]:
-        """
-        Evaluate on test set.
+    def predict(self, X: pd.Series) -> np.ndarray:
+        """Predict class labels"""
+        return self.pipeline.predict(X)
 
-        Returns:
-            Dict with accuracy, precision, recall, f1_score
-        """
+    def predict_proba(self, X: pd.Series) -> np.ndarray:
+        """Predict class probabilities"""
+        return self.pipeline.predict_proba(X)
+
+    def evaluate(self, X_test: pd.Series, y_test: pd.Series) -> Dict[str, float]:
+        """Evaluate on test set"""
         y_pred = self.predict(X_test)
 
         accuracy = accuracy_score(y_test, y_pred)
@@ -87,12 +91,49 @@ class LogisticRegressionModel:
             y_test, y_pred, average='weighted', zero_division=0
         )
 
-        print('\nLogistic Regression Classification Report:')
-        print(classification_report(y_test, y_pred, zero_division=0))
-
         return {
             'accuracy': float(accuracy),
             'precision': float(precision),
             'recall': float(recall),
             'f1_score': float(f1),
+            'classification_report': classification_report(
+                y_test, y_pred, zero_division=0, output_dict=True
+            ),
         }
+
+    def _merge_config(self, user_config):
+        merged = self.DEFAULT_CONFIG.copy()
+
+        for key, value in user_config.items():
+            if (
+                isinstance(value, dict)
+                and key in merged
+                and isinstance(merged[key], dict)
+            ):
+                merged[key] = {**merged[key], **value}  # Merge nested dict
+            else:
+                merged[key] = value
+
+        return merged
+
+    def get_top_features(self, top_n: int = 20) -> Dict[str, Dict[int, float]]:
+        """
+        Get top features per class.
+
+        Returns:
+            Dict mapping class_id to top features and their coefficients
+        """
+        vectorizer = self.pipeline.named_steps['tfidf']
+        classifier = self.pipeline.named_steps['classifier']
+
+        feature_names = vectorizer.get_feature_names_out()
+
+        top_features = {}
+        for class_id, coef in enumerate(classifier.coef_):
+            # Get top positive coefficients
+            top_indices = np.argsort(coef)[-top_n:][::-1]
+            top_features[class_id] = {
+                feature_names[i]: float(coef[i]) for i in top_indices
+            }
+
+        return top_features
