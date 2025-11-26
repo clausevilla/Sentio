@@ -1,4 +1,6 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+
+from ml_pipeline.data_cleaning.cleaner import run_cleaning_pipeline
 
 from .models import DatasetRecord, DataUpload, ModelVersion, TrainingJob
 
@@ -16,6 +18,12 @@ class ModelVersionAdmin(admin.ModelAdmin):
 
 @admin.register(DataUpload)
 class DataUploadAdmin(admin.ModelAdmin):
+    """
+    Introduces two methods of triggering the data cleaning pipeline:
+    - automatic trigger when admin clicks "Save" on a newly uploaded dataset
+    - manual trigger through the DataUpload List page
+    """
+
     list_display = [
         'file_name',
         'uploaded_at',
@@ -24,6 +32,58 @@ class DataUploadAdmin(admin.ModelAdmin):
         'row_count',
     ]
     list_filter = ['is_validated', 'uploaded_at']
+    actions = ['trigger_cleaning_pipeline']
+
+    # --- Action for manual triggers ---
+    def trigger_cleaning_pipeline(self, request, queryset):
+        success_count = 0
+        for upload in queryset:
+            result = run_cleaning_pipeline(upload.id)
+            if result.get('success'):
+                success_count += 1
+                self.message_user(
+                    request,
+                    f'Cleaned {upload.file_name}: {result.get("row_count")} rows.',
+                    messages.SUCCESS,
+                )
+            else:
+                self.message_user(
+                    request,
+                    f'Error cleaning {upload.file_name}: {result.get("error")}',
+                    messages.ERROR,
+                )
+
+    trigger_cleaning_pipeline.short_description = 'Run Data Cleaning Pipeline'
+
+    # --- Automatically trigger cleaning pipeline on "Save" when dataset is uploaded ---
+    def save_model(self, request, obj, form, change):
+        """
+        This runs immediately when you click 'SAVE' on the Add/Edit page.
+        """
+        # 1. Save the file to the database first
+        super().save_model(request, obj, form, change)
+
+        # 2. Automatically run the pipeline
+        self.message_user(
+            request,
+            f"File saved. Starting cleaning pipeline for '{obj.file_name}'...",
+            messages.INFO,
+        )
+
+        result = run_cleaning_pipeline(obj.id)
+
+        if result.get('success'):
+            self.message_user(
+                request,
+                f'Success! Cleaned {result.get("row_count")} rows.',
+                messages.SUCCESS,
+            )
+        else:
+            self.message_user(
+                request,
+                f'Warning: File saved but cleaning failed. Error: {result.get("error")}',
+                messages.WARNING,
+            )
 
 
 @admin.register(TrainingJob)
