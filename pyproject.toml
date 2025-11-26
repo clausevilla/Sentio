@@ -3,3 +3,21 @@ line-length = 88 # Ruff's default line length is 88
 
 [tool.ruff.format]
 quote-style = "single" # Ruff's default is double quotes, Django prefers single quotes
+
+[tool.pytest.ini_options] # pytest configuration
+DJANGO_SETTINGS_MODULE = "sentio.settings.testing"
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+pythonpath = ["."]
+
+testpaths = ["ml_models", "apps", "tests"]
+
+addopts = [
+    "--reuse-db",
+    "--cov=ml_models",
+    "--cov=apps",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "-v"
+]
