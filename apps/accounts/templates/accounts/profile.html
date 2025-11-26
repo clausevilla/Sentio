@@ -38,8 +38,13 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label">Member Since</span>
-                        <span class="info-value">{{
-                            user.date_joined|date:"F d, Y" }}</span>
+                        <span
+                            class="info-value">{{user.date_joined|date:"F d, Y"}}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Last login</span>
+                        <span
+                            class="info-value">{{user.last_login|date:"F d, Y - H:i"}}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Total Analyses</span>
@@ -66,7 +71,8 @@
                                 id="currentPassword"
                                 name="currentPassword"
                                 class="form-input"
-                                required>
+                                required
+                                autocomplete="new-password">
                             <span class="form-error"
                                 id="currentPasswordError"></span>
                         </div>
@@ -80,8 +86,7 @@
                                 name="newPassword"
                                 class="form-input"
                                 required>
-                            <span class="form-help">At least 8 characters with
-                                uppercase, lowercase, and numbers</span>
+                            <span class="form-help">At least 8 characters</span>
                             <span class="form-error"
                                 id="newPasswordError"></span>
                         </div>
@@ -173,7 +178,9 @@
                         type="password"
                         id="deleteDataPassword"
                         class="form-input"
-                        required>
+                        required
+                        autocomplete="new-password"
+                        placeholder="Enter your password to confirm">
                 </div>
 
                 <div style="display: flex; gap: 1rem; margin-top: 2rem;">
@@ -224,7 +231,9 @@
                         type="password"
                         id="deleteAccountPassword"
                         class="form-input"
-                        required>
+                        required
+                        autocomplete="new-password"
+                        placeholder="Enter your password to confirm">
                 </div>
 
                 <div style="display: flex; gap: 1rem; margin-top: 2rem;">
@@ -241,6 +250,7 @@
         </div>
     </div>
 </div>
+
 
 {% endblock %}
 

@@ -137,111 +137,15 @@ a:hover {
     padding: 0 var(--spacing-lg);
 }
 
-.section {
-    padding: var(--spacing-3xl) var(--spacing-lg);
-}
+.section { padding: var(--spacing-xl) var(--spacing-lg); }
 
 /* ===================================
-   Utilities
+   NAVIGATION
    =================================== */
-
-.text-center {
-    text-align: center;
-}
-
-.text-primary {
-    color: var(--color-primary);
-}
-
-.text-coral {
-    color: var(--color-coral);
-}
-
-.bg-white {
-    background: var(--color-bg-white);
-}
-
-.bg-cream {
-    background: var(--color-bg-cream);
-}
-
-.bg-mint {
-    background: var(--color-bg-mint);
-}
-
-.mt-sm { margin-top: var(--spacing-sm); }
-.mt-md { margin-top: var(--spacing-md); }
-.mt-lg { margin-top: var(--spacing-lg); }
-.mt-xl { margin-top: var(--spacing-xl); }
-
-.mb-sm { margin-bottom: var(--spacing-sm); }
-.mb-md { margin-bottom: var(--spacing-md); }
-.mb-lg { margin-bottom: var(--spacing-lg); }
-.mb-xl { margin-bottom: var(--spacing-xl); }
-
-.p-sm { padding: var(--spacing-sm); }
-.p-md { padding: var(--spacing-md); }
-.p-lg { padding: var(--spacing-lg); }
-.p-xl { padding: var(--spacing-xl); }
-
-/* ===================================
-   Animations
-   =================================== */
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes slideInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes slideInRight {
-    from {
-        opacity: 0;
-        transform: translateX(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-.fade-in {
-    animation: fadeIn 0.6s ease forwards;
-}
-
-.slide-in-left {
-    animation: slideInLeft 0.6s ease forwards;
-}
-
-.slide-in-right {
-    animation: slideInRight 0.6s ease forwards;
-}
-
- /* REQUIRED STYLES FOR MOBILE MENU AND FOOTER */
-
-/* ========================================
-   NAVIGATION STYLES
-   ======================================== */
 
 nav {
     background: #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -250,25 +154,31 @@ nav {
 .nav-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 1rem 2rem;
+    padding: 0 2rem;
+    height: 70px;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
+    position: relative;
 }
-
 
 .logo {
-    font-size: 2rem;
-    font-weight: bold;
+    font-size: 1.6rem;
+    font-weight: 700;
     color: var(--color-primary);
-    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1001;
 }
+.logo i { font-size: 1.4rem; }
+.logo:hover { color: var(--color-primary-light); }
 
-/* Desktop Navigation Links */
+/* Nav Links - Desktop */
 .nav-links {
     display: flex;
     list-style: none;
-    gap: 2rem;
+    gap: 0.25rem;
     margin: 0;
     padding: 0;
     align-items: center;
@@ -276,185 +186,420 @@ nav {
 
 .nav-links li {
     margin: 0;
+    display: flex;
+    align-items: center;
 }
 
-.nav-links a {
-    text-decoration: none;
-    color: #333;
-    transition: color 0.3s;
+.nav-links > li > a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-text);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
-.nav-links a:hover {
-    color: #7FAF93;
+.nav-links > li > a:hover {
+    color: var(--color-primary);
+    background: var(--color-bg-mint);
 }
 
-/* Mobile Menu Toggle Button */
+.nav-links > li > a i {
+    font-size: 0.95rem;
+    opacity: 0.8;
+}
+
+/* Sign Up Button */
+.btn-nav-signup {
+    background: var(--color-primary) !important;
+    color: white !important;
+    padding: 10px 18px !important;
+    border-radius: 25px !important;
+}
+.btn-nav-signup:hover {
+    background: var(--color-primary-light) !important;
+}
+
+/* Mobile Menu Toggle - Hidden on Desktop */
 .mobile-menu-toggle {
     display: none;
     background: none;
     border: none;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     cursor: pointer;
-    padding: 0.5rem;
-    color: #333;
+    padding: 10px;
+    color: var(--color-text);
+    z-index: 1001;
+    border-radius: 8px;
 }
+.mobile-menu-toggle:hover { background: var(--color-bg-mint); }
 
-/* ========================================
-   MOBILE STYLES (IMPORTANT!)
-   ======================================== */
-
-@media (max-width: 768px) {
-    /* Show hamburger button on mobile */
-    .mobile-menu-toggle {
-        display: block;
-    }
-
-    /* Hide nav links by default on mobile */
-    .nav-links {
-        position: fixed;
-        top: 70px; /* Below navbar */
-        left: 0;
-        right: 0;
-        flex-direction: column;
-        background: #fff;
-        padding: 1rem;
-        gap: 1rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-
-        /* Hidden by default */
-        max-height: 0;
-        overflow: hidden;
-        opacity: 0;
-        transition: max-height 0.3s ease, opacity 0.3s ease;
-    }
-
-    /* Show nav links when active */
-    .nav-links.active {
-        max-height: 500px;
-        opacity: 1;
-    }
-
-    .nav-links li {
-        width: 100%;
-        text-align: center;
-    }
-
-    .nav-links a {
-        display: block;
-        padding: 0.75rem 1rem;
-    }
+/* Hide mobile-only items on desktop */
+.mobile-only-item {
+    display: none !important;
 }
 
 /* ===================================
-   Footer
+   USER DROPDOWN (Desktop Only)
+   =================================== */
+
+.user-dropdown {
+    position: relative;
+}
+
+.user-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: var(--color-bg-mint);
+    border: 2px solid transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.3rem;
+    color: var(--color-primary);
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+.user-icon-btn:hover {
+    background: var(--color-primary-lighter);
+    color: white;
+}
+.user-icon-btn.active {
+    background: var(--color-primary);
+    color: white;
+}
+
+.user-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.15);
+    min-width: 220px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: 1002;
+    overflow: hidden;
+}
+.user-dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--color-bg-mint) 0%, var(--color-bg-cream) 100%);
+}
+.dropdown-header i { font-size: 1.4rem; color: var(--color-primary); }
+.dropdown-header span {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-text-dark);
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+}
+
+.dropdown-divider { height: 1px; background: #eee; }
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    color: var(--color-text);
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+.dropdown-item:hover {
+    background: var(--color-bg-mint);
+    color: var(--color-primary);
+}
+.dropdown-item i { width: 20px; text-align: center; color: var(--color-text-light); }
+.dropdown-item:hover i { color: var(--color-primary); }
+
+.logout-item { color: var(--color-coral); }
+.logout-item:hover { background: #fff5f3; }
+.logout-item i { color: var(--color-coral); }
+
+/* ===================================
+   TOAST NOTIFICATIONS
+   =================================== */
+
+.toast-container {
+    position: fixed;               /* float over content */
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    max-width: 600px;
+    padding: 0 1rem;
+    width: 100%;
+    pointer-events: none;
+}
+
+.toast {
+    pointer-events: auto;          /* keep toasts clickable */
+}
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    animation: toastFadeIn 0.2s ease-out;
+    transition: opacity 0.3s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+.toast:hover { transform: none; }
+.toast.hiding { animation: toastFadeOut 0.2s ease-in forwards; }
+.toast.success { background: linear-gradient(135deg, #6bbc6d, #5fae63); color: white; }
+.toast.error { background: linear-gradient(135deg, #f44336, #d32f2f); color: white; }
+.toast.warning { background: linear-gradient(135deg, #ff9800, #f57c00); color: white; }
+.toast.info { background: linear-gradient(135deg, #2196F3, #1976D2); color: white; }
+
+.toast-icon { font-size: 1.2rem; }
+.toast-content { flex: 1; }
+.toast-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; }
+.toast-message { font-size: 0.85rem; opacity: 0.95; }
+.toast-close { background: none; border: none; color: white; opacity: 0.7; cursor: pointer; font-size: 1.1rem; }
+.toast-close:hover { opacity: 1; }
+.toast-progress { position: absolute; bottom: 0; left: 0; height: 3px; background: rgba(255,255,255,0.4); animation: toastProgress 3s linear forwards; }
+
+@keyframes toastFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes toastFadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+@keyframes toastProgress { from { width: 100%; } to { width: 0%; } }
+
+/* ===================================
+   FOOTER
    =================================== */
 
 footer {
-    background: var(--color-text);
+    background: var(--color-text-dark);
     color: white;
     padding: 3rem 2rem 1.5rem;
+    margin-top: auto;
 }
 
 .footer-content {
     max-width: 1200px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 3rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
     margin-bottom: 2rem;
 }
 
-.footer-section h3 {
-    margin-bottom: 1rem;
-    font-weight: 600;
-    color: var(--color-primary-lighter);
-}
+.footer-section h3 { margin-bottom: 1rem; color: var(--color-primary-lighter); font-size: 1.1rem; }
+.footer-section p { color: rgba(255,255,255,0.8); font-size: 0.9rem; }
+.footer-section ul { list-style: none; }
+.footer-section ul li { margin-bottom: 0.5rem; }
+.footer-section a { color: rgba(255,255,255,0.8); font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+.footer-section a i { font-size: 0.8rem; opacity: 0.7; }
+.footer-section a:hover { color: var(--color-primary-lighter); }
 
-.footer-section p {
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.footer-section ul {
-    list-style: none;
-}
-
-.footer-section ul li {
-    margin-bottom: 0.6rem;
-}
-
-.footer-section a {
-    color: rgba(255, 255, 255, 0.8);
-    text-decoration: none;
-    transition: color var(--transition-base);
-}
-
-.footer-section a:hover {
-    color: var(--color-primary-lighter);
-}
-
-.footer-bottom {
-    text-align: center;
-    padding-top: 2rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.7);
-    font-size: var(--font-xs);
-}
-
-.footer-bottom p {
-    color: rgba(255, 255, 255, 0.7);
-    text-decoration: none;
-}
-
-.fooer-bottom i {
-    color: var(--color-primary-lighter);
-}
-
-/* ========================================
-   MAIN CONTENT WRAPPER (IMPORTANT!)
-   ======================================== */
-
-/* Ensure main content doesn't overlap footer */
-body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    margin: 0;
-    padding: 0;
-}
-
-main {
-    flex: 1; /* This makes main content grow to push footer down */
-    width: 100%;
-}
-
-
-
-
-/* ========================================
-   CONTAINER
-   ======================================== */
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 2rem;
-}
-
-
+.footer-bottom { text-align: center; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: var(--font-xs); }
+.footer-bottom p { color: rgba(255,255,255,0.6); margin-bottom: 0.5rem; }
+.footer-bottom i { color: var(--color-primary-lighter); }
 
 /* ===================================
-   Responsive
+   UTILITIES
    =================================== */
+
+.text-center { text-align: center; }
+.text-primary { color: var(--color-primary); }
+.bg-white { background: var(--color-bg-white); }
+.bg-cream { background: var(--color-bg-cream); }
+.bg-mint { background: var(--color-bg-mint); }
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.6s ease forwards; }
+
+/* ===================================
+   MOBILE RESPONSIVE
+   =================================== */
+
+@media (max-width: 768px) {
+    /* Show hamburger */
+    .mobile-menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Hide desktop-only dropdown */
+    .desktop-only {
+        display: none !important;
+    }
+
+    /* Show mobile-only items */
+    .mobile-only-item {
+        display: flex !important;
+    }
+
+    /* Mobile nav dropdown panel */
+    .nav-links {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        background: white;
+        padding: 0;
+        gap: 0;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        border-radius: 0 0 16px 16px;
+        align-items: stretch;
+
+        /* Hidden by default */
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        visibility: hidden;
+        transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
+    }
+
+    .nav-links.active {
+        max-height: 80vh;
+        overflow-y: auto;
+        opacity: 1;
+        visibility: visible;
+        padding: 1rem;
+    }
+
+    .nav-links li {
+        width: 100%;
+    }
+
+    .nav-links > li > a {
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 10px;
+        font-size: 1rem;
+    }
+
+    .nav-links > li > a:hover,
+    .nav-links > li > a:active {
+        background: var(--color-bg-mint);
+    }
+
+    .nav-links > li > a i {
+        font-size: 1.1rem;
+        width: 24px;
+    }
+
+    /* Sign up button on mobile */
+    .btn-nav-signup {
+        justify-content: center;
+        margin-top: 0.5rem;
+    }
+
+    /* Mobile username header */
+    .mobile-user-header {
+        border-top: 1px solid #eee;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-radius: 10px;
+    }
+
+    .mobile-username {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        background: linear-gradient(135deg, var(--color-bg-mint) 0%, var(--color-bg-cream) 100%);
+        border-radius: 10px;
+        font-weight: 600;
+        color: var(--color-text-dark);
+        width: calc(100% + 2rem);  /* 100% + both sides of parent padding */
+        margin-left: -1rem;        /* Shift left to align */
+        border-radius: 0;
+    }
+
+    .mobile-username i {
+        font-size: 1.3rem;
+        color: var(--color-primary);
+    }
+
+    /* Logout link styling */
+    .logout-link {
+        color: var(--color-coral) !important;
+    }
+    .logout-link:hover {
+        background: #fff5f3 !important;
+    }
+    .logout-link i {
+        color: var(--color-coral) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-container {
+        padding: 0 1rem;
+        height: 60px;
+    }
+    .logo { font-size: 1.3rem; }
+
+    footer { padding: 2rem 1rem 1rem; }
+    .footer-content { grid-template-columns: 1fr; }
+
+    .toast-container {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: calc(100% - 2rem);
+        max-width: none;
+    }
+}
 
 @media (max-width: 968px) {
     :root {
         --font-4xl: 2.5rem;
         --font-3xl: 2.2rem;
-        --font-xl: 1.3rem;
-    }
-
-    .section {
-        padding: var(--spacing-xl) var(--spacing-md);
     }
 }
 
@@ -462,23 +607,5 @@ main {
     :root {
         --font-4xl: 2rem;
         --font-3xl: 1.8rem;
-    }
-
-    .container {
-        padding: 0 var(--spacing-sm);
-    }
-}
-
-@media (max-width: 480px) {
-    .nav-container {
-        padding: 1rem;
-    }
-
-    footer {
-        padding: 2rem 1rem 1rem;
-    }
-
-    .footer-content {
-        grid-template-columns: 1fr;
     }
 }
