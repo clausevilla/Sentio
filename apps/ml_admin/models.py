@@ -21,6 +21,7 @@ class ModelVersion(models.Model):
     is_active = models.BooleanField(default=False)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
+
 class DataUpload(models.Model):
     """
     Tracks CSV files uploaded by admins for model training.
@@ -38,8 +39,9 @@ class DataUpload(models.Model):
     is_validated = models.BooleanField(default=False)
     validation_errors = models.TextField(null=True, blank=True)
 
-    def __str__(self):  #Print the date data was added
-        return f"{self.uploaded_at.strftime('%Y-%m-%d')}"
+    def __str__(self):  # Print the date data was added
+        return f'{self.uploaded_at.strftime("%Y-%m-%d")}'
+
 
 class DatasetRecord(models.Model):
     """
@@ -49,33 +51,35 @@ class DatasetRecord(models.Model):
     from the CSV.
     """
 
-    DATASET_OPTIONS = (             # Used to separate the training data from the test data
+    DATASET_OPTIONS = (  # Used to separate the training data from the test data
         ('train', 'Training'),
         ('test', 'Test'),
         ('unlabeled', 'Unlabeled'),
     )
 
     text = models.TextField()
-    label = models.CharField(max_length=50) # Category label (Anxiety, depression, stress, etc.)
+    label = models.CharField(
+        max_length=50
+    )  # Category label (Anxiety, depression, stress, etc.)
 
-    category_id = models.IntegerField(null=True, blank=True) # Numeric category id (0-5) corresponding to the label
+    category_id = models.IntegerField(
+        null=True, blank=True
+    )  # Numeric category id (0-5) corresponding to the label
 
     # One hot encoded columns for each category (0 or 1)
     normal = models.IntegerField(default=0)
     depression = models.IntegerField(default=0)
     suicidal = models.IntegerField(default=0)
-    anxiety = models.IntegerField(default=0)
-    bipolar = models.IntegerField(default=0)
     stress = models.IntegerField(default=0)
 
     # Indicates dataset type (train/test/unlabeled)
-    dataset_type=models.CharField(max_length=10, choices=DATASET_OPTIONS, default='train')
+    dataset_type = models.CharField(
+        max_length=10, choices=DATASET_OPTIONS, default='train'
+    )
 
     # Tracking
     data_upload = models.ForeignKey(
-        DataUpload,
-        on_delete=models.CASCADE,
-        related_name='records'
+        DataUpload, on_delete=models.CASCADE, related_name='records'
     )
     imported_at = models.DateTimeField(auto_now_add=True)
 
@@ -86,8 +90,8 @@ class DatasetRecord(models.Model):
             models.Index(fields=['label']),
         ]
 
-    def __str__(self):   # Formats how the model instances are represented as a string
-        return f" {self.dataset_type} | {self.label} | {self.text[:30]}"
+    def __str__(self):  # Formats how the model instances are represented as a string
+        return f' {self.dataset_type} | {self.label} | {self.text[:30]}'
 
 
 class TrainingJob(models.Model):

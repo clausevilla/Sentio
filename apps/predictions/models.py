@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-from apps.model_management.models import ModelVersion
+from apps.ml_admin.models import ModelVersion
 
 
 class TextSubmission(models.Model):
