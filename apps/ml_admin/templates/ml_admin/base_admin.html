@@ -11,6 +11,9 @@
 </head>
 <body>
     <div class="admin-layout">
+        <!-- Sidebar Overlay (mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand">
@@ -19,27 +22,57 @@
             </div>
 
             <nav class="sidebar-nav">
-                <a href="{% url 'ml_admin:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <i class="fas fa-home"></i><span>Dashboard</span>
-                </a>
-                <a href="{% url 'ml_admin:data' %}" class="nav-link {% if request.resolver_match.url_name == 'data' %}active{% endif %}">
-                    <i class="fas fa-database"></i><span>Data</span>
-                </a>
-                <a href="{% url 'ml_admin:training' %}" class="nav-link {% if request.resolver_match.url_name == 'training' %}active{% endif %}">
-                    <i class="fas fa-flask"></i><span>Training</span>
-                </a>
-                <a href="{% url 'ml_admin:models' %}" class="nav-link {% if request.resolver_match.url_name == 'models' %}active{% endif %}">
-                    <i class="fas fa-cube"></i><span>Models</span>
-                </a>
+                <!-- Overview Section -->
+                <div class="nav-section">
+                    <div class="nav-title">Overview</div>
+                    <a href="{% url 'ml_admin:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{% url 'ml_admin:analytics' %}" class="nav-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Analytics</span>
+                    </a>
+                </div>
 
-                <div class="nav-divider"></div>
+                <!-- ML Management Section -->
+                <div class="nav-section">
+                    <div class="nav-title">ML Management</div>
+                    <a href="{% url 'ml_admin:data' %}" class="nav-link {% if request.resolver_match.url_name == 'data' %}active{% endif %}">
+                        <i class="fas fa-database"></i>
+                        <span>Training Data</span>
+                    </a>
+                    <a href="{% url 'ml_admin:training' %}" class="nav-link {% if request.resolver_match.url_name == 'training' %}active{% endif %}">
+                        <i class="fas fa-flask"></i>
+                        <span>Training</span>
+                    </a>
+                    <a href="{% url 'ml_admin:models' %}" class="nav-link {% if request.resolver_match.url_name == 'models' %}active{% endif %}">
+                        <i class="fas fa-cube"></i>
+                        <span>Models</span>
+                    </a>
+                </div>
 
-                <a href="{% url 'admin:index' %}" class="nav-link" target="_blank">
-                    <i class="fas fa-cog"></i><span>Django Admin</span>
-                </a>
-                <a href="/" class="nav-link">
-                    <i class="fas fa-arrow-left"></i><span>Back to Site</span>
-                </a>
+                <!-- System Section -->
+                <div class="nav-section">
+                    <div class="nav-title">System</div>
+                    <a href="{% url 'ml_admin:users' %}" class="nav-link {% if request.resolver_match.url_name == 'users' %}active{% endif %}">
+                        <i class="fas fa-users"></i>
+                        <span>Users</span>
+                    </a>
+                </div>
+
+                <!-- Links Section -->
+                <div class="nav-section">
+                    <div class="nav-title">Links</div>
+                    <a href="{% url 'admin:index' %}" class="nav-link" target="_blank">
+                        <i class="fas fa-cog"></i>
+                        <span>Django Admin</span>
+                    </a>
+                    <a href="/" class="nav-link">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Back to Site</span>
+                    </a>
+                </div>
             </nav>
 
             <div class="sidebar-footer">
@@ -47,18 +80,26 @@
                     <i class="fas fa-user-circle"></i>
                     <span>{{ request.user.username }}</span>
                 </div>
+                <form action="{% url 'accounts:logout' %}" method="post" class="logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </form>
             </div>
         </aside>
 
         <!-- Main -->
         <main class="main-content">
             <header class="topbar">
-                <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                <button class="menu-toggle" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </button>
                 <h1>{% block page_title %}Dashboard{% endblock %}</h1>
                 {% if active_model %}
                 <div class="active-badge"><i class="fas fa-check-circle"></i> {{ active_model.version_name }}</div>
+                {% else %}
+                <div class="active-badge warning"><i class="fas fa-exclamation-triangle"></i> No Model</div>
                 {% endif %}
             </header>
 
@@ -92,6 +133,16 @@
     function closeModal(id) {
         document.getElementById(id).classList.remove('open');
         document.body.style.overflow = '';
+    }
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebarOverlay').classList.toggle('open');
+    }
+
+    function closeSidebar() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('open');
     }
     </script>
 
