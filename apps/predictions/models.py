@@ -28,10 +28,26 @@ class PredictionResult(models.Model):
     TODO: Possibly adding JSONField to recommendations for more flexible recommendation storage.
     """
 
+    MENTAL_STATE_CHOICES = [
+        ('normal', 'Normal'),
+        ('stress', 'Stress'),
+        ('depression', 'Depression'),
+        ('suicidal', 'Suicidal'),
+    ]
+
     submission = models.OneToOneField(TextSubmission, on_delete=models.CASCADE)
     model_version = models.ForeignKey(ModelVersion, on_delete=models.PROTECT)
-    stress_level = models.IntegerField()
-    emotional_tone = models.FloatField()
-    social_confidence = models.FloatField()
+
+    mental_state = models.CharField(
+        max_length=20,
+        choices=MENTAL_STATE_CHOICES,
+        default='normal',
+    )
+    confidence = models.FloatField(default=0)
+
+    anxiety_level = models.IntegerField(null=True, blank=True)
+    negativity_level = models.IntegerField(null=True, blank=True)
+    emotional_intensity = models.IntegerField(null=True, blank=True)
+
     recommendations = models.TextField()
     predicted_at = models.DateTimeField(auto_now_add=True)
