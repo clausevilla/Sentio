@@ -6,11 +6,10 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('model_management', '0001_initial'),
+        ('ml_admin', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -18,23 +17,57 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TextSubmission',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
                 ('text_content', models.TextField(max_length=5000)),
                 ('submitted_at', models.DateTimeField(auto_now_add=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    'user',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
             name='PredictionResult',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
                 ('stress_level', models.IntegerField()),
                 ('emotional_tone', models.FloatField()),
                 ('social_confidence', models.FloatField()),
                 ('recommendations', models.TextField()),
                 ('predicted_at', models.DateTimeField(auto_now_add=True)),
-                ('model_version', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='model_management.modelversion')),
-                ('submission', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='predictions.textsubmission')),
+                (
+                    'model_version',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='ml_admin.modelversion',
+                    ),
+                ),
+                (
+                    'submission',
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to='predictions.textsubmission',
+                    ),
+                ),
             ],
         ),
     ]

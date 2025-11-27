@@ -24,6 +24,7 @@
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
     color: white;
     box-shadow: 0 4px 15px rgba(74, 124, 89, 0.25);
+    border-radius: var(--radius-md)
 }
 
 .btn-primary:hover {
@@ -36,6 +37,7 @@
     background: white;
     color: var(--color-primary);
     border: 2px solid var(--color-primary-light);
+    border-radius: var(--radius-md)
 }
 
 .btn-secondary:hover {
@@ -224,10 +226,10 @@
    =================================== */
 
 .alert {
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm);
     border-radius: var(--radius-sm);
-    margin-bottom: var(--spacing-md);
-    border-left: 4px solid;
+    margin-bottom: var(--spacing-sm);
+    border-left: 1px solid;
 }
 
 .alert-success {

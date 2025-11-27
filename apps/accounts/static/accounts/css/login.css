@@ -139,7 +139,7 @@
 }
 
 /* ===================================
-   Password Toggle Icon Fix
+   Password Toggle Icon
    =================================== */
 
 .form-group {
@@ -149,8 +149,8 @@
 .password-toggle {
     position: absolute !important;
     right: 12px !important;
-    bottom: 12px !important;
-    top: 50% !important;
+    bottom: 40% !important;
+    top: 55% !important;
     transform: translateY(-50%) ;
     background: none;
     border: none;
@@ -160,6 +160,7 @@
     font-size: 1.2rem;
     z-index: 10;
     transition: color 0.3s;
+
 }
 
 .password-toggle:hover {

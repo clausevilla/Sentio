@@ -39,3 +39,6 @@ coverage.xml
 .env
 .venv
 venv/
+
+# Database
+*.sqlite3

@@ -5,7 +5,6 @@
 .history-section {
     padding: var(--spacing-3xl) 0;
     min-height: calc(100vh - 200px);
-    background: linear-gradient(135deg, rgba(74, 124, 89, 0.02) 0%, rgba(74, 124, 89, 0.05) 100%);
 }
 
 /* PAGE HEADER - Balanced space with visual separator */
@@ -733,32 +732,34 @@
 @media (max-width: 640px) {
     .history-section {
         padding: var(--spacing-lg) 0;
+        padding: 0 0.5rem;
+
     }
 
     .stats-grid {
         grid-template-columns: 1fr;
-        padding: var(--spacing-sm) 0;
+        padding: var(--spacing-xs) 0;
     }
 
     .chart-card,
     .history-list-card,
     .stats-section,
     .distribution-grid {
-        padding: var(--spacing-md);
+        padding: var(--spacing-sm);
     }
 
     .stat-card {
-        padding: var(--spacing-md);
+        padding: var(--spacing-sm);
     }
 
     .stat-icon {
         width: 55px;
         height: 55px;
-        font-size: 1.6rem;
+        font-size: 1rem;
     }
 
     .stat-value {
-        font-size: 1.8rem;
+        font-size: 1rem;
     }
 
     .item-header {
@@ -799,20 +800,21 @@
     }
 
     .history-item {
-        padding: var(--spacing-md);
+        padding: var(--spacing-sm);
     }
 
     .section-divider {
-        margin: var(--spacing-md) 0;
+        margin: var(--spacing-sm) 0;
     }
 
     .stats-section-header h2,
     .card-title,
     .list-header h2 {
-        font-size: var(--font-lg);
+        font-size: var(--font-md);
     }
 
     .chart-container {
         height: 280px;
+        padding: 0 0.5rem;
     }
 }

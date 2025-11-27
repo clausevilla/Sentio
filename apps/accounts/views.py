@@ -1,58 +1,423 @@
+import json
 from datetime import datetime, timedelta
 
-from django.contrib.auth import authenticate, login
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.views.decorators.http import require_http_methods
 
-
-def login_view(request):
-    #TODO NEED TO DOUBLE CHECK IMPLEMENTATION AFTER IMPLEMENTING USER LOGIN AND AUTHENTICATION
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect('prediction:input')
-        else:
-            context = {'error': 'Invalid username of password'}
-            return render(request, 'accounts/login.html', context)
-
-    return render(request, 'accounts/login.html')
-
-
-# @login_required
-def logout_view(request):
-    #TODO NEED TO MAKE SURE SESSION EXPIRES
-    return render(request, 'home')
+from .forms import LoginForm, RegisterForm
 
 
 def register_view(request):
-    #TODO NEED TO SEND USER REGISTRATION DATA
-    return render(request, 'accounts/register.html', {})
+    """
+    Handle user registration
+    """
+    # If user is already logged in, redirect to predictions page
+    if request.user.is_authenticated:
+        messages.info(request, 'You are already logged in.')
+        return redirect('predictions:input')
+
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+
+        if form.is_valid():
+            # Create the user
+            user = form.save()
+
+            # Log the user in automatically after registration
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=password)
+
+            if user is not None:
+                login(request, user)
+                messages.success(
+                    request,
+                    f'Welcome {username}! Your account has been created successfully.',
+                )
+                return redirect('predictions:input')
+        else:
+            # Form has errors - they will be displayed in the template
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{error}')
+    else:
+        form = RegisterForm()
+
+    context = {'form': form}
+    return render(request, 'accounts/register.html', context)
 
 
+def login_view(request):
+    """
+    Handle user login
+    """
+    # If user is already logged in, redirect to predictions page
+    if request.user.is_authenticated:
+        messages.info(request, 'You are already logged in.')
+        return redirect('predictions:input')
+
+    if request.method == 'POST':
+        form = LoginForm(request, data=request.POST)
+
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+
+            # Authenticate user
+            user = authenticate(request, username=username, password=password)
+
+            if user is not None:
+                login(request, user)
+                messages.success(request, f'Welcome back, {username}!')
+
+                # Redirect to next page if specified, otherwise to predictions
+                next_page = request.GET.get('next', 'predictions:input')
+                return redirect(next_page)
+        else:
+            messages.error(request, 'Invalid username or password. Please try again.')
+    else:
+        form = LoginForm()
+
+    context = {'form': form}
+    return render(request, 'accounts/login.html', context)
+
+
+@login_required(login_url='accounts:login')
+def logout_view(request):
+    """
+    Handle user logout and end session
+    """
+    username = request.user.username
+    logout(request)
+    messages.success(
+        request, f'You have been logged out successfully. See you soon, {username}!'
+    )
+    return redirect('accounts:login')
+
+
+@login_required(login_url='accounts:login')
 def profile_view(request):
-    #TODO NEED TO FETCH DATA AND SEND USER INFO
-    return render(request, 'accounts/profile.html')
+    """
+    Display user profile with account information and statistics
+    """
+    # TODO: Import the MentalHealthAnalysis model when it's ready
+    # from apps.predictions.models import MentalHealthAnalysis
+
+    # Get total number of analyses for this user
+    # For now, using placeholder value
+    total_analyses = 0
+    # total_analyses = MentalHealthAnalysis.objects.filter(user=request.user).count()
+
+    context = {
+        'user': request.user,
+        'total_analyses': total_analyses,
+    }
+    return render(request, 'accounts/profile.html', context)
 
 
-# @login_required
+@login_required(login_url='accounts:login')
+@require_http_methods(['POST'])
+def change_password_api(request):
+    """
+    API endpoint to change user password
+    """
+    try:
+        # Parse JSON body
+        data = json.loads(request.body)
+        current_password = data.get('currentPassword')
+        new_password = data.get('newPassword')
+
+        # Validate inputs
+        if not current_password or not new_password:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': 'missing_fields',
+                    'message': 'Both current and new password are required',
+                },
+                status=400,
+            )
+
+        # Check if current password is correct
+        if not request.user.check_password(current_password):
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': 'incorrect_password',
+                    'message': 'Current password is incorrect',
+                },
+                status=400,
+            )
+
+        # Check if new password is different
+        if current_password == new_password:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': 'same_password',
+                    'message': 'New password must be different from current password',
+                },
+                status=400,
+            )
+
+        # Validate new password strength
+        if len(new_password) < 8:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': 'weak_password',
+                    'message': 'Password must be at least 8 characters long',
+                },
+                status=400,
+            )
+
+        # Set new password (automatically hashes it)
+        request.user.set_password(new_password)
+        request.user.save()
+
+        # Important: Update session to prevent logout
+        update_session_auth_hash(request, request.user)
+
+        return JsonResponse(
+            {'success': True, 'message': 'Password changed successfully'}
+        )
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {'success': False, 'error': 'invalid_json', 'message': 'Invalid JSON data'},
+            status=400,
+        )
+    except Exception as e:
+        return JsonResponse(
+            {'success': False, 'error': 'server_error', 'message': str(e)}, status=500
+        )
+
+
+@login_required(login_url='accounts:login')
+@require_http_methods(['POST'])
+def delete_all_data_api(request):
+    """
+    API endpoint to delete all user's analysis data (but keep account)
+    """
+    try:
+        # Parse JSON body
+        data = json.loads(request.body)
+        password = data.get('password')
+
+        # Validate password
+        if not password:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': 'missing_password',
+                    'message': 'Password is required',
+                },
+                status=400,
+            )
+
+        # Check if password is correct
+        if not request.user.check_password(password):
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': 'incorrect_password',
+                    'message': 'Incorrect password',
+                },
+                status=400,
+            )
+
+        # Delete all user's mental health analyses
+        # TODO: Uncomment when MentalHealthAnalysis model is ready
+        # from apps.predictions.models import MentalHealthAnalysis
+        # deleted_count = MentalHealthAnalysis.objects.filter(user=request.user).delete()[0]
+        deleted_count = 0
+
+        return JsonResponse(
+            {
+                'success': True,
+                'message': f'Successfully deleted {deleted_count} analyses',
+                'deleted_count': deleted_count,
+            }
+        )
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {'success': False, 'error': 'invalid_json', 'message': 'Invalid JSON data'},
+            status=400,
+        )
+    except Exception as e:
+        return JsonResponse(
+            {'success': False, 'error': 'server_error', 'message': str(e)}, status=500
+        )
+
+
+@login_required(login_url='accounts:login')
+@require_http_methods(['POST'])
+def delete_account_api(request):
+    """
+    API endpoint to permanently delete user account and all associated data
+    """
+    try:
+        # Parse JSON body
+        data = json.loads(request.body)
+        password = data.get('password')
+
+        # Validate password
+        if not password:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': 'missing_password',
+                    'message': 'Password is required',
+                },
+                status=400,
+            )
+
+        # Check if password is correct
+        if not request.user.check_password(password):
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': 'incorrect_password',
+                    'message': 'Incorrect password',
+                },
+                status=400,
+            )
+
+        # Store username for response
+        username = request.user.username
+
+        # Delete user account (this will cascade delete all related data)
+        # including all MentalHealthAnalysis records due to ForeignKey
+        request.user.delete()
+
+        # Logout (session is destroyed)
+        logout(request)
+
+        return JsonResponse(
+            {
+                'success': True,
+                'message': f'Account {username} has been permanently deleted',
+            }
+        )
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {'success': False, 'error': 'invalid_json', 'message': 'Invalid JSON data'},
+            status=400,
+        )
+    except Exception as e:
+        return JsonResponse(
+            {'success': False, 'error': 'server_error', 'message': str(e)}, status=500
+        )
+
+
+@login_required(login_url='accounts:login')
 def history_view(request):
-    # TODO IMPLEMENT THE METHOD
-    # chart_data = get_chart_data(request.user, 'week')
+    """
+    Display user's analysis history with charts and statistics
+    """
+    # TODO: Import the MentalHealthAnalysis model when it's ready
+    # from apps.predictions.models import MentalHealthAnalysis
 
-    return render(request, 'accounts/history.html')
+    # Get all analyses for this user
+    # analyses = MentalHealthAnalysis.objects.filter(user=request.user).order_by('-created_at')
 
+    # Calculate statistics
+    # For now, using placeholder values
+    total_analyses = 0
+    normal_count = 0
+    concern_count = 0
+    last_analysis = 'Never'
+
+    # TODO: Uncomment when model is ready
+    # total_analyses = analyses.count()
+    # normal_count = analyses.filter(mental_state='normal').count()
+    # concern_count = total_analyses - normal_count
+    #
+    # if analyses.exists():
+    #     last_analysis = analyses.first().created_at.strftime('%b %d, %Y')
+
+    # Calculate state distribution
+    state_distribution = {
+        'normal': {
+            'label': 'Normal',
+            'icon': '😊',
+            'class': 'normal',
+            'count': 0,
+            'percentage': 0,
+        },
+        'depression': {
+            'label': 'Depression',
+            'icon': '😢',
+            'class': 'depression',
+            'count': 0,
+            'percentage': 0,
+        },
+        'anxiety': {
+            'label': 'Anxiety',
+            'icon': '😰',
+            'class': 'anxiety',
+            'count': 0,
+            'percentage': 0,
+        },
+        'stress': {
+            'label': 'Stress',
+            'icon': '😫',
+            'class': 'stress',
+            'count': 0,
+            'percentage': 0,
+        },
+        'suicidal': {
+            'label': 'Suicidal',
+            'icon': '🆘',
+            'class': 'suicidal',
+            'count': 0,
+            'percentage': 0,
+        },
+        'bipolar': {
+            'label': 'Bipolar',
+            'icon': '🔄',
+            'class': 'bipolar',
+            'count': 0,
+            'percentage': 0,
+        },
+    }
+
+    # TODO: Calculate actual distribution when model is ready
+    # for state in state_distribution.keys():
+    #     count = analyses.filter(mental_state=state).count()
+    #     state_distribution[state]['count'] = count
+    #     if total_analyses > 0:
+    #         state_distribution[state]['percentage'] = round((count / total_analyses) * 100, 1)
+
+    context = {
+        'total_analyses': total_analyses,
+        'normal_count': normal_count,
+        'concern_count': concern_count,
+        'last_analysis': last_analysis,
+        'state_distribution': state_distribution,
+        'analyses': [],  # TODO: Replace with actual analyses when model is ready
+    }
+
+    return render(request, 'accounts/history.html', context)
 
 
 def get_chart_data(user, period='week'):
-
-    # TODO GET REAL DATA FROM OUR DATABASE
-
-    from .models import MentalHealthAnalysis  # ← YOUR MODEL NAME
+    """
+    Get chart data for mental health trends over time
+    Helper function for history view
+    """
+    # TODO: Import the MentalHealthAnalysis model when it's ready
+    # from apps.predictions.models import MentalHealthAnalysis
 
     now = datetime.now()
+
+    # Determine date range and labels based on period
     if period == 'week':
         start_date = now - timedelta(days=7)
         labels = [(start_date + timedelta(days=i)).strftime('%a') for i in range(7)]
@@ -61,13 +426,13 @@ def get_chart_data(user, period='week'):
         labels = [
             (start_date + timedelta(days=i * 5)).strftime('%b %d') for i in range(6)
         ]
-    else:
+    else:  # all time
         start_date = now - timedelta(days=90)
         labels = [
             (start_date + timedelta(days=i * 15)).strftime('%b %d') for i in range(6)
         ]
 
-    # TODO CHECK ALL FOLLOWING CODE, NEED TO USE REAL MENTAL STATE LABLES FROM DATABASE
+    # Initialize chart data structure
     chart_data = {
         'labels': labels,
         'normal': [0] * len(labels),
@@ -78,28 +443,30 @@ def get_chart_data(user, period='week'):
         'bipolar': [0] * len(labels),
     }
 
-    # TODO Get analyses from database 
-    analyses = MentalHealthAnalysis.objects.filter(
-        user=user, created_at__gte=start_date, created_at__lte=now
-    ).order_by('created_at')
+    # TODO: Get analyses from database when model is ready
+    # analyses = MentalHealthAnalysis.objects.filter(
+    #     user=user,
+    #     created_at__gte=start_date,
+    #     created_at__lte=now
+    # ).order_by('created_at')
 
-    # Count occurrences
-    for analysis in analyses:
-        if period == 'week':
-            label = analysis.created_at.strftime('%a')
-        elif period == 'month':
-            days_diff = (analysis.created_at.date() - start_date.date()).days
-            index = min(days_diff // 5, len(labels) - 1)
-            label = labels[index]
-        else:
-            days_diff = (analysis.created_at.date() - start_date.date()).days
-            index = min(days_diff // 15, len(labels) - 1)
-            label = labels[index]
-
-        if label in labels:
-            idx = labels.index(label)
-            state = analysis.mental_state  # ← YOUR FIELD NAME
-            if state in chart_data:
-                chart_data[state][idx] += 1
+    # TODO: Count occurrences for each mental state over time
+    # for analysis in analyses:
+    #     if period == 'week':
+    #         label = analysis.created_at.strftime('%a')
+    #     elif period == 'month':
+    #         days_diff = (analysis.created_at.date() - start_date.date()).days
+    #         index = min(days_diff // 5, len(labels) - 1)
+    #         label = labels[index]
+    #     else:
+    #         days_diff = (analysis.created_at.date() - start_date.date()).days
+    #         index = min(days_diff // 15, len(labels) - 1)
+    #         label = labels[index]
+    #
+    #     if label in labels:
+    #         idx = labels.index(label)
+    #         state = analysis.mental_state
+    #         if state in chart_data:
+    #             chart_data[state][idx] += 1
 
     return chart_data

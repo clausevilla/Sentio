@@ -25,20 +25,29 @@
       <h2>Login to Your Account</h2>
 
       <!-- Alert messages -->
-      {% if messages %} {% for message in messages %}
-      <div class="alert alert-{{ message.tags }} show">{{ message }}</div>
-      {% endfor %} {% endif %}
+      {% if messages %}
+      {% for message in messages %}
+      {% if message.tags == 'error' or message.tags == 'danger' %}
+        <div class="alert alert-{{ message.tags }} show">
+            {{ message }}
+        </div>
+
+      {% endif %}
+      {% endfor %}
+      {% endif %}
 
       <form method="post" action="{% url 'accounts:login' %}">
         {% csrf_token %}
         <div class="form-group">
           <label for="username">Username</label>
-          <input type="text" id="username" name="username" class="form-control" required
+          <input type="text" id="username" name="username" class="form-control"
+            required
             placeholder="Enter your username" />
         </div>
         <div class="form-group">
           <label for="password">Password</label>
-          <input type="password" id="password" name="password" class="form-control" required
+          <input type="password" id="password" name="password"
+            class="form-control" required
             placeholder="Enter your password" />
         </div>
         <button type="submit" class="btn btn-primary">Login</button>
