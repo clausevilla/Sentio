@@ -111,40 +111,8 @@
 
     <div class="toast-container" id="toasts"></div>
 
-    <script>
-    function getCSRF() {
-        return document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='))?.split('=')[1];
-    }
-
-    function toast(msg, type='success') {
-        const container = document.getElementById('toasts');
-        const el = document.createElement('div');
-        el.className = `toast ${type}`;
-        el.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle"></i><span>${msg}</span>`;
-        container.appendChild(el);
-        setTimeout(() => { el.classList.add('fade'); setTimeout(() => el.remove(), 300); }, 3000);
-    }
-
-    function openModal(id) {
-        document.getElementById(id).classList.add('open');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('open');
-        document.body.style.overflow = '';
-    }
-
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-        document.getElementById('sidebarOverlay').classList.toggle('open');
-    }
-
-    function closeSidebar() {
-        document.getElementById('sidebar').classList.remove('open');
-        document.getElementById('sidebarOverlay').classList.remove('open');
-    }
-    </script>
+    <!-- Common JS -->
+    <script src="{% static 'ml_admin/js/admin.js' %}"></script>
 
     {% block scripts %}{% endblock %}
 </body>

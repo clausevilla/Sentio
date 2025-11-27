@@ -1,5 +1,5 @@
 """
-ML Admin URLs 
+ML Admin URLs
 """
 
 from django.urls import path

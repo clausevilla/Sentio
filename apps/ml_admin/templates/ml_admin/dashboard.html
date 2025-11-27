@@ -1,4 +1,5 @@
 {% extends 'ml_admin/base_admin.html' %}
+{% load static %}
 {% block title %}Dashboard{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 
@@ -136,31 +137,7 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const data = {{ distribution|safe }};
-    const ctx = document.getElementById('distChart');
-
-    if (data && data.length > 0) {
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: data.map(d => d.label || 'Unknown'),
-                datasets: [{
-                    data: data.map(d => d.count),
-                    backgroundColor: ['#4A7C59', '#E07A5F', '#7B68A6', '#5B7C99', '#F4A261'],
-                    borderWidth: 0,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
-                cutout: '60%',
-            }
-        });
-    } else {
-        ctx.parentElement.innerHTML = '<div class="empty-state small"><p>No data yet</p></div>';
-    }
-});
+    const distributionData = {{ distribution|safe }};
 </script>
+<script src="{% static 'ml_admin/js/dashboard.js' %}"></script>
 {% endblock %}

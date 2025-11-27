@@ -124,13 +124,14 @@
 
 {% block scripts %}
 <script>
-const userStats = {{ user_stats|safe }};
-document.querySelectorAll('.prediction-count').forEach(el => {
-    const userId = el.dataset.userId;
-    if (userStats[userId]) {
-        el.textContent = userStats[userId];
-        el.style.fontWeight = '600';
-    }
-});
+    // Populate prediction counts
+    const userStats = {{ user_stats|safe }};
+    document.querySelectorAll('.prediction-count').forEach(el => {
+        const userId = el.dataset.userId;
+        if (userStats[userId]) {
+            el.textContent = userStats[userId];
+            el.style.fontWeight = '600';
+        }
+    });
 </script>
 {% endblock %}

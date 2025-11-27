@@ -1,4 +1,5 @@
 {% extends 'ml_admin/base_admin.html' %}
+{% load static %}
 {% block title %}Training{% endblock %}
 {% block page_title %}Training Center{% endblock %}
 
@@ -157,74 +158,12 @@
 
 {% block scripts %}
 <script>
-const algoNames = { {% for key, algo in algorithms.items %}'{{ key }}': '{{ algo.name }}',{% endfor %} };
-let selected = {};
-
-function toggleDataset(el, id, count) {
-    const cb = el.querySelector('input');
-    cb.checked = !cb.checked;
-    el.classList.toggle('selected', cb.checked);
-
-    if (cb.checked) selected[id] = count;
-    else delete selected[id];
-
-    updateSummary();
-}
-
-function updateSummary() {
-    const count = Object.keys(selected).length;
-    const summary = document.getElementById('summary');
-    const btn = document.getElementById('trainBtn');
-
-    if (count > 0) {
-        summary.style.display = 'block';
-        btn.disabled = false;
-
-        const algo = document.querySelector('input[name="algorithm"]:checked');
-        document.getElementById('sumAlgo').textContent = algo ? algoNames[algo.value] : '-';
-        document.getElementById('sumDatasets').textContent = count;
-
-        let total = 0;
-        Object.values(selected).forEach(c => total += c);
-        document.getElementById('sumRecords').textContent = total.toLocaleString();
-    } else {
-        summary.style.display = 'none';
-        btn.disabled = true;
-    }
-}
-
-// Update on algo change
-document.querySelectorAll('input[name="algorithm"]').forEach(r => {
-    r.addEventListener('change', updateSummary);
-});
-
-function startTraining() {
-    const ids = Object.keys(selected).map(Number);
-    if (ids.length === 0) return;
-
-    const algo = document.querySelector('input[name="algorithm"]:checked').value;
-    if (!confirm(`Start training with ${algoNames[algo]}?`)) return;
-
-    const btn = document.getElementById('trainBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting...';
-
-    fetch('{% url "ml_admin:start_training" %}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRF() },
-        body: JSON.stringify({ upload_ids: ids, algorithm: algo }),
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            toast(data.message);
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            toast(data.error, 'error');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-play"></i> Start Training';
-        }
-    });
-}
+    const ALGORITHM_NAMES = {
+        {% for key, algo in algorithms.items %}'{{ key }}': '{{ algo.name }}',{% endfor %}
+    };
+    const URLS = {
+        startTraining: '{% url "ml_admin:start_training" %}'
+    };
 </script>
+<script src="{% static 'ml_admin/js/training.js' %}"></script>
 {% endblock %}

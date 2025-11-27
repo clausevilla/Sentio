@@ -1,4 +1,5 @@
 {% extends 'ml_admin/base_admin.html' %}
+{% load static %}
 {% block title %}Models{% endblock %}
 {% block page_title %}Model Versions{% endblock %}
 
@@ -60,15 +61,18 @@
 
             <!-- Actions -->
             <div class="model-actions">
+                <button class="btn btn-sm btn-secondary" onclick="showModelDetail({{ item.model.id }})">
+                    <i class="fas fa-eye"></i> Details
+                </button>
                 {% if not item.model.is_active %}
-                <button class="btn btn-primary btn-sm" onclick="deployModel({{ item.model.id }}, '{{ item.model.version_name }}')">
+                <button class="btn btn-sm btn-primary" onclick="deployModel({{ item.model.id }}, '{{ item.model.version_name }}')">
                     <i class="fas fa-rocket"></i> Deploy
                 </button>
-                <button class="btn btn-danger btn-sm" onclick="deleteModel({{ item.model.id }}, '{{ item.model.version_name }}')">
+                <button class="btn btn-sm btn-danger" onclick="deleteModel({{ item.model.id }}, '{{ item.model.version_name }}')">
                     <i class="fas fa-trash"></i>
                 </button>
                 {% else %}
-                <span class="deployed-badge"><i class="fas fa-check"></i> Currently Deployed</span>
+                <span class="deployed-badge"><i class="fas fa-check"></i> Deployed</span>
                 {% endif %}
             </div>
         </div>
@@ -85,7 +89,7 @@
     {% endfor %}
 </div>
 
-<!-- Model Comparison (if multiple models) -->
+<!-- Model Comparison Chart -->
 {% if models|length > 1 %}
 <div class="card" style="margin-top: 2rem;">
     <div class="card-header">
@@ -96,84 +100,84 @@
     </div>
 </div>
 {% endif %}
+
+<!-- Model Detail Modal -->
+<div class="modal" id="modelModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-cube"></i> <span id="modalModelName">Model Details</span></h3>
+            <button class="modal-close" onclick="closeModal('modelModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="modalContent"></div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-function deployModel(id, name) {
-    if (!confirm(`Deploy "${name}" as the active model?`)) return;
-
-    fetch(`/ml-admin/api/models/${id}/activate/`, {
-        method: 'POST',
-        headers: { 'X-CSRFToken': getCSRF() },
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            toast(data.message);
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            toast(data.error, 'error');
-        }
-    });
-}
-
-function deleteModel(id, name) {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-
-    fetch(`/ml-admin/api/models/${id}/delete/`, {
-        method: 'POST',
-        headers: { 'X-CSRFToken': getCSRF() },
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            toast('Model deleted');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            toast(data.error, 'error');
-        }
-    });
-}
-
-{% if models|length > 1 %}
-// Model comparison chart
-document.addEventListener('DOMContentLoaded', function() {
-    const models = [
+    // Model data for JS
+    const modelsData = [
         {% for item in models %}
         {
-            name: '{{ item.model.version_name }}',
+            id: {{ item.model.id }},
+            name: '{{ item.model.version_name|escapejs }}',
             accuracy: {{ item.model.accuracy|default:0 }},
+            precision: {{ item.model.precision|default:0 }},
+            recall: {{ item.model.recall|default:0 }},
             f1: {{ item.model.f1_score|default:0 }},
+            created_at: '{{ item.model.created_at|date:"M d, Y H:i" }}',
+            created_by: '{{ item.model.created_by.username|default:"-"|escapejs }}',
+            file_path: '{{ item.model.model_file_path|default:"-"|escapejs }}',
+            is_active: {{ item.model.is_active|yesno:"true,false" }},
+            job_dataset: '{% if item.job %}{{ item.job.data_upload.file_name|default:"-"|escapejs }}{% else %}-{% endif %}',
         },
         {% endfor %}
     ];
 
-    new Chart(document.getElementById('compareChart'), {
-        type: 'bar',
-        data: {
-            labels: models.map(m => m.name),
-            datasets: [
-                {
-                    label: 'Accuracy %',
-                    data: models.map(m => m.accuracy),
-                    backgroundColor: '#4A7C59',
-                },
-                {
-                    label: 'F1 Score',
-                    data: models.map(m => m.f1 * 100),
-                    backgroundColor: '#5B7C99',
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true, max: 100 } },
-            plugins: { legend: { position: 'bottom' } }
-        }
-    });
-});
-{% endif %}
+    // Create lookup by ID
+    const modelsById = {};
+    modelsData.forEach(m => modelsById[m.id] = m);
+
+    // Show model detail in modal
+    function showModelDetail(id) {
+        const model = modelsById[id];
+        if (!model) return;
+
+        document.getElementById('modalModelName').textContent = model.name;
+        document.getElementById('modalContent').innerHTML = `
+            <div class="detail-section">
+                <h4>Performance Metrics</h4>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <span class="metric-value">${model.accuracy ? model.accuracy.toFixed(1) + '%' : '—'}</span>
+                        <span class="metric-label">Accuracy</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-value">${model.precision ? model.precision.toFixed(3) : '—'}</span>
+                        <span class="metric-label">Precision</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-value">${model.recall ? model.recall.toFixed(3) : '—'}</span>
+                        <span class="metric-label">Recall</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-value">${model.f1 ? model.f1.toFixed(3) : '—'}</span>
+                        <span class="metric-label">F1 Score</span>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-section">
+                <h4>Information</h4>
+                <div class="detail-rows">
+                    <div class="detail-row"><span>Created:</span><strong>${model.created_at}</strong></div>
+                    <div class="detail-row"><span>Created By:</span><strong>${model.created_by}</strong></div>
+                    <div class="detail-row"><span>Dataset:</span><strong>${model.job_dataset}</strong></div>
+                    <div class="detail-row"><span>File:</span><strong class="code">${model.file_path}</strong></div>
+                </div>
+            </div>
+        `;
+        openModal('modelModal');
+    }
 </script>
+<script src="{% static 'ml_admin/js/models.js' %}"></script>
 {% endblock %}
