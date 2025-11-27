@@ -1,0 +1,309 @@
+{% extends 'ml_admin/base_admin.html' %}
+{% block title %}Analytics{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+
+{% block content %}
+<!-- Prediction Stats -->
+<div class="section-header">
+    <h2><i class="fas fa-brain"></i> Predictions</h2>
+</div>
+
+{% if prediction_stats.available %}
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon coral"><i class="fas fa-chart-line"></i></div>
+        <div class="stat-value">{{ prediction_stats.total }}</div>
+        <div class="stat-label">Total Predictions</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+        <div class="stat-value">{{ prediction_stats.today }}</div>
+        <div class="stat-label">Today</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fas fa-calendar-week"></i></div>
+        <div class="stat-value">{{ prediction_stats.week }}</div>
+        <div class="stat-label">This Week</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon purple"><i class="fas fa-calendar"></i></div>
+        <div class="stat-value">{{ prediction_stats.month }}</div>
+        <div class="stat-label">This Month</div>
+    </div>
+    {% if prediction_stats.avg_confidence %}
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fas fa-percentage"></i></div>
+        <div class="stat-value">{{ prediction_stats.avg_confidence }}%</div>
+        <div class="stat-label">Avg Confidence</div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="grid-2">
+    <!-- Mental State Distribution -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-chart-pie"></i> Mental State Distribution</h3>
+        </div>
+        <div class="card-body">
+            {% if prediction_stats.distribution %}
+            <div class="chart-wrap"><canvas id="mentalStateChart"></canvas></div>
+            {% else %}
+            <div class="empty-state small"><p>No prediction data</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Daily Predictions Trend -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-chart-area"></i> Daily Predictions (14 days)</h3>
+        </div>
+        <div class="card-body">
+            {% if prediction_stats.daily_counts %}
+            <div class="chart-wrap"><canvas id="dailyChart"></canvas></div>
+            {% else %}
+            <div class="empty-state small"><p>No prediction data</p></div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert warning">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span>Prediction tracking not available. Make sure the predictions app is installed and migrations are applied.</span>
+</div>
+{% endif %}
+
+<!-- Input/Submissions Stats -->
+<div class="section-header">
+    <h2><i class="fas fa-file-alt"></i> User Submissions</h2>
+</div>
+
+{% if submission_stats.available %}
+<div class="stats-row small">
+    <div class="stat-card">
+        <div class="stat-value">{{ submission_stats.total }}</div>
+        <div class="stat-label">Total Submissions</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ submission_stats.today }}</div>
+        <div class="stat-label">Today</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ submission_stats.week }}</div>
+        <div class="stat-label">This Week</div>
+    </div>
+</div>
+{% else %}
+<div class="alert info">
+    <i class="fas fa-info-circle"></i>
+    <span>Submission tracking not available.</span>
+</div>
+{% endif %}
+
+<!-- User Stats -->
+<div class="section-header">
+    <h2><i class="fas fa-users"></i> Users</h2>
+</div>
+
+<div class="stats-row small">
+    <div class="stat-card">
+        <div class="stat-value">{{ user_stats.total }}</div>
+        <div class="stat-label">Total Users</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ user_stats.active }}</div>
+        <div class="stat-label">Active</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ user_stats.new_week }}</div>
+        <div class="stat-label">New This Week</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ user_stats.new_month }}</div>
+        <div class="stat-label">New This Month</div>
+    </div>
+</div>
+
+<!-- Dataset Stats -->
+<div class="section-header">
+    <h2><i class="fas fa-database"></i> Training Data</h2>
+</div>
+
+<div class="stats-row small">
+    <div class="stat-card">
+        <div class="stat-value">{{ dataset_stats.total_uploads }}</div>
+        <div class="stat-label">Total Uploads</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ dataset_stats.validated_uploads }}</div>
+        <div class="stat-label">Validated</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ dataset_stats.total_records }}</div>
+        <div class="stat-label">Total Records</div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- Label Distribution -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-tags"></i> Label Distribution</h3>
+        </div>
+        <div class="card-body">
+            <div class="chart-wrap"><canvas id="labelChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Dataset Type -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-layer-group"></i> Dataset Split</h3>
+        </div>
+        <div class="card-body">
+            <div class="chart-wrap"><canvas id="typeChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<!-- Training Stats -->
+<div class="section-header">
+    <h2><i class="fas fa-flask"></i> Training</h2>
+</div>
+
+<div class="stats-row small">
+    <div class="stat-card">
+        <div class="stat-value">{{ training_stats.total_jobs }}</div>
+        <div class="stat-label">Total Jobs</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ training_stats.completed }}</div>
+        <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ training_stats.failed }}</div>
+        <div class="stat-label">Failed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ training_stats.success_rate }}%</div>
+        <div class="stat-label">Success Rate</div>
+    </div>
+</div>
+
+<!-- Model Performance -->
+<div class="section-header">
+    <h2><i class="fas fa-cube"></i> Model Performance</h2>
+</div>
+
+<div class="card">
+    <div class="card-body no-pad">
+        {% if model_stats.models %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Accuracy</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                    <th>F1 Score</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for model in model_stats.models %}
+                <tr>
+                    <td><strong>{{ model.version_name }}</strong></td>
+                    <td>{% if model.accuracy %}{{ model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</td>
+                    <td>{% if model.precision %}{{ model.precision|floatformat:3 }}{% else %}—{% endif %}</td>
+                    <td>{% if model.recall %}{{ model.recall|floatformat:3 }}{% else %}—{% endif %}</td>
+                    <td>{% if model.f1_score %}{{ model.f1_score|floatformat:3 }}{% else %}—{% endif %}</td>
+                    <td>{{ model.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state small">
+            <p>No models trained yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const colors = ['#4A7C59', '#E07A5F', '#7B68A6', '#5B7C99', '#F4A261', '#A8C9B8'];
+
+    // Mental State Distribution
+    {% if prediction_stats.distribution %}
+    const mentalData = {{ prediction_distribution_json|safe }};
+    if (mentalData && mentalData.length > 0) {
+        new Chart(document.getElementById('mentalStateChart'), {
+            type: 'doughnut',
+            data: {
+                labels: mentalData.map(d => d.mental_state || 'Unknown'),
+                datasets: [{ data: mentalData.map(d => d.count), backgroundColor: colors, borderWidth: 0 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '60%' }
+        });
+    }
+    {% endif %}
+
+    // Daily Predictions
+    {% if prediction_stats.daily_counts %}
+    const dailyData = {{ prediction_daily_json|safe }};
+    if (dailyData && dailyData.length > 0) {
+        new Chart(document.getElementById('dailyChart'), {
+            type: 'line',
+            data: {
+                labels: dailyData.map(d => d.date),
+                datasets: [{
+                    label: 'Predictions',
+                    data: dailyData.map(d => d.count),
+                    borderColor: '#4A7C59',
+                    backgroundColor: 'rgba(74, 124, 89, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    }
+    {% endif %}
+
+    // Label Distribution
+    const labelData = {{ label_distribution|safe }};
+    if (labelData && labelData.length > 0) {
+        new Chart(document.getElementById('labelChart'), {
+            type: 'doughnut',
+            data: {
+                labels: labelData.map(d => d.label || 'Unknown'),
+                datasets: [{ data: labelData.map(d => d.count), backgroundColor: colors, borderWidth: 0 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '60%' }
+        });
+    } else {
+        document.getElementById('labelChart').parentElement.innerHTML = '<div class="empty-state small"><p>No data</p></div>';
+    }
+
+    // Dataset Type
+    const typeData = {{ type_distribution|safe }};
+    if (typeData && typeData.length > 0) {
+        new Chart(document.getElementById('typeChart'), {
+            type: 'bar',
+            data: {
+                labels: typeData.map(d => d.dataset_type || 'Unknown'),
+                datasets: [{ label: 'Records', data: typeData.map(d => d.count), backgroundColor: '#4A7C59' }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    } else {
+        document.getElementById('typeChart').parentElement.innerHTML = '<div class="empty-state small"><p>No data</p></div>';
+    }
+});
+</script>
+{% endblock %}

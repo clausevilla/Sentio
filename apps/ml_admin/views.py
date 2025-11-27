@@ -1,5 +1,5 @@
 """
-ML Admin Dashboard
+ML Admin Dashboard Views
 """
 
 import json
@@ -8,7 +8,9 @@ from datetime import timedelta
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
-from django.db.models import Count
+from django.core.paginator import Paginator
+from django.db.models import Count, Avg
+from django.db.models.functions import TruncDate
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
@@ -25,7 +27,7 @@ except ImportError:
 
 # Import predictions if available
 try:
-    from apps.predictions.models import PredictionResult
+    from apps.predictions.models import PredictionResult, TextSubmission
     PREDICTIONS_AVAILABLE = True
 except ImportError:
     PREDICTIONS_AVAILABLE = False
@@ -320,3 +322,195 @@ def delete_model_api(request, model_id):
         return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+# ============================================
+# PAGE 5: Users
+# ============================================
+
+@staff_member_required
+def users_view(request):
+    users = User.objects.order_by('-date_joined')
+
+    # Filter
+    status = request.GET.get('status', '')
+    if status == 'active':
+        users = users.filter(is_active=True)
+    elif status == 'inactive':
+        users = users.filter(is_active=False)
+    elif status == 'staff':
+        users = users.filter(is_staff=True)
+
+    paginator = Paginator(users, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    # Get prediction counts per user if available
+    user_stats = {}
+    if PREDICTIONS_AVAILABLE:
+        try:
+            for user in page_obj:
+                user_stats[user.id] = PredictionResult.objects.filter(
+                    submission__user=user
+                ).count()
+        except:
+            pass
+
+    return render(request, 'ml_admin/users.html', {
+        'page_obj': page_obj,
+        'status_filter': status,
+        'user_stats': json.dumps(user_stats),
+        'counts': {
+            'total': User.objects.count(),
+            'active': User.objects.filter(is_active=True).count(),
+            'staff': User.objects.filter(is_staff=True).count(),
+        },
+        'active_model': ModelVersion.objects.filter(is_active=True).first(),
+    })
+
+
+# ============================================
+# PAGE 6: Analytics
+# ============================================
+
+@staff_member_required
+def analytics_view(request):
+    today = timezone.now().date()
+    week_ago = today - timedelta(days=7)
+    month_ago = today - timedelta(days=30)
+
+    # Dataset stats
+    dataset_stats = {
+        'total_uploads': DataUpload.objects.count(),
+        'total_records': DatasetRecord.objects.count(),
+        'validated_uploads': DataUpload.objects.filter(is_validated=True).count(),
+    }
+
+    # Label distribution
+    label_distribution = list(
+        DatasetRecord.objects.values('label')
+        .annotate(count=Count('id'))
+        .order_by('-count')
+    )
+
+    # Dataset type distribution
+    type_distribution = list(
+        DatasetRecord.objects.values('dataset_type')
+        .annotate(count=Count('id'))
+    )
+
+    # Training stats
+    training_stats = {
+        'total_jobs': TrainingJob.objects.count(),
+        'completed': TrainingJob.objects.filter(status='COMPLETED').count(),
+        'failed': TrainingJob.objects.filter(status='FAILED').count(),
+        'success_rate': 0,
+    }
+    if training_stats['total_jobs'] > 0:
+        training_stats['success_rate'] = round(
+            training_stats['completed'] / training_stats['total_jobs'] * 100, 1
+        )
+
+    # Model stats
+    model_stats = {
+        'total_models': ModelVersion.objects.count(),
+        'models': list(ModelVersion.objects.order_by('-created_at').values(
+            'version_name', 'accuracy', 'precision', 'recall', 'f1_score', 'created_at'
+        )[:10]),
+    }
+    for m in model_stats['models']:
+        if m['created_at']:
+            m['created_at'] = m['created_at'].strftime('%Y-%m-%d')
+
+    # Prediction stats
+    prediction_stats = {
+        'available': PREDICTIONS_AVAILABLE,
+        'total': 0,
+        'today': 0,
+        'week': 0,
+        'month': 0,
+        'distribution': [],
+        'daily_counts': [],
+        'avg_confidence': None,
+    }
+
+    if PREDICTIONS_AVAILABLE:
+        try:
+            prediction_stats['total'] = PredictionResult.objects.count()
+            prediction_stats['today'] = PredictionResult.objects.filter(
+                predicted_at__date=today
+            ).count()
+            prediction_stats['week'] = PredictionResult.objects.filter(
+                predicted_at__date__gte=week_ago
+            ).count()
+            prediction_stats['month'] = PredictionResult.objects.filter(
+                predicted_at__date__gte=month_ago
+            ).count()
+
+            # Mental state distribution
+            prediction_stats['distribution'] = list(
+                PredictionResult.objects.values('mental_state')
+                .annotate(count=Count('id'))
+                .order_by('-count')
+            )
+
+            # Daily prediction counts (last 14 days)
+            daily_counts = list(
+                PredictionResult.objects
+                .filter(predicted_at__date__gte=today - timedelta(days=14))
+                .annotate(date=TruncDate('predicted_at'))
+                .values('date')
+                .annotate(count=Count('id'))
+                .order_by('date')
+            )
+            for item in daily_counts:
+                item['date'] = item['date'].strftime('%m/%d')
+            prediction_stats['daily_counts'] = daily_counts
+
+            # Average confidence
+            avg = PredictionResult.objects.aggregate(avg=Avg('confidence'))
+            prediction_stats['avg_confidence'] = round(avg['avg'], 1) if avg['avg'] else None
+
+        except Exception as e:
+            prediction_stats['error'] = str(e)
+
+    # Submission/Input stats
+    submission_stats = {
+        'available': PREDICTIONS_AVAILABLE,
+        'total': 0,
+        'today': 0,
+        'week': 0,
+    }
+
+    if PREDICTIONS_AVAILABLE:
+        try:
+            submission_stats['total'] = TextSubmission.objects.count()
+            submission_stats['today'] = TextSubmission.objects.filter(
+                submitted_at__date=today
+            ).count()
+            submission_stats['week'] = TextSubmission.objects.filter(
+                submitted_at__date__gte=week_ago
+            ).count()
+        except:
+            pass
+
+    # User stats
+    user_stats = {
+        'total': User.objects.count(),
+        'active': User.objects.filter(is_active=True).count(),
+        'new_week': User.objects.filter(date_joined__date__gte=week_ago).count(),
+        'new_month': User.objects.filter(date_joined__date__gte=month_ago).count(),
+    }
+
+    return render(request, 'ml_admin/analytics.html', {
+        'dataset_stats': dataset_stats,
+        'label_distribution': json.dumps(label_distribution),
+        'type_distribution': json.dumps(type_distribution),
+        'training_stats': training_stats,
+        'model_stats': model_stats,
+        'prediction_stats': prediction_stats,
+        'prediction_distribution_json': json.dumps(prediction_stats.get('distribution', [])),
+        'prediction_daily_json': json.dumps(prediction_stats.get('daily_counts', [])),
+        'submission_stats': submission_stats,
+        'user_stats': user_stats,
+        'active_model': ModelVersion.objects.filter(is_active=True).first(),
+    })

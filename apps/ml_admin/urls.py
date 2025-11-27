@@ -1,5 +1,5 @@
 """
-ML Admin URLs for the admin dashboard and related APIs.
+ML Admin URLs 
 """
 
 from django.urls import path
@@ -13,6 +13,8 @@ urlpatterns = [
     path('data/', views.data_view, name='data'),
     path('training/', views.training_view, name='training'),
     path('models/', views.models_view, name='models'),
+    path('users/', views.users_view, name='users'),
+    path('analytics/', views.analytics_view, name='analytics'),
 
     # Data APIs
     path('api/upload/', views.upload_csv_api, name='upload_csv'),
