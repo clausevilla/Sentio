@@ -10,6 +10,8 @@ from nltk.tokenize import word_tokenize
 
 logger = logging.getLogger(__name__)
 
+CHUNK_SIZE = 900
+
 
 class DataPreprocessingPipeline:
     """
@@ -218,7 +220,7 @@ class DataPreprocessingPipeline:
 
     def _expand_contractions(self, text: str) -> str:
         """Expand contractions in text."""
-        # Create pattern that matches any contraction
+        # Pattern that matches any contraction
         pattern = re.compile(
             r'\b('
             + '|'.join(re.escape(key) for key in self.contractions.keys())
@@ -234,7 +236,8 @@ class DataPreprocessingPipeline:
 
 def preprocess_cleaned_data(data_upload_id: int) -> Dict:
     """
-    This is the entry point for preprocessing cleaned data from database.
+    This is the entry point for preprocessing cleaned data.
+    Loads data, preprocesses the text, removes short texts, updates the database.
 
     Args:
         data_upload_id: ID of DataUpload record
@@ -250,7 +253,7 @@ def preprocess_cleaned_data(data_upload_id: int) -> Dict:
             f'Preprocessing data for upload ID {data_upload_id}: {upload.file_name}'
         )
 
-        # Load cleaned data from database
+        # Load cleaned data
         records = DatasetRecord.objects.filter(data_upload=upload)
 
         if not records.exists():
@@ -272,10 +275,35 @@ def preprocess_cleaned_data(data_upload_id: int) -> Dict:
 
         logger.info(f'Loaded {len(df):,} records from database')
 
+        # Run preprocessing steps
         preprocessor = DataPreprocessingPipeline()
         df_processed, report = preprocessor.preprocess_dataframe(df)
 
-        _update_database(df_processed)
+        # Identify and remove rows with too few word in the preprocessed text
+        df_processed['word_count_proc'] = (
+            df_processed['text_preprocessed'].str.split().str.len()
+        )
+        df_keep = df_processed[df_processed['word_count_proc'] >= 3].copy()
+        df_delete = df_processed[df_processed['word_count_proc'] < 3].copy()
+
+        deleted_count = len(df_delete)
+
+        # Delete short records from the database in chunks
+        if deleted_count > 0:
+            ids_to_delete = df_delete['id'].tolist()
+            for i in range(0, len(ids_to_delete), CHUNK_SIZE):
+                chunk = ids_to_delete[i : i + CHUNK_SIZE]
+                DatasetRecord.objects.filter(id__in=chunk).delete()
+
+            logger.info(
+                f'Removed {deleted_count:,} records that became < 3 words after preprocessing.'
+            )
+
+        # Update the good records in the database
+        _update_database(df_keep)
+
+        report['removed_post_preprocessing'] = deleted_count
+        report['final_count_after_preprocessing'] = len(df_keep)
 
         logger.info('=== Preprocessing complete ===')
 
@@ -293,19 +321,29 @@ def preprocess_cleaned_data(data_upload_id: int) -> Dict:
 
 
 def _update_database(df: pd.DataFrame):
-    """Update DatasetRecord with preprocessed text."""
+    """Update DatasetRecord text field with preprocessed text."""
     from apps.ml_admin.models import DatasetRecord
 
-    # Bulk update records
-    records_to_update = []
-    for _, row in df.iterrows():
-        record = DatasetRecord.objects.get(id=row['id'])
-        record.text_preprocessed = row['text_preprocessed']
-        records_to_update.append(record)
+    # Process in chunks to stay within SQLite limits
+    id_to_text = dict(zip(df['id'], df['text_preprocessed']))
+    all_ids = list(id_to_text.keys())
+    total_updated = 0
 
-    DatasetRecord.objects.bulk_update(
-        records_to_update, ['text_preprocessed'], batch_size=1000
-    )
-    logger.info(
-        f'=== Updated {len(records_to_update):,} records with preprocessed text ==='
-    )
+    for i in range(0, len(all_ids), CHUNK_SIZE):
+        chunk_ids = all_ids[i : i + CHUNK_SIZE]
+
+        records = DatasetRecord.objects.filter(id__in=chunk_ids)
+
+        records_to_update = []
+        for record in records:
+            if record.id in id_to_text:
+                record.text = id_to_text[record.id]
+                records_to_update.append(record)
+
+        if records_to_update:
+            DatasetRecord.objects.bulk_update(
+                records_to_update, ['text'], batch_size=CHUNK_SIZE
+            )
+            total_updated += len(records_to_update)
+
+    logger.info(f'=== Updated {total_updated:,} records with preprocessed text ===')
