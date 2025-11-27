@@ -1,0 +1,230 @@
+{% extends 'ml_admin/base_admin.html' %}
+{% block title %}Training{% endblock %}
+{% block page_title %}Training Center{% endblock %}
+
+{% block content %}
+{% if running_count > 0 %}
+<div class="alert info">
+    <i class="fas fa-spinner fa-spin"></i>
+    <span><strong>{{ running_count }}</strong> training job(s) currently running</span>
+</div>
+{% endif %}
+
+<div class="grid-2">
+    <!-- Training Setup -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-play-circle"></i> New Training Job</h3>
+        </div>
+        <div class="card-body">
+            {% if uploads %}
+            <!-- Algorithm Selection -->
+            <div class="form-section">
+                <label class="form-label">Algorithm</label>
+                <div class="algo-grid">
+                    {% for key, algo in algorithms.items %}
+                    <label class="algo-option">
+                        <input type="radio" name="algorithm" value="{{ key }}" {% if forloop.first %}checked{% endif %}>
+                        <div class="algo-card">
+                            <i class="fas {{ algo.icon }}"></i>
+                            <span class="algo-name">{{ algo.name }}</span>
+                            <span class="algo-desc">{{ algo.description }}</span>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Dataset Selection -->
+            <div class="form-section">
+                <label class="form-label">Datasets <span class="hint">(click to select)</span></label>
+                <div class="dataset-select">
+                    {% for item in uploads %}
+                    <div class="dataset-option" onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }})">
+                        <input type="checkbox" data-id="{{ item.upload.id }}" data-count="{{ item.count }}">
+                        <div class="ds-info">
+                            <span class="ds-name">{{ item.upload.file_name }}</span>
+                            <span class="ds-count">{{ item.count }} records</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="training-summary" id="summary" style="display:none">
+                <div class="summary-item"><span>Algorithm:</span><strong id="sumAlgo">-</strong></div>
+                <div class="summary-item"><span>Datasets:</span><strong id="sumDatasets">0</strong></div>
+                <div class="summary-item"><span>Total Records:</span><strong id="sumRecords">0</strong></div>
+            </div>
+
+            <button class="btn btn-primary btn-block" id="trainBtn" onclick="startTraining()" disabled>
+                <i class="fas fa-play"></i> Start Training
+            </button>
+            {% else %}
+            <div class="empty-state small">
+                <i class="fas fa-database"></i>
+                <p>No validated datasets</p>
+                <a href="{% url 'ml_admin:data' %}" class="btn btn-primary btn-sm">Upload Data</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Current Baseline -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-chart-bar"></i> Current Baseline</h3>
+        </div>
+        <div class="card-body">
+            {% if active_model %}
+            <div class="baseline-info">
+                <div class="baseline-name">{{ active_model.version_name }}</div>
+                <div class="baseline-metrics">
+                    <div class="metric">
+                        <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</span>
+                        <span class="metric-lbl">Accuracy</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|floatformat:3 }}{% else %}—{% endif %}</span>
+                        <span class="metric-lbl">F1 Score</span>
+                    </div>
+                </div>
+                <p class="hint">New models should beat this baseline</p>
+            </div>
+            {% else %}
+            <div class="empty-state small">
+                <p>No baseline model yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Training History -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-history"></i> Training History</h3>
+    </div>
+    <div class="card-body no-pad">
+        {% if jobs %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Job</th>
+                    <th>Dataset</th>
+                    <th>Started</th>
+                    <th>Status</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td><strong>#{{ job.id }}</strong></td>
+                    <td>{{ job.data_upload.file_name|default:"-"|truncatechars:30 }}</td>
+                    <td>{{ job.started_at|date:"M d, H:i" }}</td>
+                    <td>
+                        <span class="badge {{ job.status|lower }}">
+                            {% if job.status == 'RUNNING' %}<i class="fas fa-spinner fa-spin"></i> {% endif %}
+                            {{ job.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if job.resulting_model %}
+                        <span class="result-success">
+                            {{ job.resulting_model.version_name }}
+                            {% if job.resulting_model.accuracy %}({{ job.resulting_model.accuracy|floatformat:1 }}%){% endif %}
+                        </span>
+                        {% elif job.status == 'FAILED' %}
+                        <span class="result-failed">Failed</span>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state small">
+            <p>No training jobs yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const algoNames = { {% for key, algo in algorithms.items %}'{{ key }}': '{{ algo.name }}',{% endfor %} };
+let selected = {};
+
+function toggleDataset(el, id, count) {
+    const cb = el.querySelector('input');
+    cb.checked = !cb.checked;
+    el.classList.toggle('selected', cb.checked);
+
+    if (cb.checked) selected[id] = count;
+    else delete selected[id];
+
+    updateSummary();
+}
+
+function updateSummary() {
+    const count = Object.keys(selected).length;
+    const summary = document.getElementById('summary');
+    const btn = document.getElementById('trainBtn');
+
+    if (count > 0) {
+        summary.style.display = 'block';
+        btn.disabled = false;
+
+        const algo = document.querySelector('input[name="algorithm"]:checked');
+        document.getElementById('sumAlgo').textContent = algo ? algoNames[algo.value] : '-';
+        document.getElementById('sumDatasets').textContent = count;
+
+        let total = 0;
+        Object.values(selected).forEach(c => total += c);
+        document.getElementById('sumRecords').textContent = total.toLocaleString();
+    } else {
+        summary.style.display = 'none';
+        btn.disabled = true;
+    }
+}
+
+// Update on algo change
+document.querySelectorAll('input[name="algorithm"]').forEach(r => {
+    r.addEventListener('change', updateSummary);
+});
+
+function startTraining() {
+    const ids = Object.keys(selected).map(Number);
+    if (ids.length === 0) return;
+
+    const algo = document.querySelector('input[name="algorithm"]:checked').value;
+    if (!confirm(`Start training with ${algoNames[algo]}?`)) return;
+
+    const btn = document.getElementById('trainBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting...';
+
+    fetch('{% url "ml_admin:start_training" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRF() },
+        body: JSON.stringify({ upload_ids: ids, algorithm: algo }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            toast(data.message);
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            toast(data.error, 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-play"></i> Start Training';
+        }
+    });
+}
+</script>
+{% endblock %}

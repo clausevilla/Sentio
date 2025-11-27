@@ -1,0 +1,179 @@
+{% extends 'ml_admin/base_admin.html' %}
+{% block title %}Models{% endblock %}
+{% block page_title %}Model Versions{% endblock %}
+
+{% block content %}
+{% if active_model %}
+<div class="alert success">
+    <i class="fas fa-check-circle"></i>
+    <span><strong>Active:</strong> {{ active_model.version_name }}
+    {% if active_model.accuracy %}• {{ active_model.accuracy|floatformat:1 }}% accuracy{% endif %}</span>
+</div>
+{% else %}
+<div class="alert warning">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span><strong>No active model!</strong> Deploy a model to enable predictions.</span>
+</div>
+{% endif %}
+
+<!-- Models Grid -->
+<div class="models-grid">
+    {% for item in models %}
+    <div class="card model-card {% if item.model.is_active %}active{% endif %}">
+        <div class="card-header">
+            <div class="model-title">
+                <span>{{ item.model.version_name }}</span>
+                {% if item.model.is_active %}
+                <span class="badge success">Active</span>
+                {% endif %}
+            </div>
+            <span class="model-date">{{ item.model.created_at|date:"M d, Y" }}</span>
+        </div>
+        <div class="card-body">
+            <!-- Metrics Grid -->
+            <div class="metrics-grid">
+                <div class="metric-box">
+                    <span class="metric-value">{% if item.model.accuracy %}{{ item.model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</span>
+                    <span class="metric-label">Accuracy</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-value">{% if item.model.precision %}{{ item.model.precision|floatformat:3 }}{% else %}—{% endif %}</span>
+                    <span class="metric-label">Precision</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-value">{% if item.model.recall %}{{ item.model.recall|floatformat:3 }}{% else %}—{% endif %}</span>
+                    <span class="metric-label">Recall</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-value">{% if item.model.f1_score %}{{ item.model.f1_score|floatformat:3 }}{% else %}—{% endif %}</span>
+                    <span class="metric-label">F1 Score</span>
+                </div>
+            </div>
+
+            <!-- Training Info -->
+            {% if item.job %}
+            <div class="model-info">
+                <span><i class="fas fa-database"></i> {{ item.job.data_upload.file_name|default:"-"|truncatechars:20 }}</span>
+                <span><i class="fas fa-user"></i> {{ item.model.created_by.username|default:"-" }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="model-actions">
+                {% if not item.model.is_active %}
+                <button class="btn btn-primary btn-sm" onclick="deployModel({{ item.model.id }}, '{{ item.model.version_name }}')">
+                    <i class="fas fa-rocket"></i> Deploy
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteModel({{ item.model.id }}, '{{ item.model.version_name }}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+                {% else %}
+                <span class="deployed-badge"><i class="fas fa-check"></i> Currently Deployed</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state full">
+        <i class="fas fa-cube"></i>
+        <h4>No Models Yet</h4>
+        <p>Train your first model to see it here</p>
+        <a href="{% url 'ml_admin:training' %}" class="btn btn-primary">
+            <i class="fas fa-flask"></i> Go to Training
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Model Comparison (if multiple models) -->
+{% if models|length > 1 %}
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-line"></i> Model Comparison</h3>
+    </div>
+    <div class="card-body">
+        <div class="chart-wrap"><canvas id="compareChart"></canvas></div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deployModel(id, name) {
+    if (!confirm(`Deploy "${name}" as the active model?`)) return;
+
+    fetch(`/ml-admin/api/models/${id}/activate/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCSRF() },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            toast(data.message);
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            toast(data.error, 'error');
+        }
+    });
+}
+
+function deleteModel(id, name) {
+    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+
+    fetch(`/ml-admin/api/models/${id}/delete/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCSRF() },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            toast('Model deleted');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            toast(data.error, 'error');
+        }
+    });
+}
+
+{% if models|length > 1 %}
+// Model comparison chart
+document.addEventListener('DOMContentLoaded', function() {
+    const models = [
+        {% for item in models %}
+        {
+            name: '{{ item.model.version_name }}',
+            accuracy: {{ item.model.accuracy|default:0 }},
+            f1: {{ item.model.f1_score|default:0 }},
+        },
+        {% endfor %}
+    ];
+
+    new Chart(document.getElementById('compareChart'), {
+        type: 'bar',
+        data: {
+            labels: models.map(m => m.name),
+            datasets: [
+                {
+                    label: 'Accuracy %',
+                    data: models.map(m => m.accuracy),
+                    backgroundColor: '#4A7C59',
+                },
+                {
+                    label: 'F1 Score',
+                    data: models.map(m => m.f1 * 100),
+                    backgroundColor: '#5B7C99',
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, max: 100 } },
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+});
+{% endif %}
+</script>
+{% endblock %}

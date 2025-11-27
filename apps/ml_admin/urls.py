@@ -1,5 +1,28 @@
-# from django.urls import path
+"""
+ML Admin URLs for the admin dashboard and related APIs.
+"""
+
+from django.urls import path
+from . import views
 
 app_name = 'ml_admin'
 
-urlpatterns = []
+urlpatterns = [
+    # Pages
+    path('', views.dashboard_view, name='dashboard'),
+    path('data/', views.data_view, name='data'),
+    path('training/', views.training_view, name='training'),
+    path('models/', views.models_view, name='models'),
+
+    # Data APIs
+    path('api/upload/', views.upload_csv_api, name='upload_csv'),
+    path('api/data/<int:upload_id>/delete/', views.delete_upload_api, name='delete_upload'),
+    path('api/data/<int:upload_id>/records/', views.get_dataset_records_api, name='get_records'),
+
+    # Training APIs
+    path('api/training/start/', views.start_training_api, name='start_training'),
+
+    # Model APIs
+    path('api/models/<int:model_id>/activate/', views.activate_model_api, name='activate_model'),
+    path('api/models/<int:model_id>/delete/', views.delete_model_api, name='delete_model'),
+]

@@ -1,0 +1,166 @@
+{% extends 'ml_admin/base_admin.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-cube"></i></div>
+        <div class="stat-value">{{ stats.models }}</div>
+        <div class="stat-label">Models</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-database"></i></div>
+        <div class="stat-value">{{ stats.datasets }}</div>
+        <div class="stat-label">Datasets</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-table"></i></div>
+        <div class="stat-value">{{ stats.records|default:0 }}</div>
+        <div class="stat-label">Records</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-brain"></i></div>
+        <div class="stat-value">{{ stats.predictions }}</div>
+        <div class="stat-label">Predictions</div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- Active Model -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-rocket"></i> Active Model</h3>
+        </div>
+        <div class="card-body">
+            {% if active_model %}
+            <div class="model-display">
+                <div class="model-name">{{ active_model.version_name }}</div>
+                <div class="model-metrics">
+                    <div class="metric">
+                        <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</span>
+                        <span class="metric-lbl">Accuracy</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|floatformat:3 }}{% else %}—{% endif %}</span>
+                        <span class="metric-lbl">F1</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-val">{% if active_model.precision %}{{ active_model.precision|floatformat:3 }}{% else %}—{% endif %}</span>
+                        <span class="metric-lbl">Precision</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-val">{% if active_model.recall %}{{ active_model.recall|floatformat:3 }}{% else %}—{% endif %}</span>
+                        <span class="metric-lbl">Recall</span>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state small">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>No active model</p>
+                <a href="{% url 'ml_admin:models' %}" class="btn btn-primary btn-sm">Deploy Model</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Training Jobs -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-flask"></i> Training Jobs</h3>
+            <a href="{% url 'ml_admin:training' %}" class="link">View All →</a>
+        </div>
+        <div class="card-body">
+            <div class="job-stats">
+                <div class="job-stat pending"><span>{{ jobs.pending }}</span> Pending</div>
+                <div class="job-stat running"><span>{{ jobs.running }}</span> Running</div>
+                <div class="job-stat completed"><span>{{ jobs.completed }}</span> Done</div>
+                <div class="job-stat failed"><span>{{ jobs.failed }}</span> Failed</div>
+            </div>
+            {% if recent_jobs %}
+            <ul class="simple-list">
+                {% for job in recent_jobs %}
+                <li>
+                    <span class="status-dot {{ job.status|lower }}"></span>
+                    Job #{{ job.id }}
+                    <span class="meta">{{ job.started_at|date:"M d" }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- Dataset Distribution -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-chart-pie"></i> Label Distribution</h3>
+        </div>
+        <div class="card-body">
+            <div class="chart-wrap"><canvas id="distChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+        </div>
+        <div class="card-body">
+            <div class="quick-actions">
+                <a href="{% url 'ml_admin:data' %}" class="action-btn">
+                    <i class="fas fa-upload"></i>
+                    <span>Upload Data</span>
+                </a>
+                <a href="{% url 'ml_admin:training' %}" class="action-btn">
+                    <i class="fas fa-play"></i>
+                    <span>Train Model</span>
+                </a>
+                <a href="{% url 'ml_admin:models' %}" class="action-btn">
+                    <i class="fas fa-cube"></i>
+                    <span>Manage Models</span>
+                </a>
+                <a href="{% url 'admin:index' %}" class="action-btn" target="_blank">
+                    <i class="fas fa-users"></i>
+                    <span>Users (Admin)</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const data = {{ distribution|safe }};
+    const ctx = document.getElementById('distChart');
+
+    if (data && data.length > 0) {
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: data.map(d => d.label || 'Unknown'),
+                datasets: [{
+                    data: data.map(d => d.count),
+                    backgroundColor: ['#4A7C59', '#E07A5F', '#7B68A6', '#5B7C99', '#F4A261'],
+                    borderWidth: 0,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                cutout: '60%',
+            }
+        });
+    } else {
+        ctx.parentElement.innerHTML = '<div class="empty-state small"><p>No data yet</p></div>';
+    }
+});
+</script>
+{% endblock %}

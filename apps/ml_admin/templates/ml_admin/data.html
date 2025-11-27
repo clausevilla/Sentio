@@ -1,0 +1,265 @@
+{% extends 'ml_admin/base_admin.html' %}
+{% block title %}Data{% endblock %}
+{% block page_title %}Training Data{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="stats-row small">
+    <div class="stat-card">
+        <div class="stat-value">{{ total_uploads }}</div>
+        <div class="stat-label">Datasets</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ validated_count }}</div>
+        <div class="stat-label">Validated</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ total_records }}</div>
+        <div class="stat-label">Total Records</div>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('uploadModal')">
+        <i class="fas fa-plus"></i> Upload CSV
+    </button>
+</div>
+
+<!-- Dataset Cards -->
+<div class="dataset-grid">
+    {% for item in uploads %}
+    <div class="card dataset-card">
+        <div class="card-header">
+            <div class="dataset-title">
+                <i class="fas fa-file-csv"></i>
+                <span>{{ item.upload.file_name }}</span>
+            </div>
+            {% if item.upload.is_validated %}
+            <span class="badge success">Validated</span>
+            {% else %}
+            <span class="badge warning">Pending</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <div class="dataset-meta">
+                <span><i class="fas fa-calendar"></i> {{ item.upload.uploaded_at|date:"M d, Y" }}</span>
+                <span><i class="fas fa-user"></i> {{ item.upload.uploaded_by.username|default:"-" }}</span>
+                <span><i class="fas fa-table"></i> {{ item.upload.row_count|default:0 }} rows</span>
+            </div>
+
+            <!-- Inline Distribution -->
+            {% if item.distribution %}
+            <div class="distribution-bars">
+                {% for d in item.distribution %}
+                <div class="dist-item">
+                    <span class="dist-label">{{ d.label }}</span>
+                    <div class="dist-bar">
+                        <div class="dist-fill" style="width: {% widthratio d.count item.upload.row_count 100 %}%"></div>
+                    </div>
+                    <span class="dist-count">{{ d.count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="dataset-actions">
+                <button class="btn btn-sm btn-secondary" onclick="viewRecords({{ item.upload.id }}, '{{ item.upload.file_name }}')">
+                    <i class="fas fa-eye"></i> View Records
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteDataset({{ item.upload.id }}, '{{ item.upload.file_name }}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <h4>No Datasets Yet</h4>
+        <p>Upload your first CSV to get started</p>
+        <button class="btn btn-primary" onclick="openModal('uploadModal')">
+            <i class="fas fa-upload"></i> Upload CSV
+        </button>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Upload Modal -->
+<div class="modal" id="uploadModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-upload"></i> Upload CSV</h3>
+            <button class="modal-close" onclick="closeModal('uploadModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Click or drag CSV file</p>
+                <input type="file" id="fileInput" accept=".csv" style="display:none" onchange="fileSelected(this)">
+            </div>
+            <div class="file-preview" id="filePreview" style="display:none">
+                <i class="fas fa-file-csv"></i>
+                <span id="fileName"></span>
+                <button onclick="clearFile()">&times;</button>
+            </div>
+            <div class="help-text">
+                <strong>Required columns:</strong> <code>text</code> and <code>label</code><br>
+                <strong>Labels:</strong> Normal, Depression, Suicidal, Stress
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('uploadModal')">Cancel</button>
+            <button class="btn btn-primary" id="uploadBtn" onclick="uploadFile()" disabled>
+                <i class="fas fa-upload"></i> Upload
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Records Modal -->
+<div class="modal" id="recordsModal">
+    <div class="modal-content wide">
+        <div class="modal-header">
+            <h3><i class="fas fa-table"></i> <span id="recordsTitle">Records</span></h3>
+            <button class="modal-close" onclick="closeModal('recordsModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="recordsContent">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+            </div>
+            <div class="pagination" id="recordsPagination"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedFile = null;
+let currentUploadId = null;
+
+// File handling
+function fileSelected(input) {
+    if (input.files[0]) {
+        selectedFile = input.files[0];
+        if (!selectedFile.name.endsWith('.csv')) {
+            toast('Please select a CSV file', 'error');
+            clearFile();
+            return;
+        }
+        document.getElementById('uploadZone').style.display = 'none';
+        document.getElementById('filePreview').style.display = 'flex';
+        document.getElementById('fileName').textContent = selectedFile.name;
+        document.getElementById('uploadBtn').disabled = false;
+    }
+}
+
+function clearFile() {
+    selectedFile = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('uploadZone').style.display = 'block';
+    document.getElementById('filePreview').style.display = 'none';
+    document.getElementById('uploadBtn').disabled = true;
+}
+
+function uploadFile() {
+    if (!selectedFile) return;
+
+    const btn = document.getElementById('uploadBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+    const formData = new FormData();
+    formData.append('csv_file', selectedFile);
+
+    fetch('{% url "ml_admin:upload_csv" %}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCSRF() },
+        body: formData,
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            toast(data.message);
+            closeModal('uploadModal');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            toast(data.error, 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-upload"></i> Upload';
+        }
+    })
+    .catch(() => {
+        toast('Upload failed', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-upload"></i> Upload';
+    });
+}
+
+function deleteDataset(id, name) {
+    if (!confirm(`Delete "${name}" and all its records?`)) return;
+
+    fetch(`/ml-admin/api/data/${id}/delete/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCSRF() },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            toast('Deleted');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            toast(data.error, 'error');
+        }
+    });
+}
+
+function viewRecords(id, name) {
+    currentUploadId = id;
+    document.getElementById('recordsTitle').textContent = name;
+    openModal('recordsModal');
+    loadRecords(1);
+}
+
+function loadRecords(page) {
+    const content = document.getElementById('recordsContent');
+    content.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+    fetch(`/ml-admin/api/data/${currentUploadId}/records/?page=${page}`)
+    .then(r => r.json())
+    .then(data => {
+        if (data.records.length === 0) {
+            content.innerHTML = '<div class="empty-state small"><p>No records</p></div>';
+            return;
+        }
+
+        let html = '<table class="data-table"><thead><tr><th>ID</th><th>Text</th><th>Label</th></tr></thead><tbody>';
+        data.records.forEach(r => {
+            html += `<tr><td>${r.id}</td><td class="text-cell">${r.text}</td><td><span class="badge">${r.label}</span></td></tr>`;
+        });
+        html += '</tbody></table>';
+        content.innerHTML = html;
+
+        // Pagination
+        const pag = document.getElementById('recordsPagination');
+        if (data.pages > 1) {
+            let pagHtml = '';
+            if (page > 1) pagHtml += `<button onclick="loadRecords(${page-1})">← Prev</button>`;
+            pagHtml += `<span>Page ${page} of ${data.pages}</span>`;
+            if (page < data.pages) pagHtml += `<button onclick="loadRecords(${page+1})">Next →</button>`;
+            pag.innerHTML = pagHtml;
+        } else {
+            pag.innerHTML = '';
+        }
+    });
+}
+
+// Drag & drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    document.getElementById('fileInput').files = e.dataTransfer.files;
+    fileSelected(document.getElementById('fileInput'));
+});
+</script>
+{% endblock %}

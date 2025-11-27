@@ -1,0 +1,100 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ML Admin{% endblock %} - Sentio</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{% static 'ml_admin/css/admin.css' %}">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <i class="fas fa-brain"></i>
+                <span>Sentio ML</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="{% url 'ml_admin:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-home"></i><span>Dashboard</span>
+                </a>
+                <a href="{% url 'ml_admin:data' %}" class="nav-link {% if request.resolver_match.url_name == 'data' %}active{% endif %}">
+                    <i class="fas fa-database"></i><span>Data</span>
+                </a>
+                <a href="{% url 'ml_admin:training' %}" class="nav-link {% if request.resolver_match.url_name == 'training' %}active{% endif %}">
+                    <i class="fas fa-flask"></i><span>Training</span>
+                </a>
+                <a href="{% url 'ml_admin:models' %}" class="nav-link {% if request.resolver_match.url_name == 'models' %}active{% endif %}">
+                    <i class="fas fa-cube"></i><span>Models</span>
+                </a>
+
+                <div class="nav-divider"></div>
+
+                <a href="{% url 'admin:index' %}" class="nav-link" target="_blank">
+                    <i class="fas fa-cog"></i><span>Django Admin</span>
+                </a>
+                <a href="/" class="nav-link">
+                    <i class="fas fa-arrow-left"></i><span>Back to Site</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span>{{ request.user.username }}</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main-content">
+            <header class="topbar">
+                <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                {% if active_model %}
+                <div class="active-badge"><i class="fas fa-check-circle"></i> {{ active_model.version_name }}</div>
+                {% endif %}
+            </header>
+
+            <div class="content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <div class="toast-container" id="toasts"></div>
+
+    <script>
+    function getCSRF() {
+        return document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='))?.split('=')[1];
+    }
+
+    function toast(msg, type='success') {
+        const container = document.getElementById('toasts');
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle"></i><span>${msg}</span>`;
+        container.appendChild(el);
+        setTimeout(() => { el.classList.add('fade'); setTimeout(() => el.remove(), 300); }, 3000);
+    }
+
+    function openModal(id) {
+        document.getElementById(id).classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
