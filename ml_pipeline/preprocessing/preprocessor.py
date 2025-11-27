@@ -4,13 +4,12 @@ from typing import Dict, Tuple
 
 import nltk
 import pandas as pd
+import swifter as swifter
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
 logger = logging.getLogger(__name__)
-
-CHUNK_SIZE = 900
 
 
 class DataPreprocessingPipeline:
@@ -142,7 +141,9 @@ class DataPreprocessingPipeline:
             df = df.drop(columns=['_temp_tokens'])
 
             # Apply preprocessing
-            df['text_preprocessed'] = df['text'].apply(self._preprocess_single_text)
+            df['text_preprocessed'] = df['text'].swifter.apply(
+                self._preprocess_single_text
+            )
 
             # Calculate average tokens after preprocessing
             df['_temp_tokens'] = df['text_preprocessed'].apply(lambda x: len(x.split()))
@@ -232,118 +233,3 @@ class DataPreprocessingPipeline:
             return self.contractions[match.group(0).lower()]
 
         return pattern.sub(replace, text)
-
-
-def preprocess_cleaned_data(data_upload_id: int) -> Dict:
-    """
-    This is the entry point for preprocessing cleaned data.
-    Loads data, preprocesses the text, removes short texts, updates the database.
-
-    Args:
-        data_upload_id: ID of DataUpload record
-
-    Returns:
-        Dict with 'success', 'row_count', or 'error'
-    """
-    from apps.ml_admin.models import DatasetRecord, DataUpload
-
-    try:
-        upload = DataUpload.objects.get(id=data_upload_id)
-        logger.info(
-            f'Preprocessing data for upload ID {data_upload_id}: {upload.file_name}'
-        )
-
-        # Load cleaned data
-        records = DatasetRecord.objects.filter(data_upload=upload)
-
-        if not records.exists():
-            raise ValueError('No cleaned data found. Run cleaning pipeline first.')
-
-        # Convert to DataFrame
-        df = pd.DataFrame.from_records(
-            records.values(
-                'id',
-                'text',
-                'label',
-                'category_id',
-                'normal',
-                'depression',
-                'suicidal',
-                'stress',
-            )
-        )
-
-        logger.info(f'Loaded {len(df):,} records from database')
-
-        # Run preprocessing steps
-        preprocessor = DataPreprocessingPipeline()
-        df_processed, report = preprocessor.preprocess_dataframe(df)
-
-        # Identify and remove rows with too few word in the preprocessed text
-        df_processed['word_count_proc'] = (
-            df_processed['text_preprocessed'].str.split().str.len()
-        )
-        df_keep = df_processed[df_processed['word_count_proc'] >= 3].copy()
-        df_delete = df_processed[df_processed['word_count_proc'] < 3].copy()
-
-        deleted_count = len(df_delete)
-
-        # Delete short records from the database in chunks
-        if deleted_count > 0:
-            ids_to_delete = df_delete['id'].tolist()
-            for i in range(0, len(ids_to_delete), CHUNK_SIZE):
-                chunk = ids_to_delete[i : i + CHUNK_SIZE]
-                DatasetRecord.objects.filter(id__in=chunk).delete()
-
-            logger.info(
-                f'Removed {deleted_count:,} records that became < 3 words after preprocessing.'
-            )
-
-        # Update the good records in the database
-        _update_database(df_keep)
-
-        report['removed_post_preprocessing'] = deleted_count
-        report['final_count_after_preprocessing'] = len(df_keep)
-
-        logger.info('=== Preprocessing complete ===')
-
-        return {'success': True, 'row_count': len(df_processed), 'report': report}
-
-    except DataUpload.DoesNotExist:
-        error = f'Upload ID {data_upload_id} not found'
-        logger.error(error)
-        return {'success': False, 'error': error}
-
-    except Exception as e:
-        error = f'Preprocessing failed: {str(e)}'
-        logger.exception(error)
-        return {'success': False, 'error': error}
-
-
-def _update_database(df: pd.DataFrame):
-    """Update DatasetRecord text field with preprocessed text."""
-    from apps.ml_admin.models import DatasetRecord
-
-    # Process in chunks to stay within SQLite limits
-    id_to_text = dict(zip(df['id'], df['text_preprocessed']))
-    all_ids = list(id_to_text.keys())
-    total_updated = 0
-
-    for i in range(0, len(all_ids), CHUNK_SIZE):
-        chunk_ids = all_ids[i : i + CHUNK_SIZE]
-
-        records = DatasetRecord.objects.filter(id__in=chunk_ids)
-
-        records_to_update = []
-        for record in records:
-            if record.id in id_to_text:
-                record.text = id_to_text[record.id]
-                records_to_update.append(record)
-
-        if records_to_update:
-            DatasetRecord.objects.bulk_update(
-                records_to_update, ['text'], batch_size=CHUNK_SIZE
-            )
-            total_updated += len(records_to_update)
-
-    logger.info(f'=== Updated {total_updated:,} records with preprocessed text ===')

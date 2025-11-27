@@ -4,9 +4,16 @@ from typing import Dict, Tuple
 import pandas as pd
 
 from apps.ml_admin.models import DatasetRecord, DataUpload
-from ml_pipeline.preprocessing.preprocessor import preprocess_cleaned_data
+from ml_pipeline.preprocessing.preprocessor import (
+    DataPreprocessingPipeline,
+)
 
 logger = logging.getLogger(__name__)
+
+MIN_WORD_COUNT = 3
+MIN_TEXT_LENGTH = 10
+MAX_TEXT_LENGTH = 5000
+VALID_LABELS = ['Normal', 'Depression', 'Suicidal', 'Stress']
 
 
 class DataCleaningPipeline:
@@ -17,11 +24,6 @@ class DataCleaningPipeline:
     """
 
     def __init__(self):
-        self.min_word_count = 3
-        self.min_text_length = 10
-        self.max_text_length = 5000
-        self.valid_labels = ['Normal', 'Depression', 'Suicidal', 'Stress']
-
         self.report = {
             'original_count': 0,
             'removed_missing_labels': 0,
@@ -126,23 +128,23 @@ class DataCleaningPipeline:
         initial = len(df)
         df['word_count'] = df['text'].str.split().str.len()
         df = df[
-            (df['text'].str.len() >= self.min_text_length)
-            & (df['word_count'] >= self.min_word_count)
+            (df['text'].str.len() >= MIN_TEXT_LENGTH)
+            & (df['word_count'] >= MIN_WORD_COUNT)
         ]
         df = df.drop(columns=['word_count'])
         removed = initial - len(df)
         self.report['removed_short_text'] = removed
 
         logger.info(
-            f'Removed {removed:,} rows with "text" column having < {self.min_text_length} characters or < {self.min_word_count} words'
+            f'Removed {removed:,} rows with "text" column having < {MIN_TEXT_LENGTH} characters or < {MIN_WORD_COUNT} words'
         )
         return df
 
     def _trim_long_text(self, df: pd.DataFrame) -> pd.DataFrame:
-        long_count = (df['text'].str.len() > self.max_text_length).sum()
-        df['text'] = df['text'].str[: self.max_text_length]
+        long_count = (df['text'].str.len() > MAX_TEXT_LENGTH).sum()
+        df['text'] = df['text'].str[:MAX_TEXT_LENGTH]
         self.report['trimmed_long_text'] = long_count
-        logger.info(f'Trimmed {long_count:,} text to {self.max_text_length} chars')
+        logger.info(f'Trimmed {long_count:,} text to {MAX_TEXT_LENGTH} chars')
         return df
 
     def _combine_anxiety_stress(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -156,12 +158,12 @@ class DataCleaningPipeline:
         return df
 
     def _remove_invalid_labels(self, df: pd.DataFrame) -> pd.DataFrame:
-        invalid = df[~df['label'].isin(self.valid_labels)]['label'].value_counts()
+        invalid = df[~df['label'].isin(VALID_LABELS)]['label'].value_counts()
         if len(invalid) > 0:
             logger.info(f'Invalid labels found: {invalid.to_dict()}')
 
         initial = len(df)
-        df = df[df['label'].isin(self.valid_labels)]
+        df = df[df['label'].isin(VALID_LABELS)]
         removed = initial - len(df)
         self.report['removed_invalid_labels'] = removed
         logger.info(f'Removed {removed:,} rows with invalid labels')
@@ -196,12 +198,10 @@ class DataCleaningPipeline:
         normal, depression, suicidal, stress (one-hot encoding): for RNN
         """
         # Numeric encoding
-        label_to_id = {
-            label: idx for idx, label in enumerate(sorted(self.valid_labels))
-        }
+        label_to_id = {label: idx for idx, label in enumerate(sorted(VALID_LABELS))}
         df['category_id'] = df['label'].map(label_to_id)
 
-        for label in self.valid_labels:
+        for label in VALID_LABELS:
             label_lowercase = f'{label.replace("/", "_").replace("-", "_").lower()}'
             df[label_lowercase] = (df['label'] == label).astype(int)
 
@@ -236,41 +236,50 @@ def run_cleaning_pipeline(data_upload_id: int) -> Dict:
 
         # Run cleaning pipeline
         cleaner = DataCleaningPipeline()
-        df_cleaned, report = cleaner.clean_file(upload.file_path)
-
-        # Save cleaned data to database
-        _save_to_database(df_cleaned, upload)
+        df, report = cleaner.clean_file(upload.file_path)
 
         # Update upload metadata
-        upload.row_count = len(df_cleaned)
+        upload.row_count = len(df)
         upload.is_validated = True
         upload.save()
 
-        logger.info(f'=== Cleaning complete: {len(df_cleaned):,} records saved ===')
+        logger.info(f'=== Cleaning complete: {len(df):,} records saved ===')
 
         # Automatically trigger preprocessing pipeline
         logger.info('>>> Automatically triggering Preprocessing Phase <<<')
 
-        # The cleaning output (in DB) becomes the preprocessing input (from DB)
-        preprocess_result = preprocess_cleaned_data(data_upload_id)
+        # Run preprocessing pipeline in memory
+        logger.info('Starting Preprocessing (In-Memory)...')
+        preprocessor = DataPreprocessingPipeline()
+        df, prep_report = preprocessor.preprocess_dataframe(df)
 
-        if not preprocess_result.get('success'):
-            # If preprocessing fails, still consider cleaning successful, but report the error.
-            upload.status = 'failed'
-            upload.save()
-            return {
-                'success': False,
-                'error': f'Cleaning successful, but Preprocessing failed: {preprocess_result.get("error")}',
-            }
+        # Merge reports to get the final report
+        report.update(prep_report)
 
+        # Perform post-preprocessing filtering to remove text < 3 words
+        df['word_count_proc'] = df['text_preprocessed'].str.split().str.len()
+        initial_count = len(df)
+        df = df[df['word_count_proc'] >= MIN_WORD_COUNT].copy()
+        removed_count = initial_count - len(df)
+
+        report['removed_post_preprocessing'] = removed_count
+        logger.info(f'Removed {removed_count:,} rows < 3 words after preprocessing.')
+
+        # Replace the raw text with the cleaned, preprocessed text
+        df['text'] = df['text_preprocessed']
+
+        # Save to the database - bulk insert
+        _save_to_database(df, upload)
+
+        # Update upload fields
+        upload.row_count = len(df)
         upload.status = 'completed'
+        upload.is_validated = True
         upload.save()
-        return {
-            'success': True,
-            'row_count': len(df_cleaned),
-            'report': report,
-            'preprocessing_status': 'completed',
-        }
+
+        logger.info(f'=== Pipeline Complete. Final row count: {len(df):,} ===')
+
+        return {'success': True, 'row_count': len(df), 'report': report}
 
     except DataUpload.DoesNotExist:
         error = f'Upload ID {data_upload_id} not found'
@@ -310,5 +319,5 @@ def _save_to_database(df: pd.DataFrame, upload: DataUpload):
         )
         records.append(record)
 
-    DatasetRecord.objects.bulk_create(records, batch_size=1000)
+    DatasetRecord.objects.bulk_create(records, batch_size=5000)
     logger.info(f'=== Saved {len(records):,} records to database ===')
