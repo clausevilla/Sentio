@@ -1,7 +1,7 @@
 {% extends 'ml_admin/base_admin.html' %}
 {% load static %}
 {% block title %}Analytics{% endblock %}
-{% block page_title %}Analytics{% endblock %}
+{% block page_title %}User Analytics{% endblock %}
 
 {% block content %}
 <!-- Prediction Stats -->
@@ -76,7 +76,7 @@
 </div>
 {% endif %}
 
-<!-- Input/Submissions Stats -->
+<!-- Submissions Stats -->
 <div class="section-header">
     <h2><i class="fas fa-file-alt"></i> User Submissions</h2>
 </div>
@@ -127,111 +127,17 @@
     </div>
 </div>
 
-<!-- Dataset Stats -->
-<div class="section-header">
-    <h2><i class="fas fa-database"></i> Training Data</h2>
-</div>
-
-<div class="stats-row small">
-    <div class="stat-card">
-        <div class="stat-value">{{ dataset_stats.total_uploads }}</div>
-        <div class="stat-label">Total Uploads</div>
+<!-- User Activity Chart -->
+{% if user_signups %}
+<div class="card" style="margin-top: 1.5rem;">
+    <div class="card-header">
+        <h3><i class="fas fa-user-plus"></i> New User Signups (30 days)</h3>
     </div>
-    <div class="stat-card">
-        <div class="stat-value">{{ dataset_stats.validated_uploads }}</div>
-        <div class="stat-label">Validated</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-value">{{ dataset_stats.total_records }}</div>
-        <div class="stat-label">Total Records</div>
+    <div class="card-body">
+        <div class="chart-wrap"><canvas id="signupsChart"></canvas></div>
     </div>
 </div>
-
-<div class="grid-2">
-    <!-- Label Distribution -->
-    <div class="card">
-        <div class="card-header">
-            <h3><i class="fas fa-tags"></i> Label Distribution</h3>
-        </div>
-        <div class="card-body">
-            <div class="chart-wrap"><canvas id="labelChart"></canvas></div>
-        </div>
-    </div>
-
-    <!-- Dataset Type -->
-    <div class="card">
-        <div class="card-header">
-            <h3><i class="fas fa-layer-group"></i> Dataset Split</h3>
-        </div>
-        <div class="card-body">
-            <div class="chart-wrap"><canvas id="typeChart"></canvas></div>
-        </div>
-    </div>
-</div>
-
-<!-- Training Stats -->
-<div class="section-header">
-    <h2><i class="fas fa-flask"></i> Training</h2>
-</div>
-
-<div class="stats-row small">
-    <div class="stat-card">
-        <div class="stat-value">{{ training_stats.total_jobs }}</div>
-        <div class="stat-label">Total Jobs</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-value">{{ training_stats.completed }}</div>
-        <div class="stat-label">Completed</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-value">{{ training_stats.failed }}</div>
-        <div class="stat-label">Failed</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-value">{{ training_stats.success_rate }}%</div>
-        <div class="stat-label">Success Rate</div>
-    </div>
-</div>
-
-<!-- Model Performance -->
-<div class="section-header">
-    <h2><i class="fas fa-cube"></i> Model Performance</h2>
-</div>
-
-<div class="card">
-    <div class="card-body no-pad">
-        {% if model_stats.models %}
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Version</th>
-                    <th>Accuracy</th>
-                    <th>Precision</th>
-                    <th>Recall</th>
-                    <th>F1 Score</th>
-                    <th>Created</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for model in model_stats.models %}
-                <tr>
-                    <td><strong>{{ model.version_name }}</strong></td>
-                    <td>{% if model.accuracy %}{{ model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</td>
-                    <td>{% if model.precision %}{{ model.precision|floatformat:3 }}{% else %}—{% endif %}</td>
-                    <td>{% if model.recall %}{{ model.recall|floatformat:3 }}{% else %}—{% endif %}</td>
-                    <td>{% if model.f1_score %}{{ model.f1_score|floatformat:3 }}{% else %}—{% endif %}</td>
-                    <td>{{ model.created_at }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div class="empty-state small">
-            <p>No models trained yet</p>
-        </div>
-        {% endif %}
-    </div>
-</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
@@ -239,8 +145,7 @@
     // Chart data
     const mentalStateData = {{ prediction_distribution_json|safe }};
     const dailyData = {{ prediction_daily_json|safe }};
-    const labelData = {{ label_distribution|safe }};
-    const typeData = {{ type_distribution|safe }};
+    const signupsData = {{ user_signups_json|safe }};
 </script>
 <script src="{% static 'ml_admin/js/analytics.js' %}"></script>
 {% endblock %}

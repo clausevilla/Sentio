@@ -1,17 +1,16 @@
 /**
- * ML Admin - Analytics Page
+ * ML Admin - Analytics Page (User/App focused)
  */
 
 document.addEventListener('DOMContentLoaded', function() {
     initMentalStateChart();
     initDailyChart();
-    initLabelChart();
-    initTypeChart();
+    initSignupsChart();
 });
 
 // Mental State Distribution Chart
 function initMentalStateChart() {
-    if (typeof mentalStateData === 'undefined' || !mentalStateData) return;
+    if (typeof mentalStateData === 'undefined' || !mentalStateData || mentalStateData.length === 0) return;
 
     createDoughnutChart(
         'mentalStateChart',
@@ -22,7 +21,7 @@ function initMentalStateChart() {
 
 // Daily Predictions Chart
 function initDailyChart() {
-    if (typeof dailyData === 'undefined' || !dailyData) return;
+    if (typeof dailyData === 'undefined' || !dailyData || dailyData.length === 0) return;
 
     createLineChart(
         'dailyChart',
@@ -32,25 +31,28 @@ function initDailyChart() {
     );
 }
 
-// Label Distribution Chart
-function initLabelChart() {
-    if (typeof labelData === 'undefined' || !labelData) return;
+// User Signups Chart
+function initSignupsChart() {
+    if (typeof signupsData === 'undefined' || !signupsData || signupsData.length === 0) return;
 
-    createDoughnutChart(
-        'labelChart',
-        labelData.map(d => d.label || 'Unknown'),
-        labelData.map(d => d.count)
-    );
-}
+    const ctx = document.getElementById('signupsChart');
+    if (!ctx) return;
 
-// Dataset Type Chart
-function initTypeChart() {
-    if (typeof typeData === 'undefined' || !typeData) return;
-
-    createBarChart(
-        'typeChart',
-        typeData.map(d => d.dataset_type || 'Unknown'),
-        typeData.map(d => d.count),
-        { label: 'Records' }
-    );
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: signupsData.map(d => d.date),
+            datasets: [{
+                label: 'New Users',
+                data: signupsData.map(d => d.count),
+                backgroundColor: CHART_COLORS[0],
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
 }

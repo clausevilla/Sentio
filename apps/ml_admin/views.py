@@ -1,5 +1,5 @@
 """
-ML Admin Dashboard Views
+ML Admin Dashboard - 6 Pages: Dashboard, Data, Training, Models, Users, Analytics
 """
 
 import json
@@ -63,6 +63,7 @@ def dashboard_view(request):
             pass
 
     jobs = {
+        'total': TrainingJob.objects.count(),
         'pending': TrainingJob.objects.filter(status='PENDING').count(),
         'running': TrainingJob.objects.filter(status='RUNNING').count(),
         'completed': TrainingJob.objects.filter(status='COMPLETED').count(),
@@ -72,12 +73,18 @@ def dashboard_view(request):
     recent_jobs = TrainingJob.objects.order_by('-started_at')[:5]
     recent_uploads = DataUpload.objects.order_by('-uploaded_at')[:5]
 
-    # Dataset distribution for chart
-    distribution = list(
-        DatasetRecord.objects.values('label')
-        .annotate(count=Count('id'))
-        .order_by('-count')
-    )
+    # Models for comparison chart (if > 1 model)
+    models_for_comparison = None
+    all_models = ModelVersion.objects.order_by('-created_at')[:10]
+    if all_models.count() > 1:
+        models_for_comparison = json.dumps([
+            {
+                'name': m.version_name,
+                'accuracy': float(m.accuracy) if m.accuracy else 0,
+                'f1': float(m.f1_score) if m.f1_score else 0,
+            }
+            for m in all_models
+        ])
 
     return render(request, 'ml_admin/dashboard.html', {
         'active_model': active_model,
@@ -85,7 +92,7 @@ def dashboard_view(request):
         'jobs': jobs,
         'recent_jobs': recent_jobs,
         'recent_uploads': recent_uploads,
-        'distribution': json.dumps(distribution),
+        'models_for_comparison': models_for_comparison,
     })
 
 
@@ -110,11 +117,22 @@ def data_view(request):
             'distribution': dist,
         })
 
+    # Overall distribution
+    overall_distribution = list(
+        DatasetRecord.objects.values('label')
+        .annotate(count=Count('id'))
+        .order_by('-count')
+    )
+
+    total_records = DatasetRecord.objects.count()
+
     return render(request, 'ml_admin/data.html', {
         'uploads': uploads_with_stats,
         'total_uploads': uploads.count(),
-        'total_records': DatasetRecord.objects.count(),
+        'total_records': total_records,
         'validated_count': DataUpload.objects.filter(is_validated=True).count(),
+        'overall_distribution': overall_distribution,
+        'overall_distribution_json': json.dumps(overall_distribution),
     })
 
 
@@ -216,11 +234,20 @@ def training_view(request):
     available_uploads = DataUpload.objects.filter(is_validated=True).order_by('-uploaded_at')
     active_model = ModelVersion.objects.filter(is_active=True).first()
 
-    # Add record counts
+    # Add record counts and distribution for each upload
     uploads_with_counts = []
     for upload in available_uploads:
         count = DatasetRecord.objects.filter(data_upload=upload).count()
-        uploads_with_counts.append({'upload': upload, 'count': count})
+        dist = list(
+            DatasetRecord.objects.filter(data_upload=upload)
+            .values('label')
+            .annotate(count=Count('id'))
+        )
+        uploads_with_counts.append({
+            'upload': upload,
+            'count': count,
+            'distribution_json': json.dumps(dist),
+        })
 
     return render(request, 'ml_admin/training.html', {
         'jobs': jobs,
@@ -378,49 +405,6 @@ def analytics_view(request):
     week_ago = today - timedelta(days=7)
     month_ago = today - timedelta(days=30)
 
-    # Dataset stats
-    dataset_stats = {
-        'total_uploads': DataUpload.objects.count(),
-        'total_records': DatasetRecord.objects.count(),
-        'validated_uploads': DataUpload.objects.filter(is_validated=True).count(),
-    }
-
-    # Label distribution
-    label_distribution = list(
-        DatasetRecord.objects.values('label')
-        .annotate(count=Count('id'))
-        .order_by('-count')
-    )
-
-    # Dataset type distribution
-    type_distribution = list(
-        DatasetRecord.objects.values('dataset_type')
-        .annotate(count=Count('id'))
-    )
-
-    # Training stats
-    training_stats = {
-        'total_jobs': TrainingJob.objects.count(),
-        'completed': TrainingJob.objects.filter(status='COMPLETED').count(),
-        'failed': TrainingJob.objects.filter(status='FAILED').count(),
-        'success_rate': 0,
-    }
-    if training_stats['total_jobs'] > 0:
-        training_stats['success_rate'] = round(
-            training_stats['completed'] / training_stats['total_jobs'] * 100, 1
-        )
-
-    # Model stats
-    model_stats = {
-        'total_models': ModelVersion.objects.count(),
-        'models': list(ModelVersion.objects.order_by('-created_at').values(
-            'version_name', 'accuracy', 'precision', 'recall', 'f1_score', 'created_at'
-        )[:10]),
-    }
-    for m in model_stats['models']:
-        if m['created_at']:
-            m['created_at'] = m['created_at'].strftime('%Y-%m-%d')
-
     # Prediction stats
     prediction_stats = {
         'available': PREDICTIONS_AVAILABLE,
@@ -432,6 +416,9 @@ def analytics_view(request):
         'daily_counts': [],
         'avg_confidence': None,
     }
+
+    prediction_distribution_json = '[]'
+    prediction_daily_json = '[]'
 
     if PREDICTIONS_AVAILABLE:
         try:
@@ -447,11 +434,13 @@ def analytics_view(request):
             ).count()
 
             # Mental state distribution
-            prediction_stats['distribution'] = list(
+            distribution = list(
                 PredictionResult.objects.values('mental_state')
                 .annotate(count=Count('id'))
                 .order_by('-count')
             )
+            prediction_stats['distribution'] = distribution
+            prediction_distribution_json = json.dumps(distribution)
 
             # Daily prediction counts (last 14 days)
             daily_counts = list(
@@ -465,6 +454,7 @@ def analytics_view(request):
             for item in daily_counts:
                 item['date'] = item['date'].strftime('%m/%d')
             prediction_stats['daily_counts'] = daily_counts
+            prediction_daily_json = json.dumps(daily_counts)
 
             # Average confidence
             avg = PredictionResult.objects.aggregate(avg=Avg('confidence'))
@@ -473,7 +463,7 @@ def analytics_view(request):
         except Exception as e:
             prediction_stats['error'] = str(e)
 
-    # Submission/Input stats
+    # Submission stats
     submission_stats = {
         'available': PREDICTIONS_AVAILABLE,
         'total': 0,
@@ -501,16 +491,25 @@ def analytics_view(request):
         'new_month': User.objects.filter(date_joined__date__gte=month_ago).count(),
     }
 
+    # User signups (last 30 days)
+    user_signups = list(
+        User.objects
+        .filter(date_joined__date__gte=month_ago)
+        .annotate(date=TruncDate('date_joined'))
+        .values('date')
+        .annotate(count=Count('id'))
+        .order_by('date')
+    )
+    for item in user_signups:
+        item['date'] = item['date'].strftime('%m/%d')
+
     return render(request, 'ml_admin/analytics.html', {
-        'dataset_stats': dataset_stats,
-        'label_distribution': json.dumps(label_distribution),
-        'type_distribution': json.dumps(type_distribution),
-        'training_stats': training_stats,
-        'model_stats': model_stats,
         'prediction_stats': prediction_stats,
-        'prediction_distribution_json': json.dumps(prediction_stats.get('distribution', [])),
-        'prediction_daily_json': json.dumps(prediction_stats.get('daily_counts', [])),
+        'prediction_distribution_json': prediction_distribution_json,
+        'prediction_daily_json': prediction_daily_json,
         'submission_stats': submission_stats,
         'user_stats': user_stats,
+        'user_signups': user_signups if len(user_signups) > 1 else None,
+        'user_signups_json': json.dumps(user_signups),
         'active_model': ModelVersion.objects.filter(is_active=True).first(),
     })
