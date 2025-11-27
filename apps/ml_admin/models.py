@@ -38,6 +38,15 @@ class DataUpload(models.Model):
     row_count = models.IntegerField(null=True, blank=True)
     is_validated = models.BooleanField(default=False)
     validation_errors = models.TextField(null=True, blank=True)
+    PROCESSING_STATUS = (
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    )
+    status = models.CharField(
+        max_length=20, choices=PROCESSING_STATUS, default='pending'
+    )
 
     def __str__(self):  # Print the date data was added
         return f'{self.uploaded_at.strftime("%Y-%m-%d")}'

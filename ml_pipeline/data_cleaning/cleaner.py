@@ -221,8 +221,17 @@ def run_cleaning_pipeline(data_upload_id: int) -> Dict:
         Dict with 'success', 'row_count', or 'error'
     """
     try:
-        # Get upload record from DataUpload
+        # Get upload record from DataUpload and set status to processing
         upload = DataUpload.objects.get(id=data_upload_id)
+
+        # If already processing, stop (to prevent double clicks)
+        if upload.status == 'processing':
+            logger.warning(f'Upload {data_upload_id} is already processing.')
+            return {'success': False, 'error': 'Already processing'}
+
+        upload.status = 'processing'
+        upload.save()
+
         logger.info(f'Processing upload ID {data_upload_id}: {upload.file_name}')
 
         # Run cleaning pipeline
@@ -240,19 +249,28 @@ def run_cleaning_pipeline(data_upload_id: int) -> Dict:
         logger.info(f'=== Cleaning complete: {len(df_cleaned):,} records saved ===')
 
         # Automatically trigger preprocessing pipeline
-        logger.info('>>> Automatically triggering Preprocessing Phase...')
+        logger.info('>>> Automatically triggering Preprocessing Phase <<<')
 
         # The cleaning output (in DB) becomes the preprocessing input (from DB)
         preprocess_result = preprocess_cleaned_data(data_upload_id)
 
         if not preprocess_result.get('success'):
             # If preprocessing fails, still consider cleaning successful, but report the error.
+            upload.status = 'failed'
+            upload.save()
             return {
                 'success': False,
                 'error': f'Cleaning successful, but Preprocessing failed: {preprocess_result.get("error")}',
             }
 
-        return {'success': True, 'row_count': len(df_cleaned), 'report': report}
+        upload.status = 'completed'
+        upload.save()
+        return {
+            'success': True,
+            'row_count': len(df_cleaned),
+            'report': report,
+            'preprocessing_status': 'completed',
+        }
 
     except DataUpload.DoesNotExist:
         error = f'Upload ID {data_upload_id} not found'
@@ -260,7 +278,13 @@ def run_cleaning_pipeline(data_upload_id: int) -> Dict:
         return {'success': False, 'error': error}
 
     except Exception as e:
-        error = f'Cleaning failed: {str(e)}'
+        try:
+            upload = DataUpload.objects.get(id=data_upload_id)
+            upload.status = 'failed'
+            upload.save()
+        except:
+            pass
+        error = f'Pipeline failed: {str(e)}'
         logger.exception(error)
         return {'success': False, 'error': error}
 

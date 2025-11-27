@@ -1,3 +1,5 @@
+import threading
+
 from django.contrib import admin, messages
 
 from ml_pipeline.data_cleaning.cleaner import run_cleaning_pipeline
@@ -26,35 +28,30 @@ class DataUploadAdmin(admin.ModelAdmin):
 
     list_display = [
         'file_name',
+        'status',
         'uploaded_at',
         'uploaded_by',
         'is_validated',
         'row_count',
     ]
-    list_filter = ['is_validated', 'uploaded_at']
+    list_filter = ['status', 'is_validated', 'uploaded_at']
     actions = ['trigger_cleaning_preprocessing_pipelines']
 
     # --- Action for manual trigger of both pipelines (in case there was a failure) ---
     def trigger_cleaning_preprocessing_pipelines(self, request, queryset):
-        success_count = 0
         for upload in queryset:
-            result = run_cleaning_pipeline(upload.id)
-            if result.get('success'):
-                success_count += 1
-                self.message_user(
-                    request,
-                    f'Success: {upload.file_name}: Cleaned and preprocessed {result.get("row_count")} rows.',
-                    messages.SUCCESS,
-                )
-            else:
-                self.message_user(
-                    request,
-                    f'Error in pipeline {upload.file_name}: {result.get("error")}',
-                    messages.ERROR,
-                )
+            thread = threading.Thread(target=run_cleaning_pipeline, args=(upload.id,))
+            thread.daemon = True
+            thread.start()
+
+        self.message_user(
+            request,
+            'Pipeline started in the background. Refresh page to see status updates.',
+            messages.INFO,
+        )
 
     trigger_cleaning_preprocessing_pipelines.short_description = (
-        'Clean and preprocess selected dataset'
+        'Clean and preprocess selected datasets'
     )
 
     # --- Automatically trigger both data processing pipelines on "Save" when dataset is uploaded ---
@@ -64,26 +61,19 @@ class DataUploadAdmin(admin.ModelAdmin):
         """
         super().save_model(request, obj, form, change)
 
+        # Run cleaning and preprocessing pipelines in a background task (separate thread)
+        def background_task(upload_id):
+            run_cleaning_pipeline(upload_id)
+
+        thread = threading.Thread(target=background_task, args=(obj.id,))
+        thread.daemon = True  # Thread dies if server restarts
+        thread.start()
+
         self.message_user(
             request,
-            f"File saved. Starting data pipeline (cleaning & preprocessing) for '{obj.file_name}'...",
+            'File saved. Data pipeline started in the background.',
             messages.INFO,
         )
-
-        result = run_cleaning_pipeline(obj.id)
-
-        if result.get('success'):
-            self.message_user(
-                request,
-                f'Pipeline success! Cleaned and preprocessed {result.get("row_count")} rows.',
-                messages.SUCCESS,
-            )
-        else:
-            self.message_user(
-                request,
-                f'Warning: File saved but pipeline failed! Error: {result.get("error")}',
-                messages.WARNING,
-            )
 
 
 @admin.register(TrainingJob)
