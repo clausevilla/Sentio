@@ -268,6 +268,9 @@ def run_cleaning_pipeline(data_upload_id: int) -> Dict:
         # Replace the raw text with the cleaned, preprocessed text
         df['text'] = df['text_preprocessed']
 
+        # Reset dataframe indices
+        df.reset_index(drop=True, inplace=True)
+
         # Save to the database - bulk insert
         _save_to_database(df, upload)
 
