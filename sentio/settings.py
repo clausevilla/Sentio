@@ -32,7 +32,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'apps.accounts',
-    'apps.model_management',
+    'apps.ml_admin',
     'apps.predictions',
     'django.contrib.admin',
     'django.contrib.auth',

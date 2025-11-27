@@ -1,14 +1,16 @@
 import csv
-from apps.model_management.models import DatasetRecord, DataUpload
+
+from apps.ml_admin.models import DatasetRecord
 
 CATEGORY_MAP = {  # Define category mapping
-    "normal": 0,
-    "depression": 1,
-    "suicidal": 2,
-    "anxiety": 3,
-    "bipolar": 4,
-    "stress": 5,
+    'normal': 0,
+    'depression': 1,
+    'suicidal': 2,
+    'anxiety': 3,
+    'bipolar': 4,
+    'stress': 5,
 }
+
 
 def import_csv_dataset(file_path, data_upload, dataset_type='train', batch_size=5000):
     """
@@ -21,21 +23,21 @@ def import_csv_dataset(file_path, data_upload, dataset_type='train', batch_size=
     with open(file_path, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
 
-        for row in reader:      # Map known columns to model fields
+        for row in reader:  # Map known columns to model fields
             label = row.get('status', '').strip().lower()
             category_id = CATEGORY_MAP.get(label, None)
 
-            if category_id is None: # Handle personality_disorder category (not in map)
-                continue # Skip the record
+            if category_id is None:  # Handle personality_disorder category (not in map)
+                continue  # Skip the record
 
             one_hot_categories = {
-                "normal": 0,
-                "depression": 0,
-                "suicidal": 0,
-                "anxiety": 0,
-                "bipolar": 0,
-                "stress": 0,
-                } # Initialise all columns to 0
+                'normal': 0,
+                'depression': 0,
+                'suicidal': 0,
+                'anxiety': 0,
+                'bipolar': 0,
+                'stress': 0,
+            }  # Initialise all columns to 0
 
             if category_id is not None:
                 one_hot_categories[label] = 1
@@ -44,9 +46,9 @@ def import_csv_dataset(file_path, data_upload, dataset_type='train', batch_size=
                 text=row.get('statement', ''),
                 label=row.get('status', ''),
                 category_id=category_id,
-                dataset_type=dataset_type, # (train, test, or unlabeled)
+                dataset_type=dataset_type,  # (train, test, or unlabeled)
                 data_upload=data_upload,
-                **one_hot_categories #unpack into model fields
+                **one_hot_categories,  # unpack into model fields
             )
             batch.append(record)
 
