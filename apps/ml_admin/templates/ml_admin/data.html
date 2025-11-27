@@ -23,6 +23,31 @@
     </button>
 </div>
 
+<!-- Overall Label Distribution -->
+{% if total_records > 0 %}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-pie"></i> Overall Label Distribution</h3>
+    </div>
+    <div class="card-body">
+        <div class="grid-2">
+            <div class="chart-wrap" style="height: 200px;"><canvas id="labelDistChart"></canvas></div>
+            <div class="label-stats">
+                {% for item in overall_distribution %}
+                <div class="label-stat-row">
+                    <span class="label-name">{{ item.label }}</span>
+                    <div class="label-bar-wrap">
+                        <div class="label-bar" style="width: {% widthratio item.count total_records 100 %}%"></div>
+                    </div>
+                    <span class="label-count">{{ item.count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Dataset Cards -->
 <div class="dataset-grid">
     {% for item in uploads %}
@@ -136,6 +161,7 @@
     const URLS = {
         uploadCsv: '{% url "ml_admin:upload_csv" %}'
     };
+    const labelDistData = {{ overall_distribution_json|safe }};
 </script>
 <script src="{% static 'ml_admin/js/data.js' %}"></script>
 {% endblock %}

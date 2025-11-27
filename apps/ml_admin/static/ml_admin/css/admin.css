@@ -615,6 +615,53 @@ body {
     text-align: right;
 }
 
+/* Label Stats (Data Page) */
+.label-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.label-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.label-stat-row .label-name {
+    width: 80px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--gray-700);
+}
+
+.label-bar-wrap {
+    flex: 1;
+    height: 10px;
+    background: var(--gray-100);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.label-bar {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 5px;
+    transition: width 0.3s;
+}
+
+.label-stat-row:nth-child(2) .label-bar { background: var(--coral); }
+.label-stat-row:nth-child(3) .label-bar { background: var(--purple); }
+.label-stat-row:nth-child(4) .label-bar { background: var(--secondary); }
+
+.label-stat-row .label-count {
+    width: 60px;
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    text-align: right;
+}
+
 .dataset-actions {
     display: flex;
     gap: 0.5rem;
@@ -622,7 +669,6 @@ body {
 
 /* Model Card */
 .model-card {
-    cursor: pointer;
     transition: all 0.2s;
 }
 

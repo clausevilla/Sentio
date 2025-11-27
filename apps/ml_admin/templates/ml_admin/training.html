@@ -41,7 +41,7 @@
                 <label class="form-label">Datasets <span class="hint">(click to select)</span></label>
                 <div class="dataset-select">
                     {% for item in uploads %}
-                    <div class="dataset-option" onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }})">
+                    <div class="dataset-option" onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }})" data-distribution='{{ item.distribution_json|safe }}'>
                         <input type="checkbox" data-id="{{ item.upload.id }}" data-count="{{ item.count }}">
                         <div class="ds-info">
                             <span class="ds-name">{{ item.upload.file_name }}</span>
@@ -72,35 +72,51 @@
         </div>
     </div>
 
-    <!-- Current Baseline -->
+    <!-- Selected Data Distribution -->
     <div class="card">
         <div class="card-header">
-            <h3><i class="fas fa-chart-bar"></i> Current Baseline</h3>
+            <h3><i class="fas fa-chart-pie"></i> Selected Data Distribution</h3>
         </div>
         <div class="card-body">
-            {% if active_model %}
-            <div class="baseline-info">
-                <div class="baseline-name">{{ active_model.version_name }}</div>
-                <div class="baseline-metrics">
-                    <div class="metric">
-                        <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</span>
-                        <span class="metric-lbl">Accuracy</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|floatformat:3 }}{% else %}—{% endif %}</span>
-                        <span class="metric-lbl">F1 Score</span>
-                    </div>
+            <div id="distributionDisplay">
+                <div class="empty-state small">
+                    <i class="fas fa-hand-pointer"></i>
+                    <p>Select dataset(s) to see distribution</p>
                 </div>
-                <p class="hint">New models should beat this baseline</p>
             </div>
-            {% else %}
-            <div class="empty-state small">
-                <p>No baseline model yet</p>
+            <div class="chart-wrap" id="distributionChartWrap" style="display: none; height: 200px;">
+                <canvas id="selectedDistChart"></canvas>
             </div>
-            {% endif %}
+            <div id="distributionBars" style="display: none; margin-top: 1rem;"></div>
         </div>
     </div>
 </div>
+
+<!-- Current Baseline -->
+{% if active_model %}
+<div class="card" style="margin: 1.5rem 0;">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-bar"></i> Current Baseline</h3>
+        <span class="badge success"><i class="fas fa-check"></i> Active</span>
+    </div>
+    <div class="card-body">
+        <div class="baseline-info">
+            <div class="baseline-name">{{ active_model.version_name }}</div>
+            <div class="baseline-metrics">
+                <div class="metric">
+                    <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</span>
+                    <span class="metric-lbl">Accuracy</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|floatformat:3 }}{% else %}—{% endif %}</span>
+                    <span class="metric-lbl">F1 Score</span>
+                </div>
+            </div>
+            <p class="hint">New models should beat this baseline</p>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Training History -->
 <div class="card">

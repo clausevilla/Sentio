@@ -7,7 +7,19 @@ let currentUploadId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     initDragAndDrop();
+    initLabelDistChart();
 });
+
+// Label Distribution Chart
+function initLabelDistChart() {
+    if (typeof labelDistData === 'undefined' || !labelDistData || labelDistData.length === 0) return;
+
+    createDoughnutChart(
+        'labelDistChart',
+        labelDistData.map(d => d.label || 'Unknown'),
+        labelDistData.map(d => d.count)
+    );
+}
 
 // Drag and Drop
 function initDragAndDrop() {

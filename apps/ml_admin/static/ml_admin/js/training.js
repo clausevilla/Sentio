@@ -3,6 +3,8 @@
  */
 
 let selectedDatasets = {};
+let datasetDistributions = {};
+let distributionChart = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     initAlgorithmListeners();
@@ -22,13 +24,25 @@ function toggleDataset(element, id, count) {
     checkbox.checked = !checkbox.checked;
     element.classList.toggle('selected', checkbox.checked);
 
+    // Get distribution data from element
+    const distData = element.dataset.distribution;
+    let distribution = [];
+    try {
+        distribution = JSON.parse(distData || '[]');
+    } catch (e) {
+        distribution = [];
+    }
+
     if (checkbox.checked) {
         selectedDatasets[id] = count;
+        datasetDistributions[id] = distribution;
     } else {
         delete selectedDatasets[id];
+        delete datasetDistributions[id];
     }
 
     updateSummary();
+    updateDistributionChart();
 }
 
 // Update training summary
@@ -57,6 +71,113 @@ function updateSummary() {
         summary.style.display = 'none';
         btn.disabled = true;
     }
+}
+
+// Update distribution chart based on selected datasets
+function updateDistributionChart() {
+    const display = document.getElementById('distributionDisplay');
+    const chartWrap = document.getElementById('distributionChartWrap');
+    const barsDiv = document.getElementById('distributionBars');
+
+    const selectedIds = Object.keys(selectedDatasets);
+
+    if (selectedIds.length === 0) {
+        // No selection
+        display.style.display = 'block';
+        display.innerHTML = `
+            <div class="empty-state small">
+                <i class="fas fa-hand-pointer"></i>
+                <p>Select dataset(s) to see distribution</p>
+            </div>
+        `;
+        chartWrap.style.display = 'none';
+        barsDiv.style.display = 'none';
+
+        if (distributionChart) {
+            distributionChart.destroy();
+            distributionChart = null;
+        }
+        return;
+    }
+
+    // Combine distributions from all selected datasets
+    const combined = {};
+
+    selectedIds.forEach(id => {
+        const dist = datasetDistributions[id] || [];
+        dist.forEach(item => {
+            const label = item.label || 'Unknown';
+            combined[label] = (combined[label] || 0) + item.count;
+        });
+    });
+
+    // Convert to arrays
+    const labels = Object.keys(combined).sort();
+    const counts = labels.map(l => combined[l]);
+    const total = counts.reduce((a, b) => a + b, 0);
+
+    if (labels.length === 0) {
+        display.style.display = 'block';
+        display.innerHTML = `
+            <div class="empty-state small">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>No distribution data available</p>
+            </div>
+        `;
+        chartWrap.style.display = 'none';
+        barsDiv.style.display = 'none';
+        return;
+    }
+
+    // Show chart and bars
+    display.style.display = 'none';
+    chartWrap.style.display = 'block';
+    barsDiv.style.display = 'block';
+
+    // Update or create chart
+    const ctx = document.getElementById('selectedDistChart');
+
+    if (distributionChart) {
+        distributionChart.data.labels = labels;
+        distributionChart.data.datasets[0].data = counts;
+        distributionChart.update();
+    } else {
+        distributionChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: counts,
+                    backgroundColor: CHART_COLORS.slice(0, labels.length),
+                    borderWidth: 0,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                cutout: '60%',
+            }
+        });
+    }
+
+    // Update bars
+    let barsHtml = '';
+    labels.forEach((label, i) => {
+        const percent = ((counts[i] / total) * 100).toFixed(1);
+        barsHtml += `
+            <div class="dist-item">
+                <span class="dist-label">${label}</span>
+                <div class="dist-bar">
+                    <div class="dist-fill" style="width: ${percent}%; background: ${CHART_COLORS[i % CHART_COLORS.length]}"></div>
+                </div>
+                <span class="dist-count">${formatNumber(counts[i])} (${percent}%)</span>
+            </div>
+        `;
+    });
+    barsDiv.innerHTML = barsHtml;
 }
 
 // Start training
