@@ -4,6 +4,7 @@ from typing import Dict, Tuple
 import pandas as pd
 
 from apps.ml_admin.models import DatasetRecord, DataUpload
+from ml_pipeline.preprocessing.preprocessor import preprocess_cleaned_data
 
 logger = logging.getLogger(__name__)
 
@@ -236,7 +237,20 @@ def run_cleaning_pipeline(data_upload_id: int) -> Dict:
         upload.is_validated = True
         upload.save()
 
-        logger.info(f'=== Pipeline complete: {len(df_cleaned):,} records saved ===')
+        logger.info(f'=== Cleaning complete: {len(df_cleaned):,} records saved ===')
+
+        # Automatically trigger preprocessing pipeline
+        logger.info('>>> Automatically triggering Preprocessing Phase...')
+
+        # The cleaning output (in DB) becomes the preprocessing input (from DB)
+        preprocess_result = preprocess_cleaned_data(data_upload_id)
+
+        if not preprocess_result.get('success'):
+            # If preprocessing fails, still consider cleaning successful, but report the error.
+            return {
+                'success': False,
+                'error': f'Cleaning successful, but Preprocessing failed: {preprocess_result.get("error")}',
+            }
 
         return {'success': True, 'row_count': len(df_cleaned), 'report': report}
 

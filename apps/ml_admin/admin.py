@@ -1,6 +1,7 @@
 from django.contrib import admin, messages
 
 from ml_pipeline.data_cleaning.cleaner import run_cleaning_pipeline
+from ml_pipeline.preprocessing.preprocessor import preprocess_cleaned_data
 
 from .models import DatasetRecord, DataUpload, ModelVersion, TrainingJob
 
@@ -32,9 +33,9 @@ class DataUploadAdmin(admin.ModelAdmin):
         'row_count',
     ]
     list_filter = ['is_validated', 'uploaded_at']
-    actions = ['trigger_cleaning_pipeline']
+    actions = ['trigger_cleaning_pipeline', 'trigger_preprocessing_pipeline']
 
-    # --- Action for manual triggers ---
+    # --- Action for manual trigger of whole pipeline (cleaning and preprocessing) ---
     def trigger_cleaning_pipeline(self, request, queryset):
         success_count = 0
         for upload in queryset:
@@ -43,22 +44,52 @@ class DataUploadAdmin(admin.ModelAdmin):
                 success_count += 1
                 self.message_user(
                     request,
-                    f'Cleaned {upload.file_name}: {result.get("row_count")} rows.',
+                    f'Success: {upload.file_name}: Cleaned and preprocessed {result.get("row_count")} rows.',
                     messages.SUCCESS,
                 )
             else:
                 self.message_user(
                     request,
-                    f'Error cleaning {upload.file_name}: {result.get("error")}',
+                    f'Error in pipeline {upload.file_name}: {result.get("error")}',
                     messages.ERROR,
                 )
 
-    trigger_cleaning_pipeline.short_description = 'Run Data Cleaning Pipeline'
+    trigger_cleaning_pipeline.short_description = 'Clean and Preprocess Dataset'
+
+    # --- Action for manual trigger (Preprocessing ONLY) ---
+    # You can keep this if you ever need to re-run ONLY preprocessing without re-cleaning
+    def trigger_preprocessing_pipeline(self, request, queryset):
+        success_count = 0
+        for upload in queryset:
+            if not upload.is_validated:
+                self.message_user(
+                    request,
+                    f'Skipping {upload.file_name}: Data not cleaned yet.',
+                    messages.WARNING,
+                )
+                continue
+
+            result = preprocess_cleaned_data(upload.id)
+            if result.get('success'):
+                success_count += 1
+                self.message_user(
+                    request,
+                    f'Re-Preprocessed {upload.file_name}: {result.get("row_count")} rows.',
+                    messages.SUCCESS,
+                )
+            else:
+                self.message_user(
+                    request,
+                    f'Error preprocessing {upload.file_name}: {result.get("error")}',
+                    messages.ERROR,
+                )
+
+    trigger_preprocessing_pipeline.short_description = 'Re-run Preprocessing Only'
 
     # --- Automatically trigger cleaning pipeline on "Save" when dataset is uploaded ---
     def save_model(self, request, obj, form, change):
         """
-        This runs immediately when you click 'SAVE' on the Add/Edit page.
+        Runs cleaning and preprocessing immediately when you click 'SAVE' on the Add DataUpload page.
         """
         # 1. Save the file to the database first
         super().save_model(request, obj, form, change)
@@ -66,7 +97,7 @@ class DataUploadAdmin(admin.ModelAdmin):
         # 2. Automatically run the pipeline
         self.message_user(
             request,
-            f"File saved. Starting cleaning pipeline for '{obj.file_name}'...",
+            f"File saved. Starting data pipeline (cleaning & preprocessing) for '{obj.file_name}'...",
             messages.INFO,
         )
 
@@ -75,13 +106,13 @@ class DataUploadAdmin(admin.ModelAdmin):
         if result.get('success'):
             self.message_user(
                 request,
-                f'Success! Cleaned {result.get("row_count")} rows.',
+                f'Pipeline success! Cleaned and preprocessed {result.get("row_count")} rows.',
                 messages.SUCCESS,
             )
         else:
             self.message_user(
                 request,
-                f'Warning: File saved but cleaning failed. Error: {result.get("error")}',
+                f'Warning: File saved but pipeline failed! Error: {result.get("error")}',
                 messages.WARNING,
             )
 
