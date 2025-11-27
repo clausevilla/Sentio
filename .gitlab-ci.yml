@@ -1,0 +1,50 @@
+stages:
+  - setup
+  - test
+  - train
+
+variables:
+  PYTHON_VERSION: "3.11"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+image: python:${PYTHON_VERSION}-slim
+
+# Cache pip packages between jobs
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .cache/pip
+
+before_script:
+  - echo "Installing dependencies..."
+  - python -m pip install --upgrade pip
+  - pip install -r requirements.txt --no-cache-dir
+
+setup:
+  stage: setup
+  script:
+    - python manage.py check    # Scan project for config / model issues
+  tags:
+    - docker
+
+test:
+  stage: test
+  script:
+    - echo "Running unit tests..."
+    - pytest tests/test_pipeline.py --maxfail=1 --disable-warnings # Run pipeline and data validation tests
+  tags:
+    - docker
+
+train:
+  stage: train
+  script:
+    - echo "Training ML model..."
+    - python manage.py import_dataset data/stressor-data-cleaned.csv --dataset_type train --subset 1000
+    - python ml_models/bert/run_model.py --subset 1000  # Run model for training
+
+  tags:
+    - docker
+  artifacts:
+    paths:
+      - ml_models/bert/trained_model/  # Save trained model artifact
+    expire_in: 1 week
