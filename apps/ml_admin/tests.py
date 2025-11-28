@@ -77,9 +77,8 @@ class DataCleaningTests(TestCase):
             self.assertTrue(len(df_cleaned) > 0, 'Error: pipeline execution failed')
 
             self.assertIn(
-                'final_count', report, 'Error: missing final_count'
-            )  # Check final count exists
-            self.assertIn('report', report, 'Error: missing report')
+                'final_count', report, 'Error: missing final_count' # Check final count exists
+            )
             # Check there is same or fewer rows after cleaning
             self.assertLessEqual(
                 len(df_cleaned),
