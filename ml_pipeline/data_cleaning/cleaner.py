@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Dict, Tuple
 
 import pandas as pd
@@ -74,11 +75,40 @@ class DataCleaningPipeline:
         logger.info('=== Starting Data Cleaning Pipeline ===')
         logger.info(f'File: {file_path}')
 
+        # Validation step 1: check the file format
+        _, file_extension = os.path.splitext(str(file_path))
+
+        if not str(file_path).endswith('.csv'):
+            # Create a readable error message even if extension is missing
+            received = file_extension if file_extension else 'no file extension'
+            raise ValueError(
+                f'Invalid file format. Expected .csv, got {received}'
+                f'(File: {os.path.basename(file_path)})'
+            )
+
         try:
-            # Load data
+            # Load data and handle malformed rows if necessary
             df = pd.read_csv(file_path)
             self.report['original_count'] = len(df)
             logger.info(f'Loaded {len(df):,} rows')
+
+            # Validation step 2: check column names
+            allowed_text_cols = ['statement', 'text', 'Text']
+            allowed_label_cols = ['status', 'label', 'Label']
+
+            found_text = [col for col in df.columns if col in allowed_text_cols]
+            found_label = [col for col in df.columns if col in allowed_label_cols]
+
+            # Raise error if columns are invalid or missing
+            if not found_text or not found_label:
+                raise ValueError(
+                    f'Invalid CSV columns. Found: {list(df.columns)}. '
+                    f'Expected one text column from {allowed_text_cols} and one label column from {allowed_label_cols}.'
+                )
+
+            # Standardize the columns to 'text' and 'label'
+            rename_map = {found_text[0]: 'text', found_label[0]: 'label'}
+            df.rename(columns=rename_map, inplace=True)
 
             # Execute all cleaning steps
             df = self._remove_missing_labels(df)
