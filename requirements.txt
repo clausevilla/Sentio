@@ -1,3 +1,4 @@
 nltk==3.8.1
 pandas
 Django==5.2.7
+swifter==1.4.0
