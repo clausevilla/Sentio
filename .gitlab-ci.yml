@@ -31,7 +31,7 @@ setup:
 test:
   stage: test
   script:
-    - echo "Running tests for preprocessing and cleaning pipeline..."
+    - echo "Running data pipeline and authentication tests..."
     - python manage.py test apps.ml_admin.tests --verbosity=2
     - python manage.py test apps.accounts.tests --verbosity=2
   tags:
