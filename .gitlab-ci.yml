@@ -33,6 +33,7 @@ test:
   script:
     - echo "Running tests for preprocessing and cleaning pipeline..."
     - python manage.py test apps.ml_admin.tests --verbosity=2
+    - python manage.py test apps.accounts.tests --verbosity=2
   tags:
     - docker
 
