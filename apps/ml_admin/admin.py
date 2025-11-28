@@ -1,8 +1,6 @@
-import threading
-
 from django.contrib import admin, messages
 
-from ml_pipeline.data_cleaning.cleaner import run_cleaning_pipeline
+from apps.ml_admin.services import trigger_full_pipeline_in_background
 
 from .models import DatasetRecord, DataUpload, ModelVersion, TrainingJob
 
@@ -35,24 +33,19 @@ class DataUploadAdmin(admin.ModelAdmin):
         'row_count',
     ]
     list_filter = ['status', 'is_validated', 'uploaded_at']
-    actions = ['trigger_cleaning_preprocessing_pipelines']
+    actions = ['run_pipeline']
 
     # --- Action for manual trigger of both pipelines (in case there was a failure) ---
-    def trigger_cleaning_preprocessing_pipelines(self, request, queryset):
+    def run_pipeline(self, request, queryset):
         for upload in queryset:
-            thread = threading.Thread(target=run_cleaning_pipeline, args=(upload.id,))
-            thread.daemon = True
-            thread.start()
-
+            trigger_full_pipeline_in_background(upload.id)
         self.message_user(
             request,
-            'Pipeline started in the background. Refresh page to see status updates.',
+            'Pipeline started in the background. Refresh to see pipeline status changes.',
             messages.INFO,
         )
 
-    trigger_cleaning_preprocessing_pipelines.short_description = (
-        'Clean and preprocess selected datasets'
-    )
+    run_pipeline.short_description = 'Clean and preprocess selected dataset'
 
     # --- Automatically trigger both data processing pipelines on "Save" when dataset is uploaded ---
     def save_model(self, request, obj, form, change):
@@ -61,14 +54,7 @@ class DataUploadAdmin(admin.ModelAdmin):
         """
         super().save_model(request, obj, form, change)
 
-        # Run cleaning and preprocessing pipelines in a background task (separate thread)
-        def background_task(upload_id):
-            run_cleaning_pipeline(upload_id)
-
-        thread = threading.Thread(target=background_task, args=(obj.id,))
-        thread.daemon = True  # Thread dies if server restarts
-        thread.start()
-
+        trigger_full_pipeline_in_background(obj.id)
         self.message_user(
             request,
             'File saved. Data pipeline started in the background.',

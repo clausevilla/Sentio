@@ -3,11 +3,6 @@ from typing import Dict, Tuple
 
 import pandas as pd
 
-from apps.ml_admin.models import DatasetRecord, DataUpload
-from ml_pipeline.preprocessing.preprocessor import (
-    DataPreprocessingPipeline,
-)
-
 logger = logging.getLogger(__name__)
 
 MIN_WORD_COUNT = 3
@@ -95,6 +90,7 @@ class DataCleaningPipeline:
             df = self._fix_encoding(df)
             df = self._remove_duplicates(df)
             df = df.reset_index(drop=True)
+
             df = self._create_label_encodings(df)
 
             self.report['final_count'] = len(df)
@@ -207,120 +203,3 @@ class DataCleaningPipeline:
 
         logger.info(f'Created encodings: {label_to_id}')
         return df
-
-
-def run_cleaning_pipeline(data_upload_id: int) -> Dict:
-    """
-    Clean data and save to database.
-
-    Args:
-        data_upload_id: ID of DataUpload record,
-        necessary for the data cleaning pipeline to get triggered
-
-    Returns:
-        Dict with 'success', 'row_count', or 'error'
-    """
-    try:
-        # Get upload record from DataUpload and set status to processing
-        upload = DataUpload.objects.get(id=data_upload_id)
-
-        # If already processing, stop (to prevent double clicks)
-        if upload.status == 'processing':
-            logger.warning(f'Upload {data_upload_id} is already processing.')
-            return {'success': False, 'error': 'Already processing'}
-
-        upload.status = 'processing'
-        upload.save()
-
-        logger.info(f'Processing upload ID {data_upload_id}: {upload.file_name}')
-
-        # Run cleaning pipeline
-        cleaner = DataCleaningPipeline()
-        df, report = cleaner.clean_file(upload.file_path)
-
-        # Update upload metadata
-        upload.row_count = len(df)
-        upload.is_validated = True
-        upload.save()
-
-        logger.info(f'=== Cleaning complete: {len(df):,} records saved ===')
-
-        # Automatically trigger preprocessing pipeline
-        logger.info('>>> Automatically triggering Preprocessing Phase <<<')
-
-        # Run preprocessing pipeline in memory
-        logger.info('Starting Preprocessing (In-Memory)...')
-        preprocessor = DataPreprocessingPipeline()
-        df, prep_report = preprocessor.preprocess_dataframe(df)
-
-        # Merge reports to get the final report
-        report.update(prep_report)
-
-        # Perform post-preprocessing filtering to remove text < 3 words
-        df['word_count_proc'] = df['text_preprocessed'].str.split().str.len()
-        initial_count = len(df)
-        df = df[df['word_count_proc'] >= MIN_WORD_COUNT].copy()
-        removed_count = initial_count - len(df)
-
-        report['removed_post_preprocessing'] = removed_count
-        logger.info(f'Removed {removed_count:,} rows < 3 words after preprocessing.')
-
-        # Replace the raw text with the cleaned, preprocessed text
-        df['text'] = df['text_preprocessed']
-
-        # Reset dataframe indices
-        df.reset_index(drop=True, inplace=True)
-
-        # Save to the database - bulk insert
-        _save_to_database(df, upload)
-
-        # Update upload fields
-        upload.row_count = len(df)
-        upload.status = 'completed'
-        upload.is_validated = True
-        upload.save()
-
-        logger.info(f'=== Pipeline Complete. Final row count: {len(df):,} ===')
-
-        return {'success': True, 'row_count': len(df), 'report': report}
-
-    except DataUpload.DoesNotExist:
-        error = f'Upload ID {data_upload_id} not found'
-        logger.error(error)
-        return {'success': False, 'error': error}
-
-    except Exception as e:
-        try:
-            upload = DataUpload.objects.get(id=data_upload_id)
-            upload.status = 'failed'
-            upload.save()
-        except:
-            pass
-        error = f'Pipeline failed: {str(e)}'
-        logger.exception(error)
-        return {'success': False, 'error': error}
-
-
-def _save_to_database(df: pd.DataFrame, upload: DataUpload):
-    """Save cleaned DataFrame to DatasetRecord model."""
-    # Delete old records
-    DatasetRecord.objects.filter(data_upload=upload).delete()
-
-    # Bulk create new records
-    records = []
-    for _, row in df.iterrows():
-        record = DatasetRecord(
-            data_upload=upload,
-            text=row['text'],
-            label=row['label'],
-            category_id=row['category_id'],
-            normal=row['normal'],
-            depression=row['depression'],
-            suicidal=row['suicidal'],
-            stress=row['stress'],
-            dataset_type='train',
-        )
-        records.append(record)
-
-    DatasetRecord.objects.bulk_create(records, batch_size=5000)
-    logger.info(f'=== Saved {len(records):,} records to database ===')
