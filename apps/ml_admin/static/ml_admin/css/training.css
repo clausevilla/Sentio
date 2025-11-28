@@ -1,0 +1,131 @@
+/* ========================================
+   ML Admin - Training Page
+   ======================================== */
+
+/* Test Set Banner */
+.test-set-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, rgba(123, 104, 166, 0.1), rgba(123, 104, 166, 0.05));
+    border: 1px solid rgba(123, 104, 166, 0.3);
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+}
+
+.test-set-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--purple);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.test-set-info { flex: 1; }
+.test-set-info strong { display: block; color: var(--gray-800); }
+.test-set-info span { font-size: 0.85rem; color: var(--gray-500); }
+.test-set-detail .text-center { text-align: center; }
+
+/* Algorithm Grid */
+.algo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.algo-option { cursor: pointer; }
+.algo-option input { display: none; }
+
+.algo-card {
+    padding: 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.algo-option input:checked + .algo-card {
+    border-color: var(--primary);
+    background: rgba(74, 124, 89, 0.05);
+}
+
+.algo-card i { font-size: 1.5rem; color: var(--primary); margin-bottom: 0.5rem; }
+.algo-name { display: block; font-weight: 600; color: var(--gray-800); }
+.algo-desc { display: block; font-size: 0.75rem; color: var(--gray-500); }
+
+/* Dataset Selection */
+.dataset-select {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+}
+
+.dataset-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid var(--gray-100);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.dataset-option:last-child { border-bottom: none; }
+.dataset-option:hover { background: var(--gray-50); }
+.dataset-option.selected { background: rgba(74, 124, 89, 0.1); }
+.dataset-option input { accent-color: var(--primary); }
+
+.ds-info { flex: 1; }
+.ds-name { display: block; font-weight: 500; color: var(--gray-800); }
+.ds-count { font-size: 0.8rem; color: var(--gray-500); }
+
+/* Training Summary */
+.training-summary {
+    background: var(--gray-50);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.summary-item:last-child { margin-bottom: 0; }
+.summary-item span { color: var(--gray-500); }
+.summary-item strong { color: var(--gray-800); }
+
+/* Baseline Info */
+.baseline-info { text-align: center; }
+
+.baseline-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 0.75rem;
+}
+
+.baseline-metrics {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Training Results */
+.result-success { color: var(--success); font-weight: 500; }
+.result-failed { color: var(--danger); }
+
+@media (max-width: 768px) {
+    .algo-grid { grid-template-columns: 1fr; }
+    .baseline-metrics { gap: 1rem; }
+}

@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Mental State Distribution Chart
 function initMentalStateChart() {
     if (typeof mentalStateData === 'undefined' || !mentalStateData || mentalStateData.length === 0) return;
-
+    
     createDoughnutChart(
         'mentalStateChart',
         mentalStateData.map(d => d.mental_state || 'Unknown'),
@@ -22,7 +22,7 @@ function initMentalStateChart() {
 // Daily Predictions Chart
 function initDailyChart() {
     if (typeof dailyData === 'undefined' || !dailyData || dailyData.length === 0) return;
-
+    
     createLineChart(
         'dailyChart',
         dailyData.map(d => d.date),
@@ -34,10 +34,10 @@ function initDailyChart() {
 // User Signups Chart
 function initSignupsChart() {
     if (typeof signupsData === 'undefined' || !signupsData || signupsData.length === 0) return;
-
+    
     const ctx = document.getElementById('signupsChart');
     if (!ctx) return;
-
+    
     new Chart(ctx, {
         type: 'bar',
         data: {

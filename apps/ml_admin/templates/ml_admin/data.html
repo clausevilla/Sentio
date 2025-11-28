@@ -2,21 +2,30 @@
 {% load static %}
 {% block title %}Data{% endblock %}
 {% block page_title %}Training Data{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'ml_admin/css/data.css' %}">{% endblock %}
 
 {% block content %}
 <!-- Stats -->
-<div class="stats-row small">
+<div class="stats-row">
     <div class="stat-card">
+        <div class="stat-icon blue"><i class="fas fa-database"></i></div>
         <div class="stat-value">{{ total_uploads }}</div>
         <div class="stat-label">Datasets</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value">{{ validated_count }}</div>
-        <div class="stat-label">Validated</div>
+        <div class="stat-icon green"><i class="fas fa-graduation-cap"></i></div>
+        <div class="stat-value">{{ type_breakdown.training }}</div>
+        <div class="stat-label">Training Records</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value">{{ total_records }}</div>
-        <div class="stat-label">Total Records</div>
+        <div class="stat-icon purple"><i class="fas fa-flask"></i></div>
+        <div class="stat-value">{{ type_breakdown.test }}</div>
+        <div class="stat-label">Test Records</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon coral"><i class="fas fa-question-circle"></i></div>
+        <div class="stat-value">{{ type_breakdown.unlabeled }}</div>
+        <div class="stat-label">Unlabeled</div>
     </div>
     <button class="btn btn-primary" onclick="openModal('uploadModal')">
         <i class="fas fa-plus"></i> Upload CSV
@@ -69,7 +78,22 @@
                 <span><i class="fas fa-user"></i> {{ item.upload.uploaded_by.username|default:"-" }}</span>
                 <span><i class="fas fa-table"></i> {{ item.upload.row_count|default:0 }} rows</span>
             </div>
-
+            
+            <!-- Dataset Type Breakdown -->
+            {% if item.type_breakdown %}
+            <div class="type-badges">
+                {% if item.type_breakdown.Training %}
+                <span class="type-badge training"><i class="fas fa-graduation-cap"></i> {{ item.type_breakdown.Training }} train</span>
+                {% endif %}
+                {% if item.type_breakdown.Test %}
+                <span class="type-badge test"><i class="fas fa-flask"></i> {{ item.type_breakdown.Test }} test</span>
+                {% endif %}
+                {% if item.type_breakdown.Unlabeled %}
+                <span class="type-badge unlabeled"><i class="fas fa-question"></i> {{ item.type_breakdown.Unlabeled }} unlabeled</span>
+                {% endif %}
+            </div>
+            {% endif %}
+            
             <!-- Inline Distribution -->
             {% if item.distribution %}
             <div class="distribution-bars">
@@ -84,10 +108,13 @@
                 {% endfor %}
             </div>
             {% endif %}
-
+            
             <div class="dataset-actions">
                 <button class="btn btn-sm btn-secondary" onclick="viewRecords({{ item.upload.id }}, '{{ item.upload.file_name }}')">
-                    <i class="fas fa-eye"></i> View Records
+                    <i class="fas fa-eye"></i> Records
+                </button>
+                <button class="btn btn-sm btn-secondary" onclick="manageSplit({{ item.upload.id }}, '{{ item.upload.file_name }}')">
+                    <i class="fas fa-random"></i> Split
                 </button>
                 <button class="btn btn-sm btn-danger" onclick="deleteDataset({{ item.upload.id }}, '{{ item.upload.file_name }}')">
                     <i class="fas fa-trash"></i>
@@ -151,6 +178,21 @@
                 <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
             </div>
             <div class="pagination" id="recordsPagination"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Split Modal -->
+<div class="modal" id="splitModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-random"></i> Manage Train/Test Split</h3>
+            <button class="modal-close" onclick="closeModal('splitModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="splitContent">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+            </div>
         </div>
     </div>
 </div>

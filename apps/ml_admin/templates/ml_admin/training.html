@@ -2,12 +2,32 @@
 {% load static %}
 {% block title %}Training{% endblock %}
 {% block page_title %}Training Center{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'ml_admin/css/training.css' %}">{% endblock %}
 
 {% block content %}
 {% if running_count > 0 %}
 <div class="alert info">
     <i class="fas fa-spinner fa-spin"></i>
     <span><strong>{{ running_count }}</strong> training job(s) currently running</span>
+</div>
+{% endif %}
+
+<!-- Test Set Info Banner -->
+{% if test_set_info.total > 0 %}
+<div class="test-set-banner">
+    <div class="test-set-icon"><i class="fas fa-lock"></i></div>
+    <div class="test-set-info">
+        <strong>Fixed Test Set</strong>
+        <span>{{ test_set_info.total }} records · Used for all model evaluations</span>
+    </div>
+    <button class="btn btn-sm btn-secondary" onclick="openModal('testSetModal')">
+        <i class="fas fa-eye"></i> View Distribution
+    </button>
+</div>
+{% else %}
+<div class="alert warning">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span><strong>No test set defined!</strong> Mark some records as "Test" in Django Admin to enable consistent model evaluation.</span>
 </div>
 {% endif %}
 
@@ -35,10 +55,10 @@
                     {% endfor %}
                 </div>
             </div>
-
+            
             <!-- Dataset Selection -->
             <div class="form-section">
-                <label class="form-label">Datasets <span class="hint">(click to select)</span></label>
+                <label class="form-label">Training Data <span class="hint">({{ training_totals.records }} total training records)</span></label>
                 <div class="dataset-select">
                     {% for item in uploads %}
                     <div class="dataset-option" onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }})" data-distribution='{{ item.distribution_json|safe }}'>
@@ -51,14 +71,14 @@
                     {% endfor %}
                 </div>
             </div>
-
+            
             <!-- Summary -->
             <div class="training-summary" id="summary" style="display:none">
                 <div class="summary-item"><span>Algorithm:</span><strong id="sumAlgo">-</strong></div>
                 <div class="summary-item"><span>Datasets:</span><strong id="sumDatasets">0</strong></div>
                 <div class="summary-item"><span>Total Records:</span><strong id="sumRecords">0</strong></div>
             </div>
-
+            
             <button class="btn btn-primary btn-block" id="trainBtn" onclick="startTraining()" disabled>
                 <i class="fas fa-play"></i> Start Training
             </button>
@@ -71,7 +91,7 @@
             {% endif %}
         </div>
     </div>
-
+    
     <!-- Selected Data Distribution -->
     <div class="card">
         <div class="card-header">
@@ -170,6 +190,28 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Test Set Modal -->
+<div class="modal" id="testSetModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-flask"></i> Fixed Test Set</h3>
+            <button class="modal-close" onclick="closeModal('testSetModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="test-set-detail">
+                <p class="text-center"><strong>{{ test_set_info.total }}</strong> records reserved for testing</p>
+                <p class="hint text-center">This test set is used to evaluate all trained models for fair comparison.</p>
+                
+                <div class="chart-wrap" style="height: 200px; margin-top: 1rem;">
+                    <canvas id="testSetChart"></canvas>
+                </div>
+                
+                <div id="testSetBars" style="margin-top: 1rem;"></div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -180,6 +222,7 @@
     const URLS = {
         startTraining: '{% url "ml_admin:start_training" %}'
     };
+    const testSetDistribution = {{ test_set_json|safe }};
 </script>
 <script src="{% static 'ml_admin/js/training.js' %}"></script>
 {% endblock %}

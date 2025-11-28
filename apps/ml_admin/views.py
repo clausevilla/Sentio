@@ -112,17 +112,31 @@ def data_view(request):
             .values('label')
             .annotate(count=Count('id'))
         )
+        # Get dataset_type breakdown for this upload
+        type_breakdown = list(
+            DatasetRecord.objects.filter(data_upload=upload)
+            .values('dataset_type')
+            .annotate(count=Count('id'))
+        )
         uploads_with_stats.append({
             'upload': upload,
             'distribution': dist,
+            'type_breakdown': {t['dataset_type']: t['count'] for t in type_breakdown},
         })
 
-    # Overall distribution
+    # Overall distribution by label
     overall_distribution = list(
         DatasetRecord.objects.values('label')
         .annotate(count=Count('id'))
         .order_by('-count')
     )
+
+    # Overall breakdown by dataset_type
+    type_breakdown = {
+        'training': DatasetRecord.objects.filter(dataset_type='Training').count(),
+        'test': DatasetRecord.objects.filter(dataset_type='Test').count(),
+        'unlabeled': DatasetRecord.objects.filter(dataset_type='Unlabeled').count(),
+    }
 
     total_records = DatasetRecord.objects.count()
 
@@ -133,6 +147,8 @@ def data_view(request):
         'validated_count': DataUpload.objects.filter(is_validated=True).count(),
         'overall_distribution': overall_distribution,
         'overall_distribution_json': json.dumps(overall_distribution),
+        'type_breakdown': type_breakdown,
+        'active_model': ModelVersion.objects.filter(is_active=True).first(),
     })
 
 
@@ -202,6 +218,101 @@ def delete_upload_api(request, upload_id):
 
 
 @staff_member_required
+@require_http_methods(['GET'])
+def get_upload_split_api(request, upload_id):
+    """Get current train/test split for an upload"""
+    upload = get_object_or_404(DataUpload, id=upload_id)
+
+    breakdown = {
+        'training': DatasetRecord.objects.filter(data_upload=upload, dataset_type='Training').count(),
+        'test': DatasetRecord.objects.filter(data_upload=upload, dataset_type='Test').count(),
+        'unlabeled': DatasetRecord.objects.filter(data_upload=upload, dataset_type='Unlabeled').count(),
+    }
+    breakdown['total'] = sum(breakdown.values())
+
+    return JsonResponse({
+        'success': True,
+        'upload_id': upload_id,
+        'file_name': upload.file_name,
+        'breakdown': breakdown,
+    })
+
+
+@staff_member_required
+@require_http_methods(['POST'])
+def update_upload_split_api(request, upload_id):
+    """Update train/test split for an upload"""
+    import random
+
+    try:
+        upload = get_object_or_404(DataUpload, id=upload_id)
+        data = json.loads(request.body)
+
+        action = data.get('action')  # 'split', 'all_training', 'all_test'
+        test_percent = data.get('test_percent', 20)  # Default 20% test
+
+        records = list(DatasetRecord.objects.filter(data_upload=upload))
+
+        if not records:
+            return JsonResponse({'success': False, 'error': 'No records found'}, status=400)
+
+        if action == 'all_training':
+            DatasetRecord.objects.filter(data_upload=upload).update(dataset_type='Training')
+            message = f'All {len(records)} records set to Training'
+
+        elif action == 'all_test':
+            DatasetRecord.objects.filter(data_upload=upload).update(dataset_type='Test')
+            message = f'All {len(records)} records set to Test'
+
+        elif action == 'split':
+            # Stratified split by label
+            from collections import defaultdict
+
+            # Group by label
+            by_label = defaultdict(list)
+            for record in records:
+                by_label[record.label].append(record)
+
+            training_ids = []
+            test_ids = []
+
+            for label, label_records in by_label.items():
+                random.shuffle(label_records)
+                n_test = max(1, int(len(label_records) * test_percent / 100))
+
+                for i, record in enumerate(label_records):
+                    if i < n_test:
+                        test_ids.append(record.id)
+                    else:
+                        training_ids.append(record.id)
+
+            # Update in bulk
+            DatasetRecord.objects.filter(id__in=training_ids).update(dataset_type='Training')
+            DatasetRecord.objects.filter(id__in=test_ids).update(dataset_type='Test')
+
+            message = f'Split: {len(training_ids)} training, {len(test_ids)} test ({test_percent}%)'
+
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid action'}, status=400)
+
+        # Return updated breakdown
+        breakdown = {
+            'training': DatasetRecord.objects.filter(data_upload=upload, dataset_type='Training').count(),
+            'test': DatasetRecord.objects.filter(data_upload=upload, dataset_type='Test').count(),
+            'unlabeled': DatasetRecord.objects.filter(data_upload=upload, dataset_type='Unlabeled').count(),
+        }
+
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'breakdown': breakdown,
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@staff_member_required
 def get_dataset_records_api(request, upload_id):
     """API to get records for modal display"""
     upload = get_object_or_404(DataUpload, id=upload_id)
@@ -234,20 +345,42 @@ def training_view(request):
     available_uploads = DataUpload.objects.filter(is_validated=True).order_by('-uploaded_at')
     active_model = ModelVersion.objects.filter(is_active=True).first()
 
-    # Add record counts and distribution for each upload
+    # Add record counts and distribution for each upload (Training records only)
     uploads_with_counts = []
     for upload in available_uploads:
-        count = DatasetRecord.objects.filter(data_upload=upload).count()
-        dist = list(
-            DatasetRecord.objects.filter(data_upload=upload)
+        # Only count Training records
+        training_count = DatasetRecord.objects.filter(
+            data_upload=upload,
+            dataset_type='Training'
+        ).count()
+
+        if training_count > 0:  # Only show uploads with training data
+            dist = list(
+                DatasetRecord.objects.filter(data_upload=upload, dataset_type='Training')
+                .values('label')
+                .annotate(count=Count('id'))
+            )
+            uploads_with_counts.append({
+                'upload': upload,
+                'count': training_count,
+                'distribution_json': json.dumps(dist),
+            })
+
+    # Fixed test set info
+    test_set_info = {
+        'total': DatasetRecord.objects.filter(dataset_type='Test').count(),
+        'distribution': list(
+            DatasetRecord.objects.filter(dataset_type='Test')
             .values('label')
             .annotate(count=Count('id'))
-        )
-        uploads_with_counts.append({
-            'upload': upload,
-            'count': count,
-            'distribution_json': json.dumps(dist),
-        })
+        ),
+    }
+
+    # Training data totals
+    training_totals = {
+        'records': DatasetRecord.objects.filter(dataset_type='Training').count(),
+        'uploads': len(uploads_with_counts),
+    }
 
     return render(request, 'ml_admin/training.html', {
         'jobs': jobs,
@@ -255,6 +388,9 @@ def training_view(request):
         'algorithms': ML_ALGORITHMS,
         'active_model': active_model,
         'running_count': TrainingJob.objects.filter(status='RUNNING').count(),
+        'test_set_info': test_set_info,
+        'test_set_json': json.dumps(test_set_info['distribution']),
+        'training_totals': training_totals,
     })
 
 

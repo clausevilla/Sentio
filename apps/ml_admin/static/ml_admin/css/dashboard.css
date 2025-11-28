@@ -1,0 +1,125 @@
+/* ========================================
+   ML Admin - Dashboard Page
+   ======================================== */
+
+/* Dashboard cards */
+.content > .grid-2 {
+    row-gap: 2.5rem;
+}
+
+/* Stats row spacing */
+.stats-row {
+    margin-bottom: 2rem;
+}
+
+/* Model Display */
+.model-display { text-align: center; }
+
+.model-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 1rem;
+}
+
+.model-metrics {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.model-metrics .metric { text-align: center; }
+
+.metric-val {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.metric-lbl {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    text-transform: uppercase;
+}
+
+/* Job Stats - styled boxes */
+.job-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.job-stat {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--gray-600);
+}
+
+.job-stat span {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.job-stat.pending {
+    background: rgba(245, 158, 11, 0.05);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+.job-stat.pending span { color: var(--warning); }
+
+.job-stat.running {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+.job-stat.running span { color: var(--info); }
+
+.job-stat.completed {
+    background: rgba(16, 185, 129, 0.05);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+.job-stat.completed span { color: var(--success); }
+
+.job-stat.failed {
+    background: rgba(239, 68, 68, 0.05);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+.job-stat.failed span { color: var(--danger); }
+
+/* Quick Actions */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 1.25rem;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: var(--gray-700);
+    transition: all 0.2s;
+}
+
+.action-btn:hover { background: var(--primary); color: white; }
+.action-btn i { font-size: 1.5rem; }
+.action-btn span { font-size: 0.85rem; font-weight: 500; }
+
+@media (max-width: 768px) {
+    .quick-actions { grid-template-columns: 1fr; }
+    .model-metrics { gap: 1rem; }
+    .job-stats { grid-template-columns: repeat(2, 1fr); }
+}

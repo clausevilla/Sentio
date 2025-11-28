@@ -7,20 +7,24 @@
     <title>{% block title %}ML Admin{% endblock %} - Sentio</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="{% static 'ml_admin/css/admin.css' %}">
+    <!-- Base + Components (always loaded) -->
+    <link rel="stylesheet" href="{% static 'ml_admin/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'ml_admin/css/components.css' %}">
+    <!-- Page-specific CSS -->
+    {% block page_css %}{% endblock %}
 </head>
 <body>
     <div class="admin-layout">
         <!-- Sidebar Overlay (mobile) -->
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-
+        
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand">
                 <i class="fas fa-brain"></i>
                 <span>Sentio ML</span>
             </div>
-
+            
             <nav class="sidebar-nav">
                 <!-- Overview Section -->
                 <div class="nav-section">
@@ -34,7 +38,7 @@
                         <span>Analytics</span>
                     </a>
                 </div>
-
+                
                 <!-- ML Management Section -->
                 <div class="nav-section">
                     <div class="nav-title">ML Management</div>
@@ -51,7 +55,7 @@
                         <span>Models</span>
                     </a>
                 </div>
-
+                
                 <!-- System Section -->
                 <div class="nav-section">
                     <div class="nav-title">System</div>
@@ -60,7 +64,7 @@
                         <span>Users</span>
                     </a>
                 </div>
-
+                
                 <!-- Links Section -->
                 <div class="nav-section">
                     <div class="nav-title">Links</div>
@@ -74,7 +78,7 @@
                     </a>
                 </div>
             </nav>
-
+            
             <div class="sidebar-footer">
                 <div class="user-info">
                     <i class="fas fa-user-circle"></i>
@@ -88,7 +92,7 @@
                 </form>
             </div>
         </aside>
-
+        
         <!-- Main -->
         <main class="main-content">
             <header class="topbar">
@@ -102,18 +106,18 @@
                 <div class="active-badge warning"><i class="fas fa-exclamation-triangle"></i> No Model</div>
                 {% endif %}
             </header>
-
+            
             <div class="content">
                 {% block content %}{% endblock %}
             </div>
         </main>
     </div>
-
+    
     <div class="toast-container" id="toasts"></div>
-
+    
     <!-- Common JS -->
     <script src="{% static 'ml_admin/js/admin.js' %}"></script>
-
+    
     {% block scripts %}{% endblock %}
 </body>
 </html>

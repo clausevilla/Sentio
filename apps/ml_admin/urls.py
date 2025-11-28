@@ -1,5 +1,5 @@
 """
-ML Admin URLs
+ML Admin URLs - 6 Pages + APIs
 """
 
 from django.urls import path
@@ -20,6 +20,8 @@ urlpatterns = [
     path('api/upload/', views.upload_csv_api, name='upload_csv'),
     path('api/data/<int:upload_id>/delete/', views.delete_upload_api, name='delete_upload'),
     path('api/data/<int:upload_id>/records/', views.get_dataset_records_api, name='get_records'),
+    path('api/data/<int:upload_id>/split/', views.get_upload_split_api, name='get_split'),
+    path('api/data/<int:upload_id>/split/update/', views.update_upload_split_api, name='update_split'),
 
     # Training APIs
     path('api/training/start/', views.start_training_api, name='start_training'),
