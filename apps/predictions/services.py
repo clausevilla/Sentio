@@ -19,5 +19,6 @@ def analyze_text(analyzed_text):
     label = outputMap.get(int(prediction[0]))
     proba = MODEL.predict_proba([analyzed_text])[0]
     confidence = max(proba)
+    model_version = 'v1.0.0'  # Set Dynamically in the future
 
-    return (label, confidence)
+    return (label, confidence, model_version)

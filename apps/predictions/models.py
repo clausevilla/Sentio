@@ -1,8 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-from apps.ml_admin.models import ModelVersion
-
 
 class TextSubmission(models.Model):
     """
@@ -12,7 +10,9 @@ class TextSubmission(models.Model):
     Each submission generates exactly one PredictionResult via OneToOne relationship.
     """
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, null=True, blank=True, default=1
+    )
     text_content = models.TextField(max_length=5000)
     submitted_at = models.DateTimeField(auto_now_add=True)
 
@@ -29,9 +29,12 @@ class PredictionResult(models.Model):
     """
 
     submission = models.OneToOneField(TextSubmission, on_delete=models.CASCADE)
-    model_version = models.ForeignKey(ModelVersion, on_delete=models.PROTECT)
+    # model_version = models.ForeignKey(ModelVersion, on_delete=models.PROTECT)
+    model_version = models.TextField()
     stress_level = models.IntegerField()
-    emotional_tone = models.FloatField()
-    social_confidence = models.FloatField()
+    prediction = models.TextField()
+    emotional_tone = models.FloatField(default=0.0)
+    social_confidence = models.FloatField(default=0.0)
+    confidence = models.FloatField(default=0.0)
     recommendations = models.TextField()
     predicted_at = models.DateTimeField(auto_now_add=True)
