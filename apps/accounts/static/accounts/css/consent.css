@@ -1,0 +1,173 @@
+/* Consent Page Styles */
+
+.consent-container {
+    max-width: 800px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.consent-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.consent-header i {
+    font-size: 3rem;
+    color: #3498db;
+    margin-bottom: 1rem;
+}
+
+.consent-header h1 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.consent-header p {
+    color: #7f8c8d;
+    font-size: 1.1rem;
+}
+
+.consent-content {
+    background: #f8f9fa;
+    border-left: 4px solid #3498db;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    border-radius: 4px;
+}
+
+.consent-content h2 {
+    color: #34495e;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+}
+
+.consent-content ul {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.consent-content li {
+    margin-bottom: 0.8rem;
+    line-height: 1.6;
+    color: #555;
+}
+
+.consent-warning {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+    padding: 1rem;
+    margin: 1.5rem 0;
+    display: flex;
+    align-items: start;
+    gap: 1rem;
+}
+
+.consent-warning i {
+    color: #856404;
+    font-size: 1.5rem;
+    margin-top: 0.2rem;
+}
+
+.consent-warning p {
+    margin: 0;
+    color: #856404;
+    line-height: 1.6;
+}
+
+.consent-checkbox {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    transition: all 0.3s;
+}
+
+.consent-checkbox:hover {
+    border-color: #3498db;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
+}
+
+.consent-checkbox label {
+    display: flex;
+    align-items: start;
+    cursor: pointer;
+    gap: 1rem;
+}
+
+.consent-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-top: 0.2rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.consent-checkbox label span {
+    color: #2c3e50;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.consent-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.btn {
+    padding: 0.8rem 2rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: #3498db;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.btn-primary:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-secondary {
+    background: #ecf0f1;
+    color: #7f8c8d;
+}
+
+.btn-secondary:hover {
+    background: #d5dbdb;
+}
+
+.privacy-link {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.privacy-link a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+.privacy-link a:hover {
+    text-decoration: underline;
+}
