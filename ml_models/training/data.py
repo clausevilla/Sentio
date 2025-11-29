@@ -11,6 +11,31 @@ class WordTokenizer:
     Word-level tokenizer that builds vocabulary from training data.
 
     Expects preprocessed (lowercased) text.
+
+    Splits text on whitespace, maps words to integer IDs for neural network input.
+    Unknown words map to <UNK> (index 1), padding is <PAD> (index 0).
+
+    Rather than utilizing existing tokenizer from BERT, we utilized idea from Pytorch link below,
+    but since usecase is only classification and not decoding it's simplified and a limit of
+    vocabulary size set. The current dataset does not go over 50k unique tokens.
+
+    Reference:
+        https://docs.pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html
+
+    1. Count word frequencies
+    2. Keep top N words
+    3. Map word to integer
+    4. Handle unknowns with <UNK>
+    5. Handle padding with <PAD>
+
+    Example:
+        tokenizer = WordTokenizer(vocab_size=10000)
+        tokenizer.fit(["I feel anxious", "I am happy"])
+
+        tokenizer.encode("I feel great", max_len=5)
+            [2, 3, 1, 0, 0]
+            I feel <UNK> <PAD> <PAD>
+            'great' not in vocab -> <UNK> (1)
     """
 
     def __init__(self, vocab_size: int = 50000):
@@ -26,7 +51,7 @@ class WordTokenizer:
         Build vocabulary from training texts.
 
         Counts word frequencies and keeps the most common words
-        up to vocab_size. Words are lowercased.
+        up to vocab_size.
 
         Args:
             texts: List of training texts
@@ -46,6 +71,10 @@ class WordTokenizer:
     def encode(self, text: str, max_len: int) -> List[int]:
         """
         Convert text to list of token IDs.
+
+        Words not in vocabulary become <UNK> (1).
+        Sequences longer than max_len are truncated.
+        Sequences shorter than max_len are padded with <PAD> (0).
 
         Args:
             text: Input text to encode
@@ -72,8 +101,18 @@ class TextDataset(Dataset):
     """
     PyTorch Dataset for text classification.
 
+    Tokenizes texts on-the-fly and returns tensors ready for model input.
+
     Reference:
         https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html#creating-a-custom-dataset-for-your-files
+
+    Example:
+        dataset = TextDataset(texts, labels, tokenizer, max_len=256)
+        loader = DataLoader(dataset, batch_size=32)
+
+        for batch in loader:
+            input_ids = batch['input_ids']  # (32, 256)
+            labels = batch['label']         # (32,)
     """
 
     def __init__(
