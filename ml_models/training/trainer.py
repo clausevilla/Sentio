@@ -131,14 +131,19 @@ class ModelTrainer:
         """
         Train PyTorch-based models (LSTM, Transformer).
 
+        Supports two modes:
+            - 'full': Train from scratch (default)
+            - 'incremental': Fine-tune existing model (requires base_model_path)
+
         Pipeline:
-            1. Fit tokenizer on training text
+            1. Load existing or fit new tokenizer/label_encoder
             2. Encode labels to integers
             3. Create DataLoaders for batching
             4. Build model with vocab size and class count
-            5. Train with AdamW + OneCycleLR
-            6. Checkpoint best model by validation accuracy
-            7. Evaluate and save
+            5. Load weights if incremental training
+            6. Train with AdamW + OneCycleLR
+            7. Early stopping based on validation accuracy
+            8. Evaluate and save best model
         """
         X_train, y_train, X_test, y_test = data
 
@@ -146,20 +151,60 @@ class ModelTrainer:
         batch_size = config.get('batch_size', 32)
         epochs = config.get('epochs', 10)
         max_seq_len = config.get('max_seq_len', 512)
-        learning_rate = config.get('learning_rate', 1e-4)
+        patience = config.get('patience', 5)
+        min_delta = config.get('min_delta', 0.001)
+
+        # Training mode: 'full' or 'incremental'
+        mode = config.get('training_mode', 'full')
+        base_model_path = config.get('base_model_path', None)
 
         if isinstance(X_train, np.ndarray):
             X_train = X_train.tolist()
             X_test = X_test.tolist()
 
-        logger.info('Fitting tokenizer...', extra={'job_id': job_id})
-        tokenizer = WordTokenizer(vocab_size=config.get('vocab_size', 50000))
-        tokenizer.fit(X_train)
+        # Load existing or create new tokenizer/label_encoder
+        if mode == 'incremental' and base_model_path:
+            logger.info(
+                f'Loading model from {base_model_path}', extra={'job_id': job_id}
+            )
+            checkpoint = self.storage.load_neural_model(base_model_path)
+            tokenizer = checkpoint['tokenizer']
+            label_encoder = checkpoint['label_encoder']
+            model_state = checkpoint['model_state_dict']
+            use_config = checkpoint['config']
+            learning_rate = config.get(
+                'learning_rate', 1e-5
+            )  # Lower default for fine-tuning
 
-        label_encoder = LabelEncoder()
-        label_encoder.fit(y_train)
+            if config.get('expand_vocab', False):
+                new_words = tokenizer.expand_vocab(X_train)
+                logger.info(f'Added {new_words} new words', extra={'job_id': job_id})
+        else:
+            logger.info('Fitting tokenizer...', extra={'job_id': job_id})
+            tokenizer = WordTokenizer(vocab_size=config.get('vocab_size', 30000))
+            tokenizer.fit(X_train)
+            label_encoder = LabelEncoder()
+            label_encoder.fit(y_train)
+            model_state = None
+            use_config = config
+            learning_rate = config.get('learning_rate', 1e-4)
+
+        # Common path from here
         y_train_encoded = label_encoder.transform(y_train)
         y_test_encoded = label_encoder.transform(y_test)
+
+        # Build model
+        model_class = self.PYTORCH_MODELS[model_name]
+        model_wrapper = model_class(use_config)
+        model_wrapper.build_model(
+            vocab_size=tokenizer.vocab_size_actual(),
+            num_classes=len(label_encoder.classes_),
+        )
+        model = model_wrapper.model
+
+        # Load weights if incremental
+        if model_state is not None:
+            model.load_state_dict(model_state)
 
         logger.info(
             f'Vocab size: {tokenizer.vocab_size_actual()}, '
@@ -177,43 +222,29 @@ class ModelTrainer:
             test_dataset, batch_size=batch_size, shuffle=False, num_workers=0
         )
 
-        model_class = self.PYTORCH_MODELS[model_name]
-        model_wrapper = model_class(config)
-        model_wrapper.build_model(
-            vocab_size=tokenizer.vocab_size_actual(),
-            num_classes=len(label_encoder.classes_),
-        )
-        model = model_wrapper.model
-
         logger.info(
             f'Model parameters: {model_wrapper.get_num_parameters():,}',
             extra={'job_id': job_id},
         )
 
         # Class weighting for imbalanced dataset
-        # Inverse frequency: rare classes get higher weight
-        # Normalization ensures weights sum to num_classes (stable loss scale)
         class_counts = np.bincount(y_train_encoded)
         class_weights = 1.0 / class_counts
         class_weights = class_weights / class_weights.sum() * len(class_weights)
         class_weights = torch.tensor(class_weights, dtype=torch.float).to(self.device)
 
         criterion = nn.CrossEntropyLoss(weight=class_weights)
-
-        # Have tried SGD (stochastic gradient descent), Adam and AdamW has given best results
-        # AdamW: Adam with decoupled weight decay
-        # Better regularization than L2 penalty in original Adam
         optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
 
-        # OneCycleLR: Learning rate starts low, peaks at max_lr, then anneals
-        # Often faster convergence than constant LR or step decay
         total_steps = len(train_loader) * epochs
         scheduler = OneCycleLR(
             optimizer, max_lr=learning_rate * 10, total_steps=total_steps
         )
 
+        # Early stopping setup
         best_accuracy = 0.0
         best_state = None
+        epochs_without_improvement = 0
 
         for epoch in range(epochs):
             model.train()
@@ -228,8 +259,6 @@ class ModelTrainer:
                 loss = criterion(logits, labels)
                 loss.backward()
 
-                # Gradient clipping prevents exploding gradients
-                # Common in transformers and RNNs
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
                 optimizer.step()
@@ -246,13 +275,22 @@ class ModelTrainer:
                 extra={'job_id': job_id},
             )
 
-            # Checkpoint best model (by validation accuracy, not loss)
-            # Prevents overfitting: we keep the most generalizable state
-            if val_accuracy > best_accuracy:
+            # Early stopping check
+            if val_accuracy > best_accuracy + min_delta:
                 best_accuracy = val_accuracy
                 best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+                epochs_without_improvement = 0
+                logger.info('  -> New best model saved!', extra={'job_id': job_id})
+            else:
+                epochs_without_improvement += 1
+                if epochs_without_improvement >= patience:
+                    logger.info(
+                        f'Early stopping at epoch {epoch + 1} '
+                        f'(no improvement for {patience} epochs)',
+                        extra={'job_id': job_id},
+                    )
+                    break
 
-        # Restore best checkpoint for final evaluation and saving
         if best_state is not None:
             model.load_state_dict(best_state)
 
@@ -264,7 +302,7 @@ class ModelTrainer:
             model=model,
             tokenizer=tokenizer,
             label_encoder=label_encoder,
-            config=config,
+            config=use_config,
             filename=f'{model_name}_{job_id}.pt',
         )
 

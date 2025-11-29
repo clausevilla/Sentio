@@ -30,11 +30,11 @@ class WordTokenizer:
 
     Example:
         tokenizer = WordTokenizer(vocab_size=10000)
-        tokenizer.fit(["I feel anxious", "I am happy"])
+        tokenizer.fit(["i feel anxious", "i am happy"])
 
-        tokenizer.encode("I feel great", max_len=5)
+        tokenizer.encode("i feel great", max_len=5)
             [2, 3, 1, 0, 0]
-            I feel <UNK> <PAD> <PAD>
+            i feel <UNK> <PAD> <PAD>
             'great' not in vocab -> <UNK> (1)
     """
 
@@ -54,7 +54,7 @@ class WordTokenizer:
         up to vocab_size.
 
         Args:
-            texts: List of training texts
+            texts: List of training texts (expected to be preprocessed/lowercased)
         """
         word_counts = {}
         for text in texts:
@@ -65,8 +65,39 @@ class WordTokenizer:
         # -2 because <PAD> and <UNK> are already in vocabulary
         sorted_words = sorted(word_counts.items(), key=lambda x: -x[1])
         for word, _ in sorted_words[: self.vocab_size - 2]:
-            idx = len(self.word2idx)
-            self.word2idx[word] = idx
+            self.word2idx[word] = len(self.word2idx)
+
+    def expand_vocab(self, texts: List[str]) -> int:
+        """
+        Add new words from texts to existing vocabulary.
+
+        Used for incremental training when new data may contain words
+        not seen during initial training. Preserves existing word -> index
+        mappings and only adds new words up to vocab_size limit.
+
+        Args:
+            texts: List of texts that may contain new words
+
+        Returns:
+            Number of new words added to vocabulary
+        """
+        word_counts = {}
+        for text in texts:
+            for word in text.split():
+                if word not in self.word2idx:
+                    word_counts[word] = word_counts.get(word, 0) + 1
+
+        remaining_slots = self.vocab_size - len(self.word2idx)
+        if remaining_slots <= 0:
+            return 0
+
+        sorted_new = sorted(word_counts.items(), key=lambda x: -x[1])
+        new_words = 0
+        for word, _ in sorted_new[:remaining_slots]:
+            self.word2idx[word] = len(self.word2idx)
+            new_words += 1
+
+        return new_words
 
     def encode(self, text: str, max_len: int) -> List[int]:
         """
