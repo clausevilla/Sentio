@@ -1,5 +1,4 @@
 # Author: Marcus Berggren
-
 import logging
 from typing import Any, Dict, Tuple
 
@@ -7,8 +6,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import LabelEncoder
+from torch.optim import AdamW
+from torch.optim.lr_scheduler import OneCycleLR
 from torch.utils.data import DataLoader
 
+from ml_models.evaluation.evaluator import ModelEvaluator
 from ml_models.models import (
     LogisticRegressionModel,
     LSTMModel,
@@ -41,6 +43,7 @@ class ModelTrainer:
     def __init__(self, storage_handler: StorageHandler):
         self.storage = storage_handler
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.evaluator = ModelEvaluator(self.device)
         logger.info(f'Initialized ModelTrainer with device: {self.device}')
 
     def train(
@@ -99,6 +102,8 @@ class ModelTrainer:
         logger.info(f'Evaluating on {len(X_test)} samples', extra={'job_id': job_id})
         metrics = model.evaluate(X_test, y_test)
 
+        self.evaluator.log_feature_importance(model, job_id)
+
         model_path = self.storage.save_sklearn_model(
             model.pipeline, f'{model_name}_{job_id}.pkl'
         )
@@ -126,8 +131,14 @@ class ModelTrainer:
         """
         Train PyTorch-based models (LSTM, Transformer).
 
-        Follows standard PyTorch training loop pattern with separate
-        train_loop and test_loop functions.
+        Pipeline:
+            1. Fit tokenizer on training text
+            2. Encode labels to integers
+            3. Create DataLoaders for batching
+            4. Build model with vocab size and class count
+            5. Train with AdamW + OneCycleLR
+            6. Checkpoint best model by validation accuracy
+            7. Evaluate and save
         """
         X_train, y_train, X_test, y_test = data
 
@@ -179,41 +190,76 @@ class ModelTrainer:
             extra={'job_id': job_id},
         )
 
-        # Loss function and optimizer
-        loss_fn = nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+        # Class weighting for imbalanced dataset
+        # Inverse frequency: rare classes get higher weight
+        # Normalization ensures weights sum to num_classes (stable loss scale)
+        class_counts = np.bincount(y_train_encoded)
+        class_weights = 1.0 / class_counts
+        class_weights = class_weights / class_weights.sum() * len(class_weights)
+        class_weights = torch.tensor(class_weights, dtype=torch.float).to(self.device)
+
+        criterion = nn.CrossEntropyLoss(weight=class_weights)
+
+        # Have tried SGD (stochastic gradient descent), Adam and AdamW has given best results
+        # AdamW: Adam with decoupled weight decay
+        # Better regularization than L2 penalty in original Adam
+        optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
+
+        # OneCycleLR: Learning rate starts low, peaks at max_lr, then anneals
+        # Often faster convergence than constant LR or step decay
+        total_steps = len(train_loader) * epochs
+        scheduler = OneCycleLR(
+            optimizer, max_lr=learning_rate * 10, total_steps=total_steps
+        )
 
         best_accuracy = 0.0
-        best_model_state = None
+        best_state = None
 
         for epoch in range(epochs):
-            logger.info(f'\nEpoch {epoch + 1}/{epochs}')
-            logger.info('-' * 40)
+            model.train()
+            total_loss = 0.0
 
-            train_loss = self._train_loop(train_loader, model, loss_fn, optimizer)
-            test_loss, accuracy = self._test_loop(test_loader, model, loss_fn)
+            for batch in train_loader:
+                input_ids = batch['input_ids'].to(self.device)
+                labels = batch['label'].to(self.device)
 
-            logger.info(f'Train loss: {train_loss:.6f}')
-            logger.info(f'Test loss:  {test_loss:.6f}, Accuracy: {accuracy * 100:.1f}%')
+                optimizer.zero_grad()
+                logits = model(input_ids)
+                loss = criterion(logits, labels)
+                loss.backward()
 
-            # Save best model
-            if accuracy > best_accuracy:
-                best_accuracy = accuracy
-                best_model_state = {
-                    k: v.cpu().clone() for k, v in model.state_dict().items()
-                }
-                logger.info('  -> New best model saved!')
+                # Gradient clipping prevents exploding gradients
+                # Common in transformers and RNNs
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
-        # Restore best model
-        if best_model_state is not None:
-            model.load_state_dict(best_model_state)
+                optimizer.step()
+                scheduler.step()
 
-        # Final evaluation
-        metrics = self._compute_metrics(
+                total_loss += loss.item()
+
+            avg_loss = total_loss / len(train_loader)
+            val_accuracy = self.evaluator.quick_accuracy(model, test_loader)
+
+            logger.info(
+                f'Epoch {epoch + 1}/{epochs} - Loss: {avg_loss:.4f}, '
+                f'Val Accuracy: {val_accuracy:.4f}',
+                extra={'job_id': job_id},
+            )
+
+            # Checkpoint best model (by validation accuracy, not loss)
+            # Prevents overfitting: we keep the most generalizable state
+            if val_accuracy > best_accuracy:
+                best_accuracy = val_accuracy
+                best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+
+        # Restore best checkpoint for final evaluation and saving
+        if best_state is not None:
+            model.load_state_dict(best_state)
+
+        metrics = self.evaluator.evaluate_neural(
             model, test_loader, label_encoder, y_test_encoded
         )
 
-        # Save model
         model_path = self.storage.save_neural_model(
             model=model,
             tokenizer=tokenizer,
@@ -222,9 +268,10 @@ class ModelTrainer:
             filename=f'{model_name}_{job_id}.pt',
         )
 
-        logger.info('\nTraining complete!')
-        logger.info(f'Best accuracy: {best_accuracy * 100:.1f}%')
-        logger.info(f'Model saved to: {model_path}')
+        logger.info(
+            f'Training complete. Accuracy: {metrics["accuracy"]:.4f}',
+            extra={'job_id': job_id, 'model_path': model_path},
+        )
 
         return {
             'status': 'success',
@@ -233,84 +280,3 @@ class ModelTrainer:
             'metrics': metrics,
             'model_type': model_name,
         }
-
-    def _train_loop(
-        self,
-        dataloader: DataLoader,
-        model: nn.Module,
-        loss_fn: nn.Module,
-        optimizer: torch.optim.Optimizer,
-    ) -> float:
-        """
-        Training loop for one epoch.
-
-        Based on PyTorch tutorial:
-        https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
-        """
-        size = len(dataloader.dataset)
-        num_batches = len(dataloader)
-        total_loss = 0.0
-
-        # Set the model to training mode
-        # Important for batch normalization and dropout layers
-        model.train()
-
-        for batch_idx, batch in enumerate(dataloader):
-            input_ids = batch['input_ids'].to(self.device)
-            labels = batch['label'].to(self.device)
-
-            # Forward pass
-            pred = model(input_ids)
-            loss = loss_fn(pred, labels)
-
-            # Backpropagation
-            loss.backward()
-            optimizer.step()
-            optimizer.zero_grad()
-
-            total_loss += loss.item()
-
-            # logger.info progress every 100 batches
-            if batch_idx % 100 == 0:
-                loss_val = loss.item()
-                current = batch_idx * len(input_ids)
-                logger.info(f'  loss: {loss_val:>7f}  [{current:>5d}/{size:>5d}]')
-
-        return total_loss / num_batches
-
-    def _test_loop(
-        self,
-        dataloader: DataLoader,
-        model: nn.Module,
-        loss_fn: nn.Module,
-    ) -> Tuple[float, float]:
-        """
-        Test/validation loop.
-
-        Based on PyTorch tutorial:
-        https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
-        """
-        size = len(dataloader.dataset)
-        num_batches = len(dataloader)
-        test_loss = 0.0
-        correct = 0
-
-        # Set the model to evaluation mode
-        # Important for batch normalization and dropout layers
-        model.eval()
-
-        # Evaluating with torch.no_grad() ensures no gradients are computed
-        # Reduces memory usage for tensors with requires_grad=True
-        with torch.no_grad():
-            for batch in dataloader:
-                input_ids = batch['input_ids'].to(self.device)
-                labels = batch['label'].to(self.device)
-
-                pred = model(input_ids)
-                test_loss += loss_fn(pred, labels).item()
-                correct += (pred.argmax(1) == labels).type(torch.float).sum().item()
-
-        test_loss /= num_batches
-        accuracy = correct / size
-
-        return test_loss, accuracy
