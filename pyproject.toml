@@ -11,11 +11,11 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 pythonpath = ["."]
 
-testpaths = ["ml_models", "apps", "tests"]
+testpaths = ["ml_pipeline", "apps", "tests"]
 
 addopts = [
     "--reuse-db",
-    "--cov=ml_models",
+    "--cov=ml_pipeline",
     "--cov=apps",
     "--cov-report=html",
     "--cov-report=term-missing",
