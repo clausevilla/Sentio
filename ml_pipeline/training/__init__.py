@@ -1,3 +1,3 @@
-from ml_models.training.data import TextDataset, WordTokenizer
+from ml_pipeline.training.data import TextDataset, WordTokenizer
 
 __all__ = ['TextDataset', 'WordTokenizer']
