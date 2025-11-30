@@ -1,3 +1,4 @@
+# Author: Marcus Berggren
 import pytest
 import torch
 
