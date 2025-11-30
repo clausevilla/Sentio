@@ -10,15 +10,15 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
 from torch.utils.data import DataLoader
 
-from ml_models.evaluation.evaluator import ModelEvaluator
-from ml_models.models import (
+from ml_pipeline.evaluation.evaluator import ModelEvaluator
+from ml_pipeline.models import (
     LogisticRegressionModel,
     LSTMModel,
     RandomForestModel,
     TransformerModel,
 )
-from ml_models.storage.handler import StorageHandler
-from ml_models.training import TextDataset, WordTokenizer
+from ml_pipeline.storage.handler import StorageHandler
+from ml_pipeline.training import TextDataset, WordTokenizer
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ class ModelTrainer:
         self.evaluator.log_feature_importance(model, job_id)
 
         model_path = self.storage.save_sklearn_model(
-            model.pipeline, f'{model_name}_{job_id}.pkl'
+            model.pipeline, f'{model_name}_{job_id}.joblib'
         )
 
         logger.info(
@@ -120,6 +120,44 @@ class ModelTrainer:
             'metrics': metrics,
             'model_type': model_name,
         }
+
+    def _expand_embedding(
+        self,
+        model: nn.Module,
+        old_vocab_size: int,
+        new_vocab_size: int,
+        model_state: Dict[str, torch.Tensor],
+    ) -> Dict[str, torch.Tensor]:
+        """
+        Expand embedding weights to accommodate new vocabulary.
+
+        Copies existing embeddings and initializes new ones randomly.
+
+        Args:
+            model: The model (used to get embedding dimension)
+            old_vocab_size: Original vocabulary size
+            new_vocab_size: New vocabulary size after expansion
+            model_state: Original state dict from checkpoint
+
+        Returns:
+            Modified state dict with expanded embedding weights
+        """
+        embed_key = 'embedding.weight'
+        if embed_key not in model_state:
+            return model_state
+
+        old_weights = model_state[embed_key]
+        embed_dim = old_weights.shape[1]
+
+        new_weights = torch.zeros(new_vocab_size, embed_dim)
+        nn.init.xavier_uniform_(new_weights)
+
+        new_weights[:old_vocab_size] = old_weights
+
+        model_state = dict(model_state)
+        model_state[embed_key] = new_weights
+
+        return model_state
 
     def _train_neural_model(
         self,
@@ -158,9 +196,12 @@ class ModelTrainer:
         mode = config.get('training_mode', 'full')
         base_model_path = config.get('base_model_path', None)
 
-        if isinstance(X_train, np.ndarray):
+        if hasattr(X_train, 'tolist'):
             X_train = X_train.tolist()
             X_test = X_test.tolist()
+
+        old_vocab_size = None
+        model_state = None
 
         # Load existing or create new tokenizer/label_encoder
         if mode == 'incremental' and base_model_path:
@@ -174,9 +215,10 @@ class ModelTrainer:
             use_config = checkpoint['config']
             learning_rate = config.get(
                 'learning_rate', 1e-5
-            )  # Lower default for fine-tuning
+            )  # Lower rate for tine-tuning
 
             if config.get('expand_vocab', False):
+                old_vocab_size = tokenizer.vocab_size_actual()
                 new_words = tokenizer.expand_vocab(X_train)
                 logger.info(f'Added {new_words} new words', extra={'job_id': job_id})
         else:
@@ -185,7 +227,6 @@ class ModelTrainer:
             tokenizer.fit(X_train)
             label_encoder = LabelEncoder()
             label_encoder.fit(y_train)
-            model_state = None
             use_config = config
             learning_rate = config.get('learning_rate', 1e-4)
 
@@ -204,6 +245,16 @@ class ModelTrainer:
 
         # Load weights if incremental
         if model_state is not None:
+            if old_vocab_size is not None:
+                new_vocab_size = tokenizer.vocab_size_actual()
+                if new_vocab_size > old_vocab_size:
+                    logger.info(
+                        f'Expanding embedding: {old_vocab_size} -> {new_vocab_size}',
+                        extra={'job_id': job_id},
+                    )
+                    model_state = self._expand_embedding(
+                        model, old_vocab_size, new_vocab_size, model_state
+                    )
             model.load_state_dict(model_state)
 
         logger.info(
