@@ -45,3 +45,5 @@ venv/
 
 # Project specific
 sentio_results/
+ml-models/
+.pt

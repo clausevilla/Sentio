@@ -27,6 +27,9 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+GCS_BUCKET = None  # Google Cloud Storage
+MODEL_DIR = './ml-models'
+
 INSTALLED_APPS = [
     'apps.accounts',
     'apps.ml_admin',

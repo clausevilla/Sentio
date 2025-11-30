@@ -23,7 +23,7 @@ class StorageHandler:
 
     def __init__(
         self,
-        model_dir: str = './models',
+        model_dir: str = './ml-models',
         gcs_bucket: Optional[str] = None,
     ):
         """

@@ -1,3 +1,4 @@
+# Author: Marcus Berggren, Claudia Sevilla Eslava, Julia McCall
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -63,7 +64,7 @@ class DatasetRecord(models.Model):
     DATASET_OPTIONS = (  # Used to separate the training data from the test data
         ('train', 'Training'),
         ('test', 'Test'),
-        ('unlabeled', 'Unlabeled'),
+        ('increment', 'Increment'),
     )
 
     text = models.TextField()

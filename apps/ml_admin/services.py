@@ -1,3 +1,4 @@
+# Author: Julia McCall, Marcus Berggren
 import csv
 import logging
 import threading
