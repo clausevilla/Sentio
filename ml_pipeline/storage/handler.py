@@ -1,10 +1,9 @@
 # Author: Marcus Berggren
 import logging
-import pickle
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import pandas as pd
+import joblib
 import torch
 import torch.nn as nn
 
@@ -15,8 +14,11 @@ class StorageHandler:
     """
     Handles saving and loading models.
 
-    Supports local filesystem and Google Cloud Storage for models.
-    Dataset loading is for development/testing only, production loads from Django database.
+    Supports local filesystem and Google Cloud Storage.
+
+    File formats:
+        - sklearn models: .joblib (compressed with joblib)
+        - PyTorch models: .pt (torch.save)
     """
 
     def __init__(
@@ -57,34 +59,43 @@ class StorageHandler:
         self,
         pipeline,
         filename: str,
+        compress: int = 3,
         to_gcs: bool = False,
     ) -> str:
         """
-        Save sklearn pipeline.
+        Save sklearn pipeline using joblib with compression.
 
         Args:
             pipeline: Trained sklearn pipeline
-            filename: Name for the saved file
+            filename: Name for the saved file (should end with .joblib)
+            compress: Compression level 0-9 (default 3, good balance)
             to_gcs: If True, upload to GCS instead of local
+
+        Returns:
+            Path to saved model
         """
+        if not filename.endswith('.joblib'):
+            filename = filename.replace('.pkl', '.joblib')
+            if not filename.endswith('.joblib'):
+                filename += '.joblib'
+
         if to_gcs and self.gcs_client:
-            return self._save_sklearn_to_gcs(pipeline, filename)
+            return self._save_sklearn_to_gcs(pipeline, filename, compress)
 
         local_path = self.model_dir / filename
-
-        with open(local_path, 'wb') as f:
-            pickle.dump(pipeline, f)
+        joblib.dump(pipeline, local_path, compress=compress)
 
         logger.info(f'Saved sklearn model to {local_path}')
         return str(local_path)
 
-    def _save_sklearn_to_gcs(self, pipeline, filename: str) -> str:
+    def _save_sklearn_to_gcs(self, pipeline, filename: str, compress: int) -> str:
         """Save sklearn pipeline directly to GCS."""
         import tempfile
 
-        with tempfile.NamedTemporaryFile(suffix='.pkl', delete=False) as f:
-            pickle.dump(pipeline, f)
+        with tempfile.NamedTemporaryFile(suffix='.joblib', delete=False) as f:
             temp_path = Path(f.name)
+
+        joblib.dump(pipeline, temp_path, compress=compress)
 
         gcs_path = f'models/{filename}'
         self._upload_to_gcs(temp_path, gcs_path)
@@ -98,28 +109,27 @@ class StorageHandler:
 
         Args:
             path: Local path or GCS path (gs://bucket/path)
+                  Supports both .joblib and .pkl files
         """
         if path.startswith('gs://'):
             return self._load_sklearn_from_gcs(path)
 
-        with open(path, 'rb') as f:
-            return pickle.load(f)
+        return joblib.load(path)
 
     def _load_sklearn_from_gcs(self, gcs_path: str):
         """Load sklearn pipeline from GCS."""
         import tempfile
 
-        gcs_path = gcs_path.replace(f'gs://{self.gcs_bucket}/', '')
+        gcs_path_clean = gcs_path.replace(f'gs://{self.gcs_bucket}/', '')
 
-        with tempfile.NamedTemporaryFile(suffix='.pkl', delete=False) as f:
+        suffix = '.joblib' if '.joblib' in gcs_path else '.pkl'
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
             temp_path = Path(f.name)
 
-        self._download_from_gcs(gcs_path, temp_path)
-
-        with open(temp_path, 'rb') as f:
-            pipeline = pickle.load(f)
-
+        self._download_from_gcs(gcs_path_clean, temp_path)
+        pipeline = joblib.load(temp_path)
         temp_path.unlink()
+
         return pipeline
 
     def save_neural_model(
@@ -190,25 +200,16 @@ class StorageHandler:
         """Load neural model from GCS."""
         import tempfile
 
-        gcs_path = gcs_path.replace(f'gs://{self.gcs_bucket}/', '')
+        gcs_path_clean = gcs_path.replace(f'gs://{self.gcs_bucket}/', '')
 
         with tempfile.NamedTemporaryFile(suffix='.pt', delete=False) as f:
             temp_path = Path(f.name)
 
-        self._download_from_gcs(gcs_path, temp_path)
+        self._download_from_gcs(gcs_path_clean, temp_path)
         checkpoint = torch.load(temp_path, map_location='cpu', weights_only=False)
         temp_path.unlink()
 
         return checkpoint
-
-    def load_csv(self, path: str) -> pd.DataFrame:
-        """
-        Load dataset from CSV for development/testing.
-
-        Production code should pass data from Django database directly
-        to the trainer, not use this method.
-        """
-        return pd.read_csv(path)
 
     def _upload_to_gcs(self, local_path: Path, gcs_path: str) -> None:
         """Upload a local file to GCS."""
