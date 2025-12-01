@@ -7,6 +7,7 @@
 
 .profile-grid {
     display: grid;
+    grid-template-columns: 2fr;
     gap: var(--spacing-sm);
     max-width: 800px;
     margin: 0 auto;
