@@ -4,6 +4,10 @@
    ======================================== */
 
 :root {
+    /* color style */
+    --color-primary: #4A7C59;
+    --color-primary-light: #5C8A72;
+    --color-primary-lighter: #7FAF93;
     --primary: #4A7C59;
     --primary-dark: #3d6a4a;
     --secondary: #5B7C99;

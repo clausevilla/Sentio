@@ -13,28 +13,34 @@
 }
 
 .card-header {
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--gray-100);
+    padding: 0.8rem 1rem;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    background-color: var(--primary);
+    color: #fff;
 }
 
 .card-header h3 {
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 500;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.card-header h3 i { color: var(--primary); }
+.card-header h3 i { color: white; }
 
 .card-header .link {
     font-size: 0.85rem;
-    color: var(--primary);
+    color: white;
     text-decoration: none;
 }
+
+/*change card header icon color to white*/
+
 
 .card-header .link:hover { text-decoration: underline; }
 

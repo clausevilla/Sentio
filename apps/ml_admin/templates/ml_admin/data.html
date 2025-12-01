@@ -27,9 +27,64 @@
         <div class="stat-value">{{ type_breakdown.unlabeled }}</div>
         <div class="stat-label">Unlabeled</div>
     </div>
-    <button class="btn btn-primary" onclick="openModal('uploadModal')">
-        <i class="fas fa-plus"></i> Upload CSV
-    </button>
+</div>
+
+<!-- Upload Panel (inline, not modal) -->
+<div class="card upload-panel" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <h3><i class="fas fa-upload"></i> Upload Dataset</h3>
+    </div>
+    <div class="card-body">
+        <div class="upload-row">
+            <!-- File Selection -->
+            <div class="upload-file-section">
+                <div class="upload-zone-inline" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-file-csv"></i>
+                    <span>Choose CSV file...</span>
+                    <input type="file" id="fileInput" accept=".csv" style="display:none" onchange="fileSelected(this)">
+                </div>
+                <div class="file-selected" id="fileSelected" style="display:none">
+                    <i class="fas fa-file-csv"></i>
+                    <span id="fileName">filename.csv</span>
+                    <button class="file-clear" onclick="clearFile()">&times;</button>
+                </div>
+            </div>
+
+            <!-- Dataset Type -->
+            <div class="upload-type-section">
+                <label>Dataset Type</label>
+                <select id="datasetType" class="form-select">
+                    <option value="Training">Training Data</option>
+                    <option value="Test">Test Data</option>
+                    <option value="Unlabeled">Unlabeled</option>
+                </select>
+            </div>
+
+            <!-- Upload Button -->
+            <button class="btn btn-primary" id="uploadBtn" onclick="uploadFile()" disabled>
+                <i class="fas fa-upload"></i> Upload & Process
+            </button>
+        </div>
+
+        <div class="upload-help">
+            <i class="fas fa-info-circle"></i>
+            Required columns: <code>text</code> and <code>label</code>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Tasks Queue -->
+<div class="upload-tasks" id="uploadTasks" style="display: none;">
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-tasks"></i> Processing Tasks</h3>
+        </div>
+        <div class="card-body no-pad">
+            <div class="task-list" id="taskList">
+                <!-- Tasks will be added here dynamically -->
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Overall Label Distribution -->
@@ -78,7 +133,7 @@
                 <span><i class="fas fa-user"></i> {{ item.upload.uploaded_by.username|default:"-" }}</span>
                 <span><i class="fas fa-table"></i> {{ item.upload.row_count|default:0 }} rows</span>
             </div>
-            
+
             <!-- Dataset Type Breakdown -->
             {% if item.type_breakdown %}
             <div class="type-badges">
@@ -93,7 +148,7 @@
                 {% endif %}
             </div>
             {% endif %}
-            
+
             <!-- Inline Distribution -->
             {% if item.distribution %}
             <div class="distribution-bars">
@@ -108,7 +163,7 @@
                 {% endfor %}
             </div>
             {% endif %}
-            
+
             <div class="dataset-actions">
                 <button class="btn btn-sm btn-secondary" onclick="viewRecords({{ item.upload.id }}, '{{ item.upload.file_name }}')">
                     <i class="fas fa-eye"></i> Records
@@ -123,47 +178,12 @@
         </div>
     </div>
     {% empty %}
-    <div class="empty-state">
+    <div class="empty-state full">
         <i class="fas fa-cloud-upload-alt"></i>
         <h4>No Datasets Yet</h4>
-        <p>Upload your first CSV to get started</p>
-        <button class="btn btn-primary" onclick="openModal('uploadModal')">
-            <i class="fas fa-upload"></i> Upload CSV
-        </button>
+        <p>Upload your first CSV using the panel above</p>
     </div>
     {% endfor %}
-</div>
-
-<!-- Upload Modal -->
-<div class="modal" id="uploadModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-upload"></i> Upload CSV</h3>
-            <button class="modal-close" onclick="closeModal('uploadModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click or drag CSV file</p>
-                <input type="file" id="fileInput" accept=".csv" style="display:none" onchange="fileSelected(this)">
-            </div>
-            <div class="file-preview" id="filePreview" style="display:none">
-                <i class="fas fa-file-csv"></i>
-                <span id="fileName"></span>
-                <button onclick="clearFile()">&times;</button>
-            </div>
-            <div class="help-text">
-                <strong>Required columns:</strong> <code>text</code> and <code>label</code><br>
-                <strong>Labels:</strong> Normal, Depression, Suicidal, Stress
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('uploadModal')">Cancel</button>
-            <button class="btn btn-primary" id="uploadBtn" onclick="uploadFile()" disabled>
-                <i class="fas fa-upload"></i> Upload
-            </button>
-        </div>
-    </div>
 </div>
 
 <!-- Records Modal -->
