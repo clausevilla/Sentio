@@ -1,3 +1,6 @@
+# Author: Lian Shi
+# Disclaimer: LLM has been used to help generate tests for change password and delete account API endpoints.
+
 import json
 
 from django.contrib.auth.models import User
@@ -71,7 +74,8 @@ class RegistrationViewTests(TestCase):
     # Test registration with exisiting email
     def test_register_view_post_existing_email(self):
         User.objects.create_user(
-            username='user1', email='existingemail@example.com', password='somepassword')
+            username='user1', email='existingemail@example.com', password='somepassword'
+        )
         form_data = {
             'username': 'newuser',
             'email': 'existingemail@example.com',
@@ -120,7 +124,6 @@ class RegistrationViewTests(TestCase):
             'username',
             'This field is required.',
         )
-
 
 
 class ProfileViewTests(TestCase):
@@ -190,7 +193,6 @@ class LoginViewTests(TestCase):
         self.assertContains(response, 'Invalid username or password. Please try again.')
 
 
-
 # Tests for logout view to ensure users can log out properly
 class LogoutViewTests(TestCase):
     def setUp(self):
@@ -212,9 +214,8 @@ class LogoutViewTests(TestCase):
         self.assertFalse(response.wsgi_request.user.is_authenticated)
 
 
-
 class ProfileAPITests(TestCase):
-    #Test suite for profile-related API endpoints
+    # Test suite for profile-related API endpoints
 
     def setUp(self):
         self.user = User.objects.create_user(
@@ -229,7 +230,7 @@ class ProfileAPITests(TestCase):
     # Change Password API Tests
 
     def test_change_password_success(self):
-        #Test successful password change with valid credentials
+        # Test successful password change with valid credentials
         self.client.login(username='testuser', password='strongpassword123')
         data = {
             'currentPassword': 'strongpassword123',
@@ -252,7 +253,7 @@ class ProfileAPITests(TestCase):
         self.assertTrue(response.wsgi_request.user.is_authenticated)
 
     def test_change_password_incorrect_current_password(self):
-        #Test that password change fails with incorrect current password
+        # Test that password change fails with incorrect current password
         self.client.login(username='testuser', password='strongpassword123')
         data = {
             'currentPassword': 'wrongpassword',
@@ -269,7 +270,7 @@ class ProfileAPITests(TestCase):
         self.assertEqual(response_data['error'], 'incorrect_password')
 
     def test_change_password_same_as_current(self):
-        #Test that password change fails when new password matches current password
+        # Test that password change fails when new password matches current password
         self.client.login(username='testuser', password='strongpassword123')
         data = {
             'currentPassword': 'strongpassword123',
@@ -286,7 +287,7 @@ class ProfileAPITests(TestCase):
         self.assertEqual(response_data['error'], 'same_password')
 
     def test_change_password_too_short(self):
-        #Test that password change fails when new password is too short
+        # Test that password change fails when new password is too short
         self.client.login(username='testuser', password='strongpassword123')
         data = {
             'currentPassword': 'strongpassword123',
@@ -303,7 +304,7 @@ class ProfileAPITests(TestCase):
         self.assertEqual(response_data['error'], 'weak_password')
 
     def test_change_password_missing_fields(self):
-        #Test that password change fails when required fields are missing
+        # Test that password change fails when required fields are missing
         self.client.login(username='testuser', password='strongpassword123')
         data = {'currentPassword': 'strongpassword123'}
         response = self.client.post(
@@ -317,7 +318,7 @@ class ProfileAPITests(TestCase):
         self.assertEqual(response_data['error'], 'missing_fields')
 
     def test_change_password_requires_authentication(self):
-        #Test that password change endpoint requires authentication
+        # Test that password change endpoint requires authentication
         data = {
             'currentPassword': 'strongpassword123',
             'newPassword': 'NewStrongPass456',
@@ -332,7 +333,7 @@ class ProfileAPITests(TestCase):
     # Delete All Data API Tests
 
     def test_delete_all_data_success(self):
-        #Test successful deletion of all user data with correct password
+        # Test successful deletion of all user data with correct password
         self.client.login(username='testuser', password='strongpassword123')
         data = {'password': 'strongpassword123'}
         response = self.client.post(
@@ -351,7 +352,7 @@ class ProfileAPITests(TestCase):
         self.assertTrue(response.wsgi_request.user.is_authenticated)
 
     def test_delete_all_data_incorrect_password(self):
-        #Test that data deletion fails with incorrect password
+        # Test that data deletion fails with incorrect password
         self.client.login(username='testuser', password='strongpassword123')
         data = {'password': 'wrongpassword'}
         response = self.client.post(
@@ -365,7 +366,7 @@ class ProfileAPITests(TestCase):
         self.assertEqual(response_data['error'], 'incorrect_password')
 
     def test_delete_all_data_missing_password(self):
-        #Test that data deletion fails when password is not provided
+        # Test that data deletion fails when password is not provided
         self.client.login(username='testuser', password='strongpassword123')
         data = {}
         response = self.client.post(
@@ -379,7 +380,7 @@ class ProfileAPITests(TestCase):
         self.assertEqual(response_data['error'], 'missing_password')
 
     def test_delete_all_data_requires_authentication(self):
-        #Test that data deletion endpoint requires authentication
+        # Test that data deletion endpoint requires authentication
         data = {'password': 'strongpassword123'}
         response = self.client.post(
             self.delete_data_url,
@@ -391,7 +392,7 @@ class ProfileAPITests(TestCase):
     # Delete Account API Tests
 
     def test_delete_account_success(self):
-        #Test successful account deletion with correct password
+        # Test successful account deletion with correct password
         self.client.login(username='testuser', password='strongpassword123')
         data = {'password': 'strongpassword123'}
         response = self.client.post(
@@ -410,7 +411,7 @@ class ProfileAPITests(TestCase):
         self.assertFalse(response.wsgi_request.user.is_authenticated)
 
     def test_delete_account_incorrect_password(self):
-        #Test that account deletion fails with incorrect password
+        # Test that account deletion fails with incorrect password
         self.client.login(username='testuser', password='strongpassword123')
         data = {'password': 'wrongpassword'}
         response = self.client.post(
@@ -427,7 +428,7 @@ class ProfileAPITests(TestCase):
         self.assertTrue(User.objects.filter(username='testuser').exists())
 
     def test_delete_account_missing_password(self):
-        #Test that account deletion fails when password is not provided
+        # Test that account deletion fails when password is not provided
         self.client.login(username='testuser', password='strongpassword123')
         data = {}
         response = self.client.post(
@@ -441,11 +442,11 @@ class ProfileAPITests(TestCase):
         self.assertEqual(response_data['error'], 'missing_password')
 
     def test_delete_account_requires_authentication(self):
-        #Test that account deletion endpoint requires authentication
+        # Test that account deletion endpoint requires authentication
         data = {'password': 'strongpassword123'}
         response = self.client.post(
             self.delete_account_url,
             data=json.dumps(data),
             content_type='application/json',
         )
-        self.assertEqual(response.status_code, 302) # Redirect to login page
+        self.assertEqual(response.status_code, 302)  # Redirect to login page

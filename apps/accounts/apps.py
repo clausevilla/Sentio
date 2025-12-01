@@ -1,3 +1,5 @@
+# Author: Marcus Berggren
+
 from django.apps import AppConfig
 
 

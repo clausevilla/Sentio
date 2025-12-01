@@ -1,3 +1,6 @@
+//Author: Lian Shi
+// Disclaimer: LLM has used to generate chart display  and fine tuning was done manually to different elements */
+
 // hiostory .js - Account history page functionality
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -158,7 +161,8 @@ function updateChartForPeriod(period) {
     };
     chart.update();
 
-    // Fetch data (example - need to implement the actual AJAX call and endpoint later)
+    // TODO
+    //  Fetch data (example - need to implement the actual AJAX call and endpoint later)
     /*
     fetch(`/api/mental-health-trends/?period=${period}`)
         .then(response => response.json())
