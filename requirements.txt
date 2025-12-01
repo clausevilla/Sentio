@@ -3,3 +3,4 @@ pandas
 Django==5.2.7
 swifter==1.4.0
 scikit-learn==1.7.2
+matplotlib==3.10.7

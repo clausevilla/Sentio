@@ -19,6 +19,8 @@ class ModelVersion(models.Model):
     precision = models.FloatField(null=True, blank=True)
     recall = models.FloatField(null=True, blank=True)
     f1_score = models.FloatField(null=True, blank=True)
+    roc_plot_base64 = models.TextField(null=True, blank=True)
+    confusion_matrix_base64 = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=False)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 

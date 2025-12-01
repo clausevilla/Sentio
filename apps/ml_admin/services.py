@@ -357,6 +357,8 @@ def _run_training(
             precision=result['metrics']['precision'],
             recall=result['metrics']['recall'],
             f1_score=result['metrics']['f1_score'],
+            roc_plot_base64=result['metrics'].get('roc_plot_base64'),
+            confusion_matrix_base64=result['metrics'].get('confusion_matrix_base64'),
             is_active=False,
             created_by_id=job.initiated_by_id,
         )
