@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
@@ -35,9 +35,7 @@ def register_view(request):
 
             # Create UserConsent record with consent given
             UserConsent.objects.create(
-                user=user,
-                has_consented=True,
-                consent_at=timezone.now()
+                user=user, has_consented=True, consent_at=timezone.now()
             )
 
             username = form.cleaned_data.get('username')
@@ -91,7 +89,7 @@ def login_view(request):
                     if not consent.has_consented:
                         messages.warning(
                             request,
-                            'Please review and accept our data processing terms to continue.'
+                            'Please review and accept our data processing terms to continue.',
                         )
                         return redirect('accounts:consent')
                 except UserConsent.DoesNotExist:
@@ -99,7 +97,7 @@ def login_view(request):
                     UserConsent.objects.create(user=user, has_consented=False)
                     messages.warning(
                         request,
-                        'Please review and accept our data processing terms to continue.'
+                        'Please review and accept our data processing terms to continue.',
                     )
                     return redirect('accounts:consent')
 
@@ -142,7 +140,9 @@ def consent_view(request):
             consent, created = UserConsent.objects.get_or_create(user=request.user)
             consent.give_consent()
 
-            messages.success(request, 'Thank you for consenting to our data processing terms.')
+            messages.success(
+                request, 'Thank you for consenting to our data processing terms.'
+            )
             next_page = request.GET.get('next', 'predictions:input')
             return redirect(next_page)
         else:
@@ -164,9 +164,7 @@ def profile_view(request):
     Display user profile with account information and statistics
     """
     total_analyses = 0
-    # TODO: Uncomment when MentalHealthAnalysis model is ready
-    # from apps.predictions.models import MentalHealthAnalysis
-
+    # TODO:
     # Get total number of analyses for this user
     # For now, using placeholder value
     # total_analyses = MentalHealthAnalysis.objects.filter(user=request.user).count()
@@ -317,7 +315,7 @@ def delete_all_data_api(request):
             UserConsent.objects.create(
                 user=request.user,
                 has_consented=False,
-                consent_revoked_at=timezone.now()
+                consent_revoked_at=timezone.now(),
             )
 
         return JsonResponse(
@@ -429,12 +427,48 @@ def history_view(request):
 
     # Calculate state distribution
     state_distribution = {
-        'normal': {'label': 'Normal', 'icon': '😊', 'class': 'normal', 'count': 0, 'percentage': 0},
-        'depression': {'label': 'Depression', 'icon': '😢', 'class': 'depression', 'count': 0, 'percentage': 0},
-        'anxiety': {'label': 'Anxiety', 'icon': '😰', 'class': 'anxiety', 'count': 0, 'percentage': 0},
-        'stress': {'label': 'Stress', 'icon': '😫', 'class': 'stress', 'count': 0, 'percentage': 0},
-        'suicidal': {'label': 'Suicidal', 'icon': '🆘', 'class': 'suicidal', 'count': 0, 'percentage': 0},
-        'bipolar': {'label': 'Bipolar', 'icon': '🔄', 'class': 'bipolar', 'count': 0, 'percentage': 0},
+        'normal': {
+            'label': 'Normal',
+            'icon': '😊',
+            'class': 'normal',
+            'count': 0,
+            'percentage': 0,
+        },
+        'depression': {
+            'label': 'Depression',
+            'icon': '😢',
+            'class': 'depression',
+            'count': 0,
+            'percentage': 0,
+        },
+        'anxiety': {
+            'label': 'Anxiety',
+            'icon': '😰',
+            'class': 'anxiety',
+            'count': 0,
+            'percentage': 0,
+        },
+        'stress': {
+            'label': 'Stress',
+            'icon': '😫',
+            'class': 'stress',
+            'count': 0,
+            'percentage': 0,
+        },
+        'suicidal': {
+            'label': 'Suicidal',
+            'icon': '🆘',
+            'class': 'suicidal',
+            'count': 0,
+            'percentage': 0,
+        },
+        'bipolar': {
+            'label': 'Bipolar',
+            'icon': '🔄',
+            'class': 'bipolar',
+            'count': 0,
+            'percentage': 0,
+        },
     }
 
     context = {
@@ -465,10 +499,14 @@ def get_chart_data(user, period='week'):
         labels = [(start_date + timedelta(days=i)).strftime('%a') for i in range(7)]
     elif period == 'month':
         start_date = now - timedelta(days=30)
-        labels = [(start_date + timedelta(days=i * 5)).strftime('%b %d') for i in range(6)]
+        labels = [
+            (start_date + timedelta(days=i * 5)).strftime('%b %d') for i in range(6)
+        ]
     else:
         start_date = now - timedelta(days=90)
-        labels = [(start_date + timedelta(days=i * 15)).strftime('%b %d') for i in range(6)]
+        labels = [
+            (start_date + timedelta(days=i * 15)).strftime('%b %d') for i in range(6)
+        ]
 
     chart_data = {
         'labels': labels,
@@ -507,3 +545,63 @@ def get_chart_data(user, period='week'):
     #             chart_data[state][idx] += 1
 
     return chart_data
+
+
+@login_required(login_url='accounts:login')
+@require_http_methods(['GET'])
+def export_data_api(request):
+    """
+    API endpoint to export all user data in JSON format
+    For GDPR compliance and user data portability
+    """
+    user = request.user
+
+    try:
+        # Export user profile data
+        user_data = {
+            'username': user.username,
+            'email': user.email,
+            'date_joined': user.date_joined.isoformat(),
+        }
+
+        # Export consent data
+        try:
+            consent = UserConsent.objects.get(user=user)
+            consent_data = {
+                'has_consented': consent.has_consented,
+                'consent_at': consent.consent_at.isoformat()
+                if consent.consent_at
+                else None,
+                'consent_revoked_at': consent.consent_revoked_at.isoformat()
+                if consent.consent_revoked_at
+                else None,
+            }
+        except UserConsent.DoesNotExist:
+            consent_data = None
+
+        # TODO: Export mental health analyses
+        # analyses = PredictionResults.objects.filter(user=user).order_by('-created_at')
+        # for analysis in analyses:
+        #     export_data['analysis_history'].append({
+        #         'id': analysis.id,
+        #         'text': analysis.text,
+        #         'mental_state': analysis.mental_state,
+        #         'confidence': analysis.confidence,
+        #         'created_at': analysis.created_at.isoformat(),
+        #     })
+
+        export_data = {
+            'user_profile': user_data,
+            'consent_data': consent_data,
+            'analysis_history': [],
+        }
+        json_data = json.dumps(export_data, indent=4, ensure_ascii=False)
+        response = HttpResponse(json_data, content_type='application/json')
+        response['Content-Disposition'] = (
+            f'attachment; filename="{user.username}_data_export.json"'
+        )
+        return response
+    except Exception as e:
+        return JsonResponse(
+            {'success': False, 'error': 'server_error', 'message': str(e)}, status=500
+        )

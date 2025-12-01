@@ -1,5 +1,5 @@
 // Author: Lian Shi */
-// Disclaimer: LLM has been used to help with password strength indication and consent handling bug fix
+// Disclaimer: LLM has been used to help with password strength indication and consent group/password toggle button bug fix
 
 // accounts/register.js - Registration page with validation
 
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            // Validate consent checkbox - THIS IS THE KEY FIX
+            // Validate consent checkbox
             if (consentCheckbox && !consentCheckbox.checked) {
                 showConsentError();
                 isValid = false;
@@ -197,8 +197,18 @@ function isValidEmail(email) {
 function updatePasswordStrength(password) {
     const strengthBar = document.querySelector('.strength-bar-fill');
     const strengthText = document.querySelector('.strength-text');
+    const strengthIndicator = document.querySelector('.password-strength');
 
-    if (!strengthBar || !strengthText) return;
+    if (!strengthBar || !strengthText || !strengthIndicator) return;
+
+    // hide indicator if password is empty
+    if (password.length === 0) {
+        strengthIndicator.style.display = 'none';
+        strengthBar.style.width = '0%';
+        strengthText.textContent = '';
+        return;
+    }
+    strengthIndicator.style.display = 'block';
 
     let strength = 0;
     let text = '';

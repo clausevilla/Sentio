@@ -1,3 +1,5 @@
+# Author: Marcus Berggren, Lian Shi
+
 from django.shortcuts import render
 
 

@@ -1,6 +1,5 @@
 # Author: Lian Shi
-
-# Disclaimer: LLM has been used to suggest consent middleware setup, and implementation was made to ensure correctness and fit with project requirements.
+# Disclaimer: LLM has been used to debug consent middleware implementation while it is not working properly to check user consent status and redirect to consent page accordingly. Manual adjustment was done to fix the issues.
 
 from django.shortcuts import redirect
 
@@ -11,17 +10,21 @@ class ConsentMiddleware:
     Redirects to consent page if consent is not given or has been revoked.
     """
 
-    # Paths that don't require consent check
-    EXEMPT_PATHS = [
-        '/accounts/login/',
-        '/accounts/logout/',
-        '/accounts/register/',
-        '/accounts/consent/',
-        '/accounts/privacy/',
+    # Paths that don't require consent check (use startswith matching)
+    EXEMPT_PATH_PREFIXES = [
+        '/accounts/login',
+        '/accounts/logout',
+        '/accounts/register',
+        '/accounts/consent',
+        '/accounts/privacy',
+        '/about/',
         '/static/',
         '/media/',
         '/admin/',
-        '/ml-admin/',
+    ]
+
+    # Exact paths that are exempt
+    EXEMPT_EXACT_PATHS = [
         '/',
     ]
 
@@ -29,10 +32,15 @@ class ConsentMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Skip consent check for exempt paths
         path = request.path
-        for exempt in self.EXEMPT_PATHS:
-            if path.startswith(exempt) or path == exempt:
+
+        # Skip consent check for exact exempt paths
+        if path in self.EXEMPT_EXACT_PATHS:
+            return self.get_response(request)
+
+        # Skip consent check for paths that start with exempt prefixes
+        for prefix in self.EXEMPT_PATH_PREFIXES:
+            if path.startswith(prefix):
                 return self.get_response(request)
 
         # Only check consent for authenticated users
@@ -47,9 +55,9 @@ class ConsentMiddleware:
             except UserConsent.DoesNotExist:
                 # No consent record exists - redirect to consent page
                 return redirect('accounts:consent')
-            except Exception:
-                # If there's any error, let the request through
-                # (fail open to avoid blocking users)
+            except Exception as e:
+                # Log the error but let the request through to avoid blocking users
+                print(f'[ConsentMiddleware] Error checking consent: {e}')
                 pass
 
         return self.get_response(request)

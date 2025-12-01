@@ -5,31 +5,25 @@
 /* Consent Page Styles */
 
     .consent-container {
-        max-width: 700px;
-        margin: 2rem auto;
-        padding: 2rem;
+        max-width: 1200px;
+        margin: 1rem auto;
+        padding: 1rem;
     }
 
     .consent-header {
         text-align: center;
-        margin-bottom: 2rem;
-    }
-
-    .consent-header i {
-        font-size: 4rem;
-        color: #4a90a4;
         margin-bottom: 1rem;
-        display: block;
     }
 
-    .consent-header h1 {
+
+    .consent-header h2 {
         margin: 0 0 0.5rem 0;
-        color: #333;
+        color: var(--color-primary-dark);
     }
 
     .consent-header p {
-        color: #666;
-        font-size: 1.1rem;
+        color: var(--color-primary);
+        font-size: 1rem;
     }
 
     .consent-content {
@@ -41,7 +35,7 @@
 
     .consent-content h2 {
         margin-top: 0;
-        color: #333;
+        color: var(--color-primary);
         font-size: 1.2rem;
     }
 
@@ -52,11 +46,11 @@
     .consent-content li {
         margin-bottom: 0.75rem;
         line-height: 1.5;
-        color: #555;
+        color: var(--color-text-secondary);
     }
 
     .consent-content li strong {
-        color: #333;
+        color: var(--color-primary);
     }
 
     .consent-warning {
@@ -72,13 +66,13 @@
 
     .consent-warning i {
         font-size: 1.5rem;
-        color: #856404;
+        color: var(--color-warning);
         flex-shrink: 0;
     }
 
     .consent-warning p {
         margin: 0;
-        color: #856404;
+        color: var(--color-warning);
         line-height: 1.5;
     }
 
@@ -92,12 +86,12 @@
     }
 
     .consent-checkbox-container:hover {
-        border-color: #4a90a4;
+        border-color: var(--color-primary);
     }
 
     .consent-checkbox-container.checked {
-        border-color: #4a90a4;
-        background: #f0f7fa;
+        border-color: var(--color-primary);
+        background: var(--color-bg-mint);
     }
 
     .consent-checkbox-container label {
@@ -113,16 +107,16 @@
         min-width: 24px;
         margin-top: 2px;
         cursor: pointer;
-        accent-color: #4a90a4;
+        accent-color: var(--color-primary-light);
     }
 
     .consent-checkbox-container span {
-        color: #333;
+        color: var(--color-text-primary);
         line-height: 1.5;
     }
 
     .consent-checkbox-container a {
-        color: #4a90a4;
+        color: var(--color-primary-light);
         text-decoration: underline;
     }
 
@@ -148,12 +142,12 @@
     }
 
     .btn-primary {
-        background: #4a90a4;
+        background: var(--color-primary);
         color: white;
     }
 
     .btn-primary:hover:not(:disabled) {
-        background: #357a8a;
+        background: var(--color-primary-light);
     }
 
     .btn-primary:disabled {
@@ -168,7 +162,7 @@
     }
 
     .btn-secondary:hover {
-        border-color: #999 !important;
+        border-color: var(--color-primary-light) !important;
         color: #333;
     }
 
@@ -179,22 +173,22 @@
 
     .privacy-link p {
         margin: 0;
-        color: #666;
+        color: var(--color-text-secondary);
     }
 
     .privacy-link i {
         margin-right: 0.5rem;
-        color: #4a90a4;
+        color: var(--color-primary-dark);
     }
 
     .privacy-link a {
-        color: #4a90a4;
+        color: var(--color-primary-dark);
         text-decoration: underline;
     }
 
     .reconsent-notice {
-        background: #e8f4f8;
-        border: 2px solid #4a90a4;
+        background: var(--color-bg-mint);
+        border: 2px solid var(--color-primary);
         border-radius: 12px;
         padding: 1.5rem;
         margin-bottom: 1.5rem;
@@ -202,7 +196,7 @@
     }
 
     .reconsent-notice h3 {
-        color: #4a90a4;
+        color: var(--color-primary);
         margin: 0 0 0.5rem 0;
     }
 
@@ -220,11 +214,11 @@
     .alert-warning {
         background: #fff3cd;
         border: 1px solid #ffc107;
-        color: #856404;
+        color: var(--color-primary-dark);
     }
 
     .alert-error, .alert-danger {
         background: #f8d7da;
         border: 1px solid #f5c6cb;
-        color: #721c24;
+        color: var(--color-error);
     }

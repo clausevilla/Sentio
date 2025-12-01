@@ -1,3 +1,5 @@
+# Author: Marcus Berggren, Lian Shi
+
 """
 Django settings for sentio project.
 
@@ -47,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.accounts.middleware.ConsentMiddleware',
 ]
 
 ROOT_URLCONF = 'sentio.urls'
