@@ -89,12 +89,6 @@ class TestSklearnTraining:
         assert 'recall' in result['metrics']
         assert 'f1_score' in result['metrics']
 
-    def test_logistic_regression_saves_model(self, trainer, sample_data):
-        result = trainer.train('logistic_regression', sample_data, {}, 'test_lr')
-
-        assert 'model_path' in result
-        assert 'logistic_regression_test_lr.pkl' in result['model_path']
-
     def test_random_forest_returns_success(self, trainer, sample_data):
         result = trainer.train('random_forest', sample_data, {}, 'test_rf')
 

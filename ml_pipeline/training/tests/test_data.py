@@ -41,7 +41,7 @@ class TestWordTokenizerFit:
 
     def test_fit_prioritizes_frequent_words(self):
         texts = ['common common common', 'rare', 'common common']
-        tokenizer = WordTokenizer(vocab_size=4)
+        tokenizer = WordTokenizer(vocab_size=3)
         tokenizer.fit(texts)
 
         assert 'common' in tokenizer.word2idx
