@@ -2,6 +2,50 @@
    ML Admin - Training Page
    ======================================== */
 
+/* Training Tabs */
+.training-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--gray-100);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 1rem;
+    background: none;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--gray-500);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+}
+
+.tab-btn:hover {
+    color: var(--gray-700);
+    background: var(--gray-50);
+}
+
+.tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.tab-btn i { font-size: 0.85rem; }
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
 /* Test Set Banner */
 .test-set-banner {
     display: flex;
@@ -125,7 +169,54 @@
 .result-success { color: var(--success); font-weight: 500; }
 .result-failed { color: var(--danger); }
 
+/* Model Selection (for retrain) */
+.model-select {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+}
+
+.model-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid var(--gray-100);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.model-option:last-child { border-bottom: none; }
+.model-option:hover { background: var(--gray-50); }
+
+.model-option.selected {
+    background: rgba(74, 124, 89, 0.1);
+    border-left: 3px solid var(--primary);
+}
+
+.model-option input { accent-color: var(--primary); }
+
+.model-option-info { flex: 1; }
+
+.model-option-name {
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    color: var(--gray-800);
+}
+
+.model-option-meta {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin-top: 2px;
+}
+
 @media (max-width: 768px) {
     .algo-grid { grid-template-columns: 1fr; }
     .baseline-metrics { gap: 1rem; }
+    .training-tabs { flex-direction: column; }
+    .tab-btn { border-bottom: none; border-left: 2px solid transparent; margin-bottom: 0; margin-left: -2px; }
+    .tab-btn.active { border-left-color: var(--primary); border-bottom-color: transparent; }
 }

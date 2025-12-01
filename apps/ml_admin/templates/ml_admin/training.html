@@ -35,53 +35,132 @@
     <!-- Training Setup -->
     <div class="card">
         <div class="card-header">
-            <h3><i class="fas fa-play-circle"></i> New Training Job</h3>
+            <h3><i class="fas fa-play-circle"></i> Training Job</h3>
         </div>
+
+        <!-- Tabs -->
+        <div class="training-tabs">
+            <button class="tab-btn active" onclick="switchTab('train')">
+                <i class="fas fa-plus-circle"></i> Train New
+            </button>
+            <button class="tab-btn" onclick="switchTab('retrain')">
+                <i class="fas fa-sync-alt"></i> Retrain Model
+            </button>
+        </div>
+
         <div class="card-body">
             {% if uploads %}
-            <!-- Algorithm Selection -->
-            <div class="form-section">
-                <label class="form-label">Algorithm</label>
-                <div class="algo-grid">
-                    {% for key, algo in algorithms.items %}
-                    <label class="algo-option">
-                        <input type="radio" name="algorithm" value="{{ key }}" {% if forloop.first %}checked{% endif %}>
-                        <div class="algo-card">
-                            <i class="fas {{ algo.icon }}"></i>
-                            <span class="algo-name">{{ algo.name }}</span>
-                            <span class="algo-desc">{{ algo.description }}</span>
-                        </div>
-                    </label>
-                    {% endfor %}
-                </div>
-            </div>
-            
-            <!-- Dataset Selection -->
-            <div class="form-section">
-                <label class="form-label">Training Data <span class="hint">({{ training_totals.records }} total training records)</span></label>
-                <div class="dataset-select">
-                    {% for item in uploads %}
-                    <div class="dataset-option" onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }})" data-distribution='{{ item.distribution_json|safe }}'>
-                        <input type="checkbox" data-id="{{ item.upload.id }}" data-count="{{ item.count }}">
-                        <div class="ds-info">
-                            <span class="ds-name">{{ item.upload.file_name }}</span>
-                            <span class="ds-count">{{ item.count }} records</span>
-                        </div>
+
+            <!-- TAB: Train New Model -->
+            <div class="tab-content active" id="trainTab">
+                <!-- Algorithm Selection -->
+                <div class="form-section">
+                    <label class="form-label">Algorithm</label>
+                    <div class="algo-grid">
+                        {% for key, algo in algorithms.items %}
+                        <label class="algo-option">
+                            <input type="radio" name="algorithm" value="{{ key }}" {% if forloop.first %}checked{% endif %}>
+                            <div class="algo-card">
+                                <i class="fas {{ algo.icon }}"></i>
+                                <span class="algo-name">{{ algo.name }}</span>
+                                <span class="algo-desc">{{ algo.description }}</span>
+                            </div>
+                        </label>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 </div>
+
+                <!-- Dataset Selection -->
+                <div class="form-section">
+                    <label class="form-label">Training Data <span class="hint">({{ training_totals.records }} total)</span></label>
+                    <div class="dataset-select" id="trainDatasetSelect">
+                        {% for item in uploads %}
+                        <div class="dataset-option" onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }}, 'train')" data-distribution='{{ item.distribution_json|safe }}'>
+                            <input type="checkbox" data-id="{{ item.upload.id }}" data-count="{{ item.count }}">
+                            <div class="ds-info">
+                                <span class="ds-name">{{ item.upload.file_name }}</span>
+                                <span class="ds-count">{{ item.count }} records</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="training-summary" id="trainSummary" style="display:none">
+                    <div class="summary-item"><span>Algorithm:</span><strong id="sumAlgo">-</strong></div>
+                    <div class="summary-item"><span>Datasets:</span><strong id="sumDatasets">0</strong></div>
+                    <div class="summary-item"><span>Total Records:</span><strong id="sumRecords">0</strong></div>
+                </div>
+
+                <button class="btn btn-primary btn-block" id="trainBtn" onclick="startTraining('new')" disabled>
+                    <i class="fas fa-play"></i> Start Training
+                </button>
             </div>
-            
-            <!-- Summary -->
-            <div class="training-summary" id="summary" style="display:none">
-                <div class="summary-item"><span>Algorithm:</span><strong id="sumAlgo">-</strong></div>
-                <div class="summary-item"><span>Datasets:</span><strong id="sumDatasets">0</strong></div>
-                <div class="summary-item"><span>Total Records:</span><strong id="sumRecords">0</strong></div>
+
+            <!-- TAB: Retrain Model -->
+            <div class="tab-content" id="retrainTab">
+                <!-- Model Selection -->
+                <div class="form-section">
+                    <label class="form-label">Select Model to Retrain</label>
+                    {% if all_models %}
+                    <div class="model-select" id="retrainModelSelect">
+                        {% for model in all_models %}
+                        <div class="model-option" onclick="selectModelToRetrain(this, {{ model.id }})" data-model-id="{{ model.id }}">
+                            <input type="radio" name="retrain_model" value="{{ model.id }}">
+                            <div class="model-option-info">
+                                <span class="model-option-name">
+                                    {{ model.version_name }}
+                                    {% if model.is_active %}<span class="badge success" style="margin-left:6px;">Active</span>{% endif %}
+                                </span>
+                                <span class="model-option-meta">
+                                    {% if model.accuracy %}Acc: {{ model.accuracy|floatformat:1 }}%{% endif %}
+                                    {% if model.f1_score %}· F1: {{ model.f1_score|floatformat:3 }}{% endif %}
+                                    · {{ model.created_at|date:"M d, Y" }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state small">
+                        <p>No models available to retrain</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Additional Data Selection -->
+                <div class="form-section" id="retrainDataSection">
+                    <label class="form-label">Additional Training Data <span class="hint">(fine-tune with new data)</span></label>
+                    <div class="dataset-select" id="retrainDatasetSelect">
+                        {% for item in uploads %}
+                        <div class="dataset-option" onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }}, 'retrain')" data-distribution='{{ item.distribution_json|safe }}'>
+                            <input type="checkbox" data-id="{{ item.upload.id }}" data-count="{{ item.count }}">
+                            <div class="ds-info">
+                                <span class="ds-name">{{ item.upload.file_name }}</span>
+                                <span class="ds-count">{{ item.count }} records</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Retrain Summary -->
+                <div class="training-summary" id="retrainSummary" style="display:none">
+                    <div class="summary-item"><span>Base Model:</span><strong id="sumModel">-</strong></div>
+                    <div class="summary-item"><span>New Datasets:</span><strong id="sumRetrainDatasets">0</strong></div>
+                    <div class="summary-item"><span>New Records:</span><strong id="sumRetrainRecords">0</strong></div>
+                </div>
+
+                <button class="btn btn-primary btn-block" id="retrainBtn" onclick="startTraining('retrain')" disabled>
+                    <i class="fas fa-sync-alt"></i> Start Retraining
+                </button>
+
+                <p class="hint" style="margin-top:1rem; text-align:center;">
+                    <i class="fas fa-info-circle"></i> Retraining fine-tunes the selected model with additional data
+                </p>
             </div>
-            
-            <button class="btn btn-primary btn-block" id="trainBtn" onclick="startTraining()" disabled>
-                <i class="fas fa-play"></i> Start Training
-            </button>
+
             {% else %}
             <div class="empty-state small">
                 <i class="fas fa-database"></i>
@@ -91,11 +170,11 @@
             {% endif %}
         </div>
     </div>
-    
+
     <!-- Selected Data Distribution -->
     <div class="card">
         <div class="card-header">
-            <h3><i class="fas fa-chart-pie"></i> Selected Data Distribution</h3>
+            <h3><i class="fas fa-chart-pie"></i> <span id="distTitle">Selected Data Distribution</span></h3>
         </div>
         <div class="card-body">
             <div id="distributionDisplay">
@@ -202,11 +281,11 @@
             <div class="test-set-detail">
                 <p class="text-center"><strong>{{ test_set_info.total }}</strong> records reserved for testing</p>
                 <p class="hint text-center">This test set is used to evaluate all trained models for fair comparison.</p>
-                
+
                 <div class="chart-wrap" style="height: 200px; margin-top: 1rem;">
                     <canvas id="testSetChart"></canvas>
                 </div>
-                
+
                 <div id="testSetBars" style="margin-top: 1rem;"></div>
             </div>
         </div>

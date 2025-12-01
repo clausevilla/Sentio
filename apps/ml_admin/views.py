@@ -34,7 +34,7 @@ except ImportError:
 
 ML_ALGORITHMS = {
     'logistic_regression': {'name': 'Logistic Regression', 'description': 'Fast, interpretable baseline', 'icon': 'fa-chart-line'},
-    'bert': {'name': 'BERT', 'description': 'Pre-trained transformer', 'icon': 'fa-brain'},
+    'random_forest': {'name': 'Random Forest', 'description': 'Ensemble of decision trees', 'icon': 'fa-tree'},
     'rnn': {'name': 'RNN/LSTM', 'description': 'Recurrent neural network', 'icon': 'fa-network-wired'},
     'transformer': {'name': 'Custom Transformer', 'description': 'Custom architecture', 'icon': 'fa-microchip'},
 }
@@ -86,6 +86,21 @@ def dashboard_view(request):
             for m in all_models
         ])
 
+    # Dataset overview
+    dataset_overview = {
+        'training': DatasetRecord.objects.filter(dataset_type='Training').count(),
+        'test': DatasetRecord.objects.filter(dataset_type='Test').count(),
+        'unlabeled': DatasetRecord.objects.filter(dataset_type='Unlabeled').count(),
+    }
+    dataset_overview['total'] = sum(dataset_overview.values())
+
+    # Label distribution (top 5)
+    label_distribution = list(
+        DatasetRecord.objects.values('label')
+        .annotate(count=Count('id'))
+        .order_by('-count')[:5]
+    )
+
     return render(request, 'ml_admin/dashboard.html', {
         'active_model': active_model,
         'stats': stats,
@@ -93,6 +108,8 @@ def dashboard_view(request):
         'recent_jobs': recent_jobs,
         'recent_uploads': recent_uploads,
         'models_for_comparison': models_for_comparison,
+        'dataset_overview': dataset_overview,
+        'label_distribution': label_distribution,
     })
 
 
@@ -163,6 +180,11 @@ def upload_csv_api(request):
         if not csv_file.name.endswith('.csv'):
             return JsonResponse({'success': False, 'error': 'File must be CSV'}, status=400)
 
+        # Get dataset type from request
+        dataset_type = request.POST.get('dataset_type', 'Training')
+        if dataset_type not in ['Training', 'Test', 'Unlabeled']:
+            dataset_type = 'Training'
+
         upload_dir = os.path.join('data', 'uploads')
         os.makedirs(upload_dir, exist_ok=True)
 
@@ -181,12 +203,13 @@ def upload_csv_api(request):
         )
 
         if CLEANING_AVAILABLE:
-            result = run_cleaning_pipeline(upload.id)
+            result = run_cleaning_pipeline(upload.id, dataset_type=dataset_type)
             if result.get('success'):
                 return JsonResponse({
                     'success': True,
                     'message': f'Processed {result.get("row_count", 0)} records',
                     'upload_id': upload.id,
+                    'row_count': result.get('row_count', 0),
                 })
             else:
                 return JsonResponse({
@@ -198,6 +221,7 @@ def upload_csv_api(request):
             'success': True,
             'message': 'Uploaded (run cleaning manually)',
             'upload_id': upload.id,
+            'row_count': 0,
         })
 
     except Exception as e:
@@ -382,6 +406,22 @@ def training_view(request):
         'uploads': len(uploads_with_counts),
     }
 
+    # All models for retraining (only deep learning models can be retrained)
+    all_models = ModelVersion.objects.order_by('-created_at')
+    retrainable_models = []
+    for model in all_models:
+        # Include model type info if available
+        model_info = {
+            'id': model.id,
+            'version_name': model.version_name,
+            'accuracy': float(model.accuracy) if model.accuracy else None,
+            'f1_score': float(model.f1_score) if model.f1_score else None,
+            'created_at': model.created_at.strftime('%Y-%m-%d'),
+            'is_active': model.is_active,
+            'algorithm': getattr(model, 'algorithm', 'unknown'),
+        }
+        retrainable_models.append(model_info)
+
     return render(request, 'ml_admin/training.html', {
         'jobs': jobs,
         'uploads': uploads_with_counts,
@@ -391,6 +431,8 @@ def training_view(request):
         'test_set_info': test_set_info,
         'test_set_json': json.dumps(test_set_info['distribution']),
         'training_totals': training_totals,
+        'all_models': all_models,
+        'retrainable_models_json': json.dumps(retrainable_models),
     })
 
 
@@ -400,13 +442,30 @@ def start_training_api(request):
     try:
         data = json.loads(request.body)
         upload_ids = data.get('upload_ids', [])
+        mode = data.get('mode', 'new')  # 'new' or 'retrain'
         algorithm = data.get('algorithm', 'logistic_regression')
+        base_model_id = data.get('base_model_id')  # For retrain mode
 
         if not upload_ids:
             return JsonResponse({'success': False, 'error': 'No datasets selected'}, status=400)
 
-        if algorithm not in ML_ALGORITHMS:
+        # Validate mode
+        if mode not in ['new', 'retrain']:
+            return JsonResponse({'success': False, 'error': 'Invalid training mode'}, status=400)
+
+        # For new training, validate algorithm
+        if mode == 'new' and algorithm not in ML_ALGORITHMS:
             return JsonResponse({'success': False, 'error': 'Invalid algorithm'}, status=400)
+
+        # For retrain, validate base model
+        base_model = None
+        if mode == 'retrain':
+            if not base_model_id:
+                return JsonResponse({'success': False, 'error': 'No base model selected for retraining'}, status=400)
+            try:
+                base_model = ModelVersion.objects.get(id=base_model_id)
+            except ModelVersion.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Base model not found'}, status=400)
 
         uploads = DataUpload.objects.filter(id__in=upload_ids, is_validated=True)
         if uploads.count() != len(upload_ids):
@@ -415,20 +474,40 @@ def start_training_api(request):
         if TrainingJob.objects.filter(status='RUNNING').exists():
             return JsonResponse({'success': False, 'error': 'Training already running'}, status=400)
 
+        # Create training job
         job = TrainingJob.objects.create(
             data_upload=uploads.first(),
             status='PENDING',
             initiated_by=request.user,
         )
 
+        # TODO
+        # Store training config in job (we may want to add these fields to our model)
+        # job.config = {
+        #     'mode': mode,
+        #     'algorithm': algorithm if mode == 'new' else None,
+        #     'base_model_id': base_model_id if mode == 'retrain' else None,
+        #     'upload_ids': upload_ids,
+        # }
+        # job.save()
+
         # TODO: Trigger actual training
         # from ml_pipeline.training import train_model
-        # train_model.delay(job.id, upload_ids, algorithm)
+        # if mode == 'retrain':
+        #     train_model.delay(job.id, upload_ids, base_model_id=base_model_id)
+        # else:
+        #     train_model.delay(job.id, upload_ids, algorithm=algorithm)
+
+        if mode == 'retrain':
+            message = f'Started retraining based on {base_model.version_name}'
+        else:
+            message = f'Started {ML_ALGORITHMS[algorithm]["name"]} training'
 
         return JsonResponse({
             'success': True,
-            'message': f'Started {ML_ALGORITHMS[algorithm]["name"]} training',
+            'message': message,
             'job_id': job.id,
+            'mode': mode,
         })
 
     except json.JSONDecodeError:
