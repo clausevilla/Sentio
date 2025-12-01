@@ -1,3 +1,7 @@
+<!-- Author: Lian Shi -->
+<!-- Disclaimer: LLM has been used to help with page layout(two columns), consent layout bug fix and manual adjustments were done after -->
+
+
 {%extends 'base.html'%}
 {%load static%}
 
@@ -8,17 +12,17 @@
 {% endblock %}
 
 {%block content%}
-<div class="register_container" style>
+<div class="register_container">
 
     <div class="register_left">
-        <h2>Join Sentio Today!</h1>
-            <p>Take the first step towards better mental health awareness.</p>
-            <ul class="feature-list">
-                <li>AI-powered mental health state detection</li>
-                <li>Track your progress over time</li>
-                <li>Personalized recommendations</li>
-                <li>Secure & private data storage</li>
-            </ul>
+        <h2>Join Sentio Today!</h2>
+        <p>Take the first step towards better mental health awareness.</p>
+        <ul class="feature-list">
+            <li>AI-powered mental health state detection</li>
+            <li>Track your progress over time</li>
+            <li>Personalized recommendations</li>
+            <li>Secure & private data storage</li>
+        </ul>
     </div>
 
     <div class="register_right">
@@ -27,57 +31,94 @@
         <!-- Alert messages -->
         {% if messages %}
         {% for message in messages %}
-        {% if message.tags == 'error' or message.tags == 'danger' %}
         <div class="alert alert-{{ message.tags }} show">
             {{ message }}
         </div>
-
-        {% endif %}
         {% endfor %}
         {% endif %}
 
-
-        <form method="post" action="{% url 'accounts:register' %}">
+        <form method="post" action="{% url 'accounts:register' %}" id="registerForm">
             {% csrf_token %}
 
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" class="form-control" required
+                <input type="text" id="username" name="username"
+                    class="form-control" required
                     placeholder="Enter your username">
             </div>
+
             <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" class="form-control" required
-                    placeholder="Enter your email">
+                <input type="email" id="email" name="email" class="form-control"
+                    required placeholder="Enter your email">
             </div>
-<div class="form-group">
-    <label for="password1">Password</label>
-    <div class="input-wrapper">
-        <input type="password" id="password1" name="password1" class="form-control" required
-            placeholder="Enter your password">
-        <button type="button" class="password-toggle" aria-label="Toggle password visibility">
-            <i class="fas fa-eye-slash"></i>
-        </button>
-    </div>
-</div>
-<div class="form-group">
-    <label for="password2">Confirm Password</label>
-    <div class="input-wrapper">
-        <input type="password" id="password2" name="password2" class="form-control" required
-            placeholder="Confirm your password">
-        <button type="button" class="password-toggle" aria-label="Toggle password visibility">
-            <i class="fas fa-eye-slash"></i>
-        </button>
-    </div>
-</div>
-            <button type="submit" class="btn btn-primary btn-block" style="width: 100%;">Register</button>
+
+            <div class="form-group">
+                <label for="password1">Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="password1" name="password1"
+                        class="form-control" required
+                        placeholder="Enter your password">
+                    <button type="button" class="password-toggle" tabindex="-1">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password2">Confirm Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="password2" name="password2"
+                        class="form-control" required
+                        placeholder="Confirm your password">
+                    <button type="button" class="password-toggle" tabindex="-1">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Consent Section -->
+            <div class="consent-section" id="consentGroup">
+                <div class="consent-checkbox-row">
+                    <input type="checkbox" id="consent" name="consent" class="consent-checkbox">
+                    <label for="consent" class="consent-label">
+                        I am over 18 years old. I have read and agree to the
+                        <a href="{% url 'accounts:privacy_policy' %}" target="_blank">Privacy Policy</a>,
+                        and consent to the processing of my text submissions and mental health analysis data.
+                    </label>
+                </div>
+                <!-- Error message - hidden by default -->
+                <div class="consent-error" id="consentError">
+                    <i class="fas fa-exclamation-circle"></i>
+                    You must agree to the Privacy Policy to register.
+                </div>
+            </div>
+
+            <!-- Data Info Box -->
+            <div class="data-info-box">
+                <div class="data-info-header">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>What we collect:</span>
+                </div>
+                <ul class="data-info-list">
+                    <li>Your text submissions for mental health analysis</li>
+                    <li>AI-generated predictions and analysis results</li>
+                    <li>Basic account information (username, email)</li>
+                </ul>
+                <p class="data-info-note">
+                    <strong>You can delete ALL YOUR DATA or YOUR ACCOUNT at any time</strong>
+                    from your profile settings.
+                </p>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Register</button>
         </form>
 
         <p class="text-center">
-            Already have an account? <a href="{% url 'accounts:login' %}">Login
-                here</a>.
+            Already have an account? <a href="{% url 'accounts:login' %}">Login here</a>.
         </p>
     </div>
+</div>
 
-    <script src="{% static 'accounts/js/register.js' %}"></script>
-    {%endblock%}
+<script src="{% static 'accounts/js/register.js' %}"></script>
+{%endblock%}

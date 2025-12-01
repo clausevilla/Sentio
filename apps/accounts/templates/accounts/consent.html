@@ -1,9 +1,12 @@
+<!-- Author: Lian Shi -->
+ <!-- Disclaimer: This consent page content has been drafted with the assistance of LLM.
+  Manual review and adjustments were made to tailor the content to this specific student project to ensure compliance with GDPR principles. -->
 {% extends 'base.html' %}
 {% load static %}
 <link rel="stylesheet" href="{% static 'accounts/css/consent.css' %}">
 
-
 {% block title %}Data Processing Consent - Sentio{% endblock %}
+
 
 
 {% block content %}
@@ -13,6 +16,24 @@
         <h1>Data Processing Consent</h1>
         <p>Your privacy is important to us</p>
     </div>
+
+    <!-- Alert messages -->
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Re-consent notice (shown when user's consent was previously revoked) -->
+    {% if user.consent and not user.consent.has_consented %}
+    <div class="reconsent-notice">
+        <h3><i class="fas fa-sync-alt"></i> Consent Required</h3>
+        <p>Your previous consent was revoked (possibly after deleting your data).
+           Please review and re-accept our data processing terms to continue.</p>
+    </div>
+    {% endif %}
 
     <div class="consent-content">
         <h2>Before you continue, please understand:</h2>
@@ -33,16 +54,20 @@
     <form method="post" action="{% url 'accounts:consent' %}" id="consentForm">
         {% csrf_token %}
 
-        <div class="consent-checkbox">
+        <div class="consent-checkbox-container" id="consentCheckboxContainer">
             <label>
                 <input type="checkbox" name="consent" id="consentCheckbox" required>
-                <span>I understand and consent to the collection and processing of my text submissions and mental health analysis data as described above. I acknowledge this is a student project for educational purposes and not a medical tool. I have read and agree to the <a href="{% url 'accounts:privacy_policy' %}" target="_blank">Privacy Policy</a>.</span>
+                <span>I am at least 18 years old. I understand and consent to the collection and processing of my text submissions and mental health analysis data as described above. I acknowledge this is a student project for educational purposes and not a medical tool. I have read and agree to the <a href="{% url 'accounts:privacy_policy' %}" target="_blank">Privacy Policy</a>.</span>
             </label>
         </div>
 
         <div class="consent-actions">
-            <a href="{% url 'accounts:logout' %}" class="btn btn-secondary">I Do Not Consent</a>
-            <button type="submit" class="btn btn-primary" id="consentButton" disabled>I Consent - Continue</button>
+            <a href="{% url 'accounts:logout' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> I Do Not Consent
+            </a>
+            <button type="submit" class="btn btn-primary" id="consentButton" disabled>
+                <i class="fas fa-check"></i> I Consent - Continue
+            </button>
         </div>
     </form>
 
@@ -51,10 +76,7 @@
     </div>
 </div>
 
-<script>
-// Enable submit button only when checkbox is checked
-document.getElementById('consentCheckbox')?.addEventListener('change', function() {
-    document.getElementById('consentButton').disabled = !this.checked;
-});
-</script>
+
+
+<script src="{% static 'accounts/js/consent.js' %}"></script>
 {% endblock %}

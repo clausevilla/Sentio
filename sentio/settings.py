@@ -1,3 +1,5 @@
+# Author: Marcus Berggren, Lian Shi
+
 """
 Django settings for sentio project.
 
@@ -50,6 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.accounts.middleware.ConsentMiddleware',
 ]
 
 ROOT_URLCONF = 'sentio.urls'
@@ -142,6 +145,6 @@ LOGIN_REDIRECT_URL = 'predictions:input'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
 # Session settings
-SESSION_COOKIE_AGE = 1209600  # 2 weeks
+SESSION_COOKIE_AGE = 24000  # 6 hours in seconds
 SESSION_SAVE_EVERY_REQUEST = False
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False # Session persists after browser close

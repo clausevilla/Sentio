@@ -1,3 +1,6 @@
+<!-- Author: Lian Shi -->
+ <!-- Disclaimer: This privacy policy has been drafted with the assistance of LLM to ensure comprehensive coverage of GDPR principles. Manual review and adjustments were made to tailor the content to this specific student project application. -->
+
 {% extends 'base.html' %}
 {% load static %}
 
@@ -24,7 +27,7 @@
         <li><strong>Account Information:</strong> Username, email address, and encrypted password when you register for an account.</li>
         <li><strong>Mental Health Text Data:</strong> The text content you submit for analysis through our mental health detection system.</li>
         <li><strong>Analysis Results:</strong> The AI-generated mental health state classifications and predictions based on your submitted text.</li>
-        <li><strong>Usage Data:</strong> Timestamps of when you submit text for analysis and access your analysis history.</li>
+        <li><strong>Usage Data:</strong> Timestamps of when you submit text for analysis, your registration date, and your last login.</li>
     </ul>
 
     <h2>3. How We Use Your Data</h2>
@@ -53,8 +56,7 @@
     <p>As a user of Sentio, you have the following rights regarding your personal data:</p>
     <ul>
         <li><strong>Right to Access:</strong> You can view all your mental health analysis records in your account history.</li>
-        <li><strong>Right to Data Portability:</strong> You can export and download all your personal data in a machine-readable format.</li>
-        <li><strong>Right to Rectification:</strong> You can update your account information at any time through your profile page.</li>
+        <li><strong>Right to Data Portability:</strong> You can export and download all your personal data in a machine-readable json format.</li>
         <li><strong>Right to Erasure:</strong> You can permanently delete all your mental health analysis data or delete your entire account at any time through your profile settings.</li>
         <li><strong>Right to Withdraw Consent:</strong> You can withdraw your consent to data processing at any time by deleting your data or account.</li>
     </ul>
@@ -62,16 +64,16 @@
     <h2>7. Data Retention</h2>
     <p>We retain your personal data only for as long as necessary to provide our services:</p>
     <ul>
-        <li><strong>Account Data:</strong> Stored until you choose to delete your account.</li>
-        <li><strong>Mental Health Analysis Records:</strong> Stored until you choose to delete them individually or delete all your data.</li>
-        <li><strong>Deleted Data:</strong> When you delete your data or account, all associated information is permanently removed from our database within 30 days.</li>
+        <li><strong>Account Data:</strong> Stored until you choose to delete your data or account.</li>
+        <li><strong>Mental Health Analysis Records:</strong> Stored until you choose to delete all your data.</li>
+        <li><strong>Deleted Data:</strong> When you delete your data or account, all associated information is permanently removed from our database.</li>
     </ul>
 
     <h2>8. Cookies and Tracking</h2>
     <p>Sentio uses minimal cookies necessary for authentication and session management. We use Django's session framework to maintain your logged-in state. We do not use third-party tracking cookies or analytics services that would share your data with external parties.</p>
 
     <h2>9. Data Transfers</h2>
-    <p>This is a student project prototype. If deployed, data would be stored on servers located in [your region]. We do not transfer personal data outside the European Economic Area without implementing appropriate safeguards as required by GDPR.</p>
+    <p>This is a student project prototype. If deployed, data would be stored on servers . We do not transfer personal data outside the European Economic Area without implementing appropriate safeguards as required by GDPR.</p>
 
     <h2>10. Children's Privacy</h2>
     <p>Sentio is not intended for use by individuals under the age of 18. We do not knowingly collect personal data from children. If you are under 18, please do not use this service or provide any personal information.</p>
@@ -80,7 +82,7 @@
     <p>We may update this privacy policy from time to time to reflect changes in our practices or legal requirements. We will notify users of any material changes by updating the "Last Updated" date at the top of this policy.</p>
 
     <h2>12. Contact Information</h2>
-    <p>If you have any questions about this privacy policy or how we handle your personal data, you can contact us through your course instructor or project supervisor.</p>
+    <p>If you have any questions about this privacy policy or how we handle your personal data, you can contact us.</p>
 
     <h2>13. Educational Purpose Disclaimer</h2>
     <p>This application is developed as a student project for educational purposes. While we implement privacy best practices and GDPR principles, this is not a production system certified for processing real sensitive health data. The mental health analysis provided by this tool is generated by a machine learning model for demonstration purposes only and should not be used as a substitute for professional mental health assessment or treatment.</p>

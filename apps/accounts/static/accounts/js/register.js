@@ -1,11 +1,17 @@
+// Author: Lian Shi */
+// Disclaimer: LLM has been used to help with password strength indication and consent handling bug fix
+
 // accounts/register.js - Registration page with validation
 
 document.addEventListener('DOMContentLoaded', function () {
-    const registerForm = document.querySelector('form[action*="register"]');
+    const registerForm = document.getElementById('registerForm');
     const usernameInput = document.getElementById('username');
     const emailInput = document.getElementById('email');
     const password1Input = document.getElementById('password1');
     const password2Input = document.getElementById('password2');
+    const consentCheckbox = document.getElementById('consent');
+    const consentGroup = document.getElementById('consentGroup');
+    const consentError = document.getElementById('consentError');
 
     if (registerForm) {
         registerForm.addEventListener('submit', function (e) {
@@ -13,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Clear previous errors
             clearErrors();
+            clearConsentError();
 
             // Validate username
             if (usernameInput) {
@@ -64,16 +71,37 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
+            // Validate consent checkbox - THIS IS THE KEY FIX
+            if (consentCheckbox && !consentCheckbox.checked) {
+                showConsentError();
+                isValid = false;
+            }
+
+            // If validation failed, prevent form submission
             if (!isValid) {
                 e.preventDefault();
+                // Scroll to first error
+                const firstError = document.querySelector('.error, .consent-section.error');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
                 return false;
             }
 
-            // Show loading state
+            // Show loading state on submit button
             const submitBtn = registerForm.querySelector('button[type="submit"]');
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Creating Account...';
+            }
+        });
+    }
+
+    // Clear consent error when checkbox is checked
+    if (consentCheckbox) {
+        consentCheckbox.addEventListener('change', function () {
+            if (this.checked) {
+                clearConsentError();
             }
         });
     }
@@ -88,16 +116,23 @@ document.addEventListener('DOMContentLoaded', function () {
         // Add password strength indicator
         const formGroup = password1Input.closest('.form-group');
         if (formGroup) {
-            const strengthIndicator = document.createElement('div');
-            strengthIndicator.className = 'password-strength';
-            strengthIndicator.innerHTML = `
-                <div class="strength-bar">
-                    <div class="strength-bar-fill"></div>
-                </div>
-                <div class="strength-text"></div>
-            `;
-            const inputWrapper = password1Input.closest('.input-wrapper');
-            inputWrapper.insertAdjacentElement('afterend', strengthIndicator);
+            // Check if strength indicator already exists
+            if (!formGroup.querySelector('.password-strength')) {
+                const strengthIndicator = document.createElement('div');
+                strengthIndicator.className = 'password-strength';
+                strengthIndicator.innerHTML = `
+                    <div class="strength-bar">
+                        <div class="strength-bar-fill"></div>
+                    </div>
+                    <div class="strength-text"></div>
+                `;
+                const inputWrapper = password1Input.closest('.input-wrapper');
+                if (inputWrapper) {
+                    inputWrapper.insertAdjacentElement('afterend', strengthIndicator);
+                } else {
+                    formGroup.appendChild(strengthIndicator);
+                }
+            }
         }
     }
 
@@ -129,25 +164,27 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // handle password toggles to password fields
+    document.querySelectorAll('.password-toggle').forEach(function (toggle) {
+        toggle.addEventListener('click', function () {
+            const inputWrapper = this.closest('.input-wrapper');
+            const input = inputWrapper ? inputWrapper.querySelector('input') : null;
+            const icon = this.querySelector('i');
 
-document.querySelectorAll('.password-toggle').forEach(function(toggle) {
-    toggle.addEventListener('click', function() {
-        const input = this.closest('.input-wrapper').querySelector('input');
-        const icon = this.querySelector('i');
-
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
-        } else {
-            input.type = 'password';
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
-        }
+            if (input) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                }
+            }
+        });
     });
 });
 
-});
 
 // Simple email format validation to check if email is valid
 function isValidEmail(email) {
@@ -216,11 +253,6 @@ function showError(input, message) {
         formGroup.appendChild(errorDiv);
     }
     errorDiv.textContent = message;
-    errorDiv.style.color = '#ff4444'
-
-    // Remove success message if exists
-    const successDiv = formGroup.querySelector('.success-message');
-    if (successDiv) successDiv.remove();
 }
 
 // Show success message for input such as password confirmation
@@ -238,7 +270,6 @@ function showSuccess(input, message) {
         formGroup.appendChild(successDiv);
     }
     successDiv.textContent = message;
-    successDiv.style.color = '#4CAF50';
 
     // Remove error message if exists
     const errorDiv = formGroup.querySelector('.error-message');
@@ -274,4 +305,18 @@ function clearErrors() {
     });
 }
 
+// Show consent error - adds error class to consent section
+function showConsentError() {
+    const consentGroup = document.getElementById('consentGroup');
+    if (consentGroup) {
+        consentGroup.classList.add('error');
+    }
+}
 
+// Clear consent error - removes error class from consent section
+function clearConsentError() {
+    const consentGroup = document.getElementById('consentGroup');
+    if (consentGroup) {
+        consentGroup.classList.remove('error');
+    }
+}
