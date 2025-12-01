@@ -1,5 +1,8 @@
+/*Author: Lian Shi */
+/* Disclaimer: LLM has been used to help generate initial styles and manual adjustments were made later */
+
 /* ===================================
-   OPTION 2: VIDEO BACKGROUND (RECOMMENDED!)
+    HERO SECTION WITH VIDEO BACKGROUND
    =================================== */
 
 .hero-section {
@@ -125,7 +128,7 @@
 .features-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
+    gap: 3rem;
 }
 
 .feature-card {
@@ -157,7 +160,7 @@
 }
 
 .feature-card h3 {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     color: #1F3D3D;
     margin-bottom: 1rem;
     font-weight: 600;
@@ -165,7 +168,7 @@
 }
 
 .feature-card:hover h3 {
-    color: #4A7C59;
+    color: var(--color-text-dark);
 }
 
 .feature-card p {
