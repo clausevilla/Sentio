@@ -1,3 +1,6 @@
+# Author: Lian Shi
+# Disclaimer: LLM has been used to help with code structure and basic implementations OF views.py, with manual tuning and adjustments made throughout.
+
 """
 ML Admin Dashboard - 6 Pages: Dashboard, Data, Training, Models, Users, Analytics
 """
@@ -9,7 +12,7 @@ from datetime import timedelta
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.db.models import Count, Avg
+from django.db.models import Avg, Count
 from django.db.models.functions import TruncDate
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -21,28 +24,47 @@ from .models import DatasetRecord, DataUpload, ModelVersion, TrainingJob
 # Import cleaning pipeline
 try:
     from ml_pipeline.data_cleaning.cleaner import run_cleaning_pipeline
+
     CLEANING_AVAILABLE = True
 except ImportError:
     CLEANING_AVAILABLE = False
 
-# Import predictions if available
+# Import predictions
 try:
     from apps.predictions.models import PredictionResult, TextSubmission
+
     PREDICTIONS_AVAILABLE = True
 except ImportError:
     PREDICTIONS_AVAILABLE = False
 
 ML_ALGORITHMS = {
-    'logistic_regression': {'name': 'Logistic Regression', 'description': 'Fast, interpretable baseline', 'icon': 'fa-chart-line'},
-    'random_forest': {'name': 'Random Forest', 'description': 'Ensemble of decision trees', 'icon': 'fa-tree'},
-    'rnn': {'name': 'RNN/LSTM', 'description': 'Recurrent neural network', 'icon': 'fa-network-wired'},
-    'transformer': {'name': 'Custom Transformer', 'description': 'Custom architecture', 'icon': 'fa-microchip'},
+    'logistic_regression': {
+        'name': 'Logistic Regression',
+        'description': 'Fast, interpretable baseline',
+        'icon': 'fa-chart-line',
+    },
+    'random_forest': {
+        'name': 'Random Forest',
+        'description': 'Ensemble of decision trees',
+        'icon': 'fa-tree',
+    },
+    'rnn': {
+        'name': 'RNN/LSTM',
+        'description': 'Recurrent neural network',
+        'icon': 'fa-network-wired',
+    },
+    'transformer': {
+        'name': 'Custom Transformer',
+        'description': 'Custom architecture',
+        'icon': 'fa-microchip',
+    },
 }
 
 
 # ============================================
 # PAGE 1: Dashboard
 # ============================================
+
 
 @staff_member_required
 def dashboard_view(request):
@@ -77,14 +99,16 @@ def dashboard_view(request):
     models_for_comparison = None
     all_models = ModelVersion.objects.order_by('-created_at')[:10]
     if all_models.count() > 1:
-        models_for_comparison = json.dumps([
-            {
-                'name': m.version_name,
-                'accuracy': float(m.accuracy) if m.accuracy else 0,
-                'f1': float(m.f1_score) if m.f1_score else 0,
-            }
-            for m in all_models
-        ])
+        models_for_comparison = json.dumps(
+            [
+                {
+                    'name': m.version_name,
+                    'accuracy': float(m.accuracy) if m.accuracy else 0,
+                    'f1': float(m.f1_score) if m.f1_score else 0,
+                }
+                for m in all_models
+            ]
+        )
 
     # Dataset overview
     dataset_overview = {
@@ -101,21 +125,26 @@ def dashboard_view(request):
         .order_by('-count')[:5]
     )
 
-    return render(request, 'ml_admin/dashboard.html', {
-        'active_model': active_model,
-        'stats': stats,
-        'jobs': jobs,
-        'recent_jobs': recent_jobs,
-        'recent_uploads': recent_uploads,
-        'models_for_comparison': models_for_comparison,
-        'dataset_overview': dataset_overview,
-        'label_distribution': label_distribution,
-    })
+    return render(
+        request,
+        'ml_admin/dashboard.html',
+        {
+            'active_model': active_model,
+            'stats': stats,
+            'jobs': jobs,
+            'recent_jobs': recent_jobs,
+            'recent_uploads': recent_uploads,
+            'models_for_comparison': models_for_comparison,
+            'dataset_overview': dataset_overview,
+            'label_distribution': label_distribution,
+        },
+    )
 
 
 # ============================================
 # PAGE 2: Data Management
 # ============================================
+
 
 @staff_member_required
 def data_view(request):
@@ -135,11 +164,15 @@ def data_view(request):
             .values('dataset_type')
             .annotate(count=Count('id'))
         )
-        uploads_with_stats.append({
-            'upload': upload,
-            'distribution': dist,
-            'type_breakdown': {t['dataset_type']: t['count'] for t in type_breakdown},
-        })
+        uploads_with_stats.append(
+            {
+                'upload': upload,
+                'distribution': dist,
+                'type_breakdown': {
+                    t['dataset_type']: t['count'] for t in type_breakdown
+                },
+            }
+        )
 
     # Overall distribution by label
     overall_distribution = list(
@@ -157,16 +190,20 @@ def data_view(request):
 
     total_records = DatasetRecord.objects.count()
 
-    return render(request, 'ml_admin/data.html', {
-        'uploads': uploads_with_stats,
-        'total_uploads': uploads.count(),
-        'total_records': total_records,
-        'validated_count': DataUpload.objects.filter(is_validated=True).count(),
-        'overall_distribution': overall_distribution,
-        'overall_distribution_json': json.dumps(overall_distribution),
-        'type_breakdown': type_breakdown,
-        'active_model': ModelVersion.objects.filter(is_active=True).first(),
-    })
+    return render(
+        request,
+        'ml_admin/data.html',
+        {
+            'uploads': uploads_with_stats,
+            'total_uploads': uploads.count(),
+            'total_records': total_records,
+            'validated_count': DataUpload.objects.filter(is_validated=True).count(),
+            'overall_distribution': overall_distribution,
+            'overall_distribution_json': json.dumps(overall_distribution),
+            'type_breakdown': type_breakdown,
+            'active_model': ModelVersion.objects.filter(is_active=True).first(),
+        },
+    )
 
 
 @staff_member_required
@@ -174,11 +211,15 @@ def data_view(request):
 def upload_csv_api(request):
     try:
         if 'csv_file' not in request.FILES:
-            return JsonResponse({'success': False, 'error': 'No file provided'}, status=400)
+            return JsonResponse(
+                {'success': False, 'error': 'No file provided'}, status=400
+            )
 
         csv_file = request.FILES['csv_file']
         if not csv_file.name.endswith('.csv'):
-            return JsonResponse({'success': False, 'error': 'File must be CSV'}, status=400)
+            return JsonResponse(
+                {'success': False, 'error': 'File must be CSV'}, status=400
+            )
 
         # Get dataset type from request
         dataset_type = request.POST.get('dataset_type', 'Training')
@@ -203,26 +244,37 @@ def upload_csv_api(request):
         )
 
         if CLEANING_AVAILABLE:
-            result = run_cleaning_pipeline(upload.id, dataset_type=dataset_type)
+            result = run_cleaning_pipeline(upload.id)
             if result.get('success'):
-                return JsonResponse({
-                    'success': True,
-                    'message': f'Processed {result.get("row_count", 0)} records',
-                    'upload_id': upload.id,
-                    'row_count': result.get('row_count', 0),
-                })
+                # Update dataset_type AFTER cleaning completes
+                DatasetRecord.objects.filter(data_upload=upload).update(
+                    dataset_type=dataset_type
+                )
+                return JsonResponse(
+                    {
+                        'success': True,
+                        'message': f'Processed {result.get("row_count", 0)} records',
+                        'upload_id': upload.id,
+                        'row_count': result.get('row_count', 0),
+                    }
+                )
             else:
-                return JsonResponse({
-                    'success': False,
-                    'error': result.get('error', 'Cleaning failed'),
-                }, status=400)
+                return JsonResponse(
+                    {
+                        'success': False,
+                        'error': result.get('error', 'Cleaning failed'),
+                    },
+                    status=400,
+                )
 
-        return JsonResponse({
-            'success': True,
-            'message': 'Uploaded (run cleaning manually)',
-            'upload_id': upload.id,
-            'row_count': 0,
-        })
+        return JsonResponse(
+            {
+                'success': True,
+                'message': 'Uploaded (run cleaning manually)',
+                'upload_id': upload.id,
+                'row_count': 0,
+            }
+        )
 
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
@@ -248,18 +300,26 @@ def get_upload_split_api(request, upload_id):
     upload = get_object_or_404(DataUpload, id=upload_id)
 
     breakdown = {
-        'training': DatasetRecord.objects.filter(data_upload=upload, dataset_type='Training').count(),
-        'test': DatasetRecord.objects.filter(data_upload=upload, dataset_type='Test').count(),
-        'unlabeled': DatasetRecord.objects.filter(data_upload=upload, dataset_type='Unlabeled').count(),
+        'training': DatasetRecord.objects.filter(
+            data_upload=upload, dataset_type='Training'
+        ).count(),
+        'test': DatasetRecord.objects.filter(
+            data_upload=upload, dataset_type='Test'
+        ).count(),
+        'unlabeled': DatasetRecord.objects.filter(
+            data_upload=upload, dataset_type='Unlabeled'
+        ).count(),
     }
     breakdown['total'] = sum(breakdown.values())
 
-    return JsonResponse({
-        'success': True,
-        'upload_id': upload_id,
-        'file_name': upload.file_name,
-        'breakdown': breakdown,
-    })
+    return JsonResponse(
+        {
+            'success': True,
+            'upload_id': upload_id,
+            'file_name': upload.file_name,
+            'breakdown': breakdown,
+        }
+    )
 
 
 @staff_member_required
@@ -278,10 +338,14 @@ def update_upload_split_api(request, upload_id):
         records = list(DatasetRecord.objects.filter(data_upload=upload))
 
         if not records:
-            return JsonResponse({'success': False, 'error': 'No records found'}, status=400)
+            return JsonResponse(
+                {'success': False, 'error': 'No records found'}, status=400
+            )
 
         if action == 'all_training':
-            DatasetRecord.objects.filter(data_upload=upload).update(dataset_type='Training')
+            DatasetRecord.objects.filter(data_upload=upload).update(
+                dataset_type='Training'
+            )
             message = f'All {len(records)} records set to Training'
 
         elif action == 'all_test':
@@ -311,26 +375,38 @@ def update_upload_split_api(request, upload_id):
                         training_ids.append(record.id)
 
             # Update in bulk
-            DatasetRecord.objects.filter(id__in=training_ids).update(dataset_type='Training')
+            DatasetRecord.objects.filter(id__in=training_ids).update(
+                dataset_type='Training'
+            )
             DatasetRecord.objects.filter(id__in=test_ids).update(dataset_type='Test')
 
             message = f'Split: {len(training_ids)} training, {len(test_ids)} test ({test_percent}%)'
 
         else:
-            return JsonResponse({'success': False, 'error': 'Invalid action'}, status=400)
+            return JsonResponse(
+                {'success': False, 'error': 'Invalid action'}, status=400
+            )
 
         # Return updated breakdown
         breakdown = {
-            'training': DatasetRecord.objects.filter(data_upload=upload, dataset_type='Training').count(),
-            'test': DatasetRecord.objects.filter(data_upload=upload, dataset_type='Test').count(),
-            'unlabeled': DatasetRecord.objects.filter(data_upload=upload, dataset_type='Unlabeled').count(),
+            'training': DatasetRecord.objects.filter(
+                data_upload=upload, dataset_type='Training'
+            ).count(),
+            'test': DatasetRecord.objects.filter(
+                data_upload=upload, dataset_type='Test'
+            ).count(),
+            'unlabeled': DatasetRecord.objects.filter(
+                data_upload=upload, dataset_type='Unlabeled'
+            ).count(),
         }
 
-        return JsonResponse({
-            'success': True,
-            'message': message,
-            'breakdown': breakdown,
-        })
+        return JsonResponse(
+            {
+                'success': True,
+                'message': message,
+                'breakdown': breakdown,
+            }
+        )
 
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
@@ -350,23 +426,31 @@ def get_dataset_records_api(request, upload_id):
     end = start + per_page
     records_page = records[start:end]
 
-    return JsonResponse({
-        'success': True,
-        'records': [{'id': r.id, 'text': r.text[:200], 'label': r.label} for r in records_page],
-        'total': total,
-        'page': page,
-        'pages': (total + per_page - 1) // per_page,
-    })
+    return JsonResponse(
+        {
+            'success': True,
+            'records': [
+                {'id': r.id, 'text': r.text[:200], 'label': r.label}
+                for r in records_page
+            ],
+            'total': total,
+            'page': page,
+            'pages': (total + per_page - 1) // per_page,
+        }
+    )
 
 
 # ============================================
 # PAGE 3: Training
 # ============================================
 
+
 @staff_member_required
 def training_view(request):
     jobs = TrainingJob.objects.order_by('-started_at')[:20]
-    available_uploads = DataUpload.objects.filter(is_validated=True).order_by('-uploaded_at')
+    available_uploads = DataUpload.objects.filter(is_validated=True).order_by(
+        '-uploaded_at'
+    )
     active_model = ModelVersion.objects.filter(is_active=True).first()
 
     # Add record counts and distribution for each upload (Training records only)
@@ -374,21 +458,24 @@ def training_view(request):
     for upload in available_uploads:
         # Only count Training records
         training_count = DatasetRecord.objects.filter(
-            data_upload=upload,
-            dataset_type='Training'
+            data_upload=upload, dataset_type='Training'
         ).count()
 
         if training_count > 0:  # Only show uploads with training data
             dist = list(
-                DatasetRecord.objects.filter(data_upload=upload, dataset_type='Training')
+                DatasetRecord.objects.filter(
+                    data_upload=upload, dataset_type='Training'
+                )
                 .values('label')
                 .annotate(count=Count('id'))
             )
-            uploads_with_counts.append({
-                'upload': upload,
-                'count': training_count,
-                'distribution_json': json.dumps(dist),
-            })
+            uploads_with_counts.append(
+                {
+                    'upload': upload,
+                    'count': training_count,
+                    'distribution_json': json.dumps(dist),
+                }
+            )
 
     # Fixed test set info
     test_set_info = {
@@ -422,18 +509,22 @@ def training_view(request):
         }
         retrainable_models.append(model_info)
 
-    return render(request, 'ml_admin/training.html', {
-        'jobs': jobs,
-        'uploads': uploads_with_counts,
-        'algorithms': ML_ALGORITHMS,
-        'active_model': active_model,
-        'running_count': TrainingJob.objects.filter(status='RUNNING').count(),
-        'test_set_info': test_set_info,
-        'test_set_json': json.dumps(test_set_info['distribution']),
-        'training_totals': training_totals,
-        'all_models': all_models,
-        'retrainable_models_json': json.dumps(retrainable_models),
-    })
+    return render(
+        request,
+        'ml_admin/training.html',
+        {
+            'jobs': jobs,
+            'uploads': uploads_with_counts,
+            'algorithms': ML_ALGORITHMS,
+            'active_model': active_model,
+            'running_count': TrainingJob.objects.filter(status='RUNNING').count(),
+            'test_set_info': test_set_info,
+            'test_set_json': json.dumps(test_set_info['distribution']),
+            'training_totals': training_totals,
+            'all_models': all_models,
+            'retrainable_models_json': json.dumps(retrainable_models),
+        },
+    )
 
 
 @staff_member_required
@@ -447,32 +538,50 @@ def start_training_api(request):
         base_model_id = data.get('base_model_id')  # For retrain mode
 
         if not upload_ids:
-            return JsonResponse({'success': False, 'error': 'No datasets selected'}, status=400)
+            return JsonResponse(
+                {'success': False, 'error': 'No datasets selected'}, status=400
+            )
 
         # Validate mode
         if mode not in ['new', 'retrain']:
-            return JsonResponse({'success': False, 'error': 'Invalid training mode'}, status=400)
+            return JsonResponse(
+                {'success': False, 'error': 'Invalid training mode'}, status=400
+            )
 
         # For new training, validate algorithm
         if mode == 'new' and algorithm not in ML_ALGORITHMS:
-            return JsonResponse({'success': False, 'error': 'Invalid algorithm'}, status=400)
+            return JsonResponse(
+                {'success': False, 'error': 'Invalid algorithm'}, status=400
+            )
 
         # For retrain, validate base model
         base_model = None
         if mode == 'retrain':
             if not base_model_id:
-                return JsonResponse({'success': False, 'error': 'No base model selected for retraining'}, status=400)
+                return JsonResponse(
+                    {
+                        'success': False,
+                        'error': 'No base model selected for retraining',
+                    },
+                    status=400,
+                )
             try:
                 base_model = ModelVersion.objects.get(id=base_model_id)
             except ModelVersion.DoesNotExist:
-                return JsonResponse({'success': False, 'error': 'Base model not found'}, status=400)
+                return JsonResponse(
+                    {'success': False, 'error': 'Base model not found'}, status=400
+                )
 
         uploads = DataUpload.objects.filter(id__in=upload_ids, is_validated=True)
         if uploads.count() != len(upload_ids):
-            return JsonResponse({'success': False, 'error': 'Invalid datasets'}, status=400)
+            return JsonResponse(
+                {'success': False, 'error': 'Invalid datasets'}, status=400
+            )
 
         if TrainingJob.objects.filter(status='RUNNING').exists():
-            return JsonResponse({'success': False, 'error': 'Training already running'}, status=400)
+            return JsonResponse(
+                {'success': False, 'error': 'Training already running'}, status=400
+            )
 
         # Create training job
         job = TrainingJob.objects.create(
@@ -503,12 +612,14 @@ def start_training_api(request):
         else:
             message = f'Started {ML_ALGORITHMS[algorithm]["name"]} training'
 
-        return JsonResponse({
-            'success': True,
-            'message': message,
-            'job_id': job.id,
-            'mode': mode,
-        })
+        return JsonResponse(
+            {
+                'success': True,
+                'message': message,
+                'job_id': job.id,
+                'mode': mode,
+            }
+        )
 
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
@@ -519,6 +630,7 @@ def start_training_api(request):
 # ============================================
 # PAGE 4: Models
 # ============================================
+
 
 @staff_member_required
 def models_view(request):
@@ -531,11 +643,15 @@ def models_view(request):
         job = TrainingJob.objects.filter(resulting_model=model).first()
         models_with_info.append({'model': model, 'job': job})
 
-    return render(request, 'ml_admin/models.html', {
-        'models': models_with_info,
-        'active_model': active_model,
-        'total_models': models.count(),
-    })
+    return render(
+        request,
+        'ml_admin/models.html',
+        {
+            'models': models_with_info,
+            'active_model': active_model,
+            'total_models': models.count(),
+        },
+    )
 
 
 @staff_member_required
@@ -546,7 +662,9 @@ def activate_model_api(request, model_id):
         ModelVersion.objects.update(is_active=False)
         model.is_active = True
         model.save()
-        return JsonResponse({'success': True, 'message': f'{model.version_name} deployed'})
+        return JsonResponse(
+            {'success': True, 'message': f'{model.version_name} deployed'}
+        )
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
@@ -557,7 +675,9 @@ def delete_model_api(request, model_id):
     try:
         model = get_object_or_404(ModelVersion, id=model_id)
         if model.is_active:
-            return JsonResponse({'success': False, 'error': 'Cannot delete active model'}, status=400)
+            return JsonResponse(
+                {'success': False, 'error': 'Cannot delete active model'}, status=400
+            )
         if model.model_file_path and os.path.exists(model.model_file_path):
             os.remove(model.model_file_path)
         model.delete()
@@ -569,6 +689,7 @@ def delete_model_api(request, model_id):
 # ============================================
 # PAGE 5: Users
 # ============================================
+
 
 @staff_member_required
 def users_view(request):
@@ -597,22 +718,27 @@ def users_view(request):
         except:
             pass
 
-    return render(request, 'ml_admin/users.html', {
-        'page_obj': page_obj,
-        'status_filter': status,
-        'user_stats': json.dumps(user_stats),
-        'counts': {
-            'total': User.objects.count(),
-            'active': User.objects.filter(is_active=True).count(),
-            'staff': User.objects.filter(is_staff=True).count(),
+    return render(
+        request,
+        'ml_admin/users.html',
+        {
+            'page_obj': page_obj,
+            'status_filter': status,
+            'user_stats': json.dumps(user_stats),
+            'counts': {
+                'total': User.objects.count(),
+                'active': User.objects.filter(is_active=True).count(),
+                'staff': User.objects.filter(is_staff=True).count(),
+            },
+            'active_model': ModelVersion.objects.filter(is_active=True).first(),
         },
-        'active_model': ModelVersion.objects.filter(is_active=True).first(),
-    })
+    )
 
 
 # ============================================
 # PAGE 6: Analytics
 # ============================================
+
 
 @staff_member_required
 def analytics_view(request):
@@ -659,8 +785,9 @@ def analytics_view(request):
 
             # Daily prediction counts (last 14 days)
             daily_counts = list(
-                PredictionResult.objects
-                .filter(predicted_at__date__gte=today - timedelta(days=14))
+                PredictionResult.objects.filter(
+                    predicted_at__date__gte=today - timedelta(days=14)
+                )
                 .annotate(date=TruncDate('predicted_at'))
                 .values('date')
                 .annotate(count=Count('id'))
@@ -673,7 +800,9 @@ def analytics_view(request):
 
             # Average confidence
             avg = PredictionResult.objects.aggregate(avg=Avg('confidence'))
-            prediction_stats['avg_confidence'] = round(avg['avg'], 1) if avg['avg'] else None
+            prediction_stats['avg_confidence'] = (
+                round(avg['avg'], 1) if avg['avg'] else None
+            )
 
         except Exception as e:
             prediction_stats['error'] = str(e)
@@ -708,8 +837,7 @@ def analytics_view(request):
 
     # User signups (last 30 days)
     user_signups = list(
-        User.objects
-        .filter(date_joined__date__gte=month_ago)
+        User.objects.filter(date_joined__date__gte=month_ago)
         .annotate(date=TruncDate('date_joined'))
         .values('date')
         .annotate(count=Count('id'))
@@ -718,13 +846,17 @@ def analytics_view(request):
     for item in user_signups:
         item['date'] = item['date'].strftime('%m/%d')
 
-    return render(request, 'ml_admin/analytics.html', {
-        'prediction_stats': prediction_stats,
-        'prediction_distribution_json': prediction_distribution_json,
-        'prediction_daily_json': prediction_daily_json,
-        'submission_stats': submission_stats,
-        'user_stats': user_stats,
-        'user_signups': user_signups if len(user_signups) > 1 else None,
-        'user_signups_json': json.dumps(user_signups),
-        'active_model': ModelVersion.objects.filter(is_active=True).first(),
-    })
+    return render(
+        request,
+        'ml_admin/analytics.html',
+        {
+            'prediction_stats': prediction_stats,
+            'prediction_distribution_json': prediction_distribution_json,
+            'prediction_daily_json': prediction_daily_json,
+            'submission_stats': submission_stats,
+            'user_stats': user_stats,
+            'user_signups': user_signups if len(user_signups) > 1 else None,
+            'user_signups_json': json.dumps(user_signups),
+            'active_model': ModelVersion.objects.filter(is_active=True).first(),
+        },
+    )

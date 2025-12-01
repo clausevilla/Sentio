@@ -1,7 +1,11 @@
+/* Author: Lian Shi*/
+/*Disclaimer: LLM has used to generate initial style, and fine tuning was done manually to different elements */
+
 /* ========================================
    ML Admin - Base Styles
    Core: Variables, Reset, Layout, Sidebar, Topbar, Toast
    ======================================== */
+
 
 :root {
     /* color style */

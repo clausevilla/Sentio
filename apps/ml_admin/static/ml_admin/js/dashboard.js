@@ -1,3 +1,5 @@
+/* Author: Lian Shi*/
+
 /**
  * ML Admin - Dashboard Page
  */
@@ -8,10 +10,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function initModelComparisonChart() {
     if (typeof modelsCompareData === 'undefined' || !modelsCompareData || modelsCompareData.length < 2) return;
-    
+
     const ctx = document.getElementById('modelCompareChart');
     if (!ctx) return;
-    
+
     new Chart(ctx, {
         type: 'bar',
         data: {

@@ -1,3 +1,6 @@
+/* Author: Lian Shi*/
+/*Disclaimer: LLM has used to help with training page functions regarding dataset selection and distribution chart visualization */
+
 /**
  * ML Admin - Training Page
  */
@@ -13,7 +16,7 @@ let selectedModelName = null;
 let distributionChart = null;
 let testSetChart = null;
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initAlgorithmListeners();
     initTestSetChart();
 });
@@ -79,8 +82,8 @@ function initTestSetChart() {
     // Create chart when modal opens
     const modal = document.getElementById('testSetModal');
     if (modal) {
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
                 if (modal.classList.contains('open') && !testSetChart) {
                     const ctx = document.getElementById('testSetChart');
                     if (ctx) {

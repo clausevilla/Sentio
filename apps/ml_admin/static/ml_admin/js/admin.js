@@ -1,5 +1,8 @@
+/* Author: Lian Shi*/
+/*Disclaimer: LLM has used to help with implement toast, modal and chart display functions */
+
 /**
- * ML Admin - Common Utilities
+ * ML Admin - Common Utilities JS
  */
 
 // CSRF Token
@@ -12,7 +15,7 @@ function getCSRF() {
 function toast(message, type = 'success') {
     const container = document.getElementById('toasts');
     if (!container) return;
-    
+
     const el = document.createElement('div');
     el.className = `toast ${type}`;
     el.innerHTML = `
@@ -20,7 +23,7 @@ function toast(message, type = 'success') {
         <span>${message}</span>
     `;
     container.appendChild(el);
-    
+
     setTimeout(() => {
         el.classList.add('fade');
         setTimeout(() => el.remove(), 300);
@@ -86,12 +89,12 @@ async function apiCall(url, options = {}) {
             'X-CSRFToken': getCSRF(),
         },
     };
-    
+
     const config = { ...defaults, ...options };
     if (options.headers) {
         config.headers = { ...defaults.headers, ...options.headers };
     }
-    
+
     try {
         const response = await fetch(url, config);
         const data = await response.json();
@@ -174,12 +177,12 @@ const CHART_DEFAULTS = {
 function createDoughnutChart(canvasId, labels, data, options = {}) {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
-    
+
     if (!data || data.length === 0) {
         ctx.parentElement.innerHTML = '<div class="empty-state small"><p>No data</p></div>';
         return null;
     }
-    
+
     return new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -198,12 +201,12 @@ function createDoughnutChart(canvasId, labels, data, options = {}) {
 function createLineChart(canvasId, labels, data, options = {}) {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
-    
+
     if (!data || data.length === 0) {
         ctx.parentElement.innerHTML = '<div class="empty-state small"><p>No data</p></div>';
         return null;
     }
-    
+
     return new Chart(ctx, {
         type: 'line',
         data: {
@@ -225,12 +228,12 @@ function createLineChart(canvasId, labels, data, options = {}) {
 function createBarChart(canvasId, labels, data, options = {}) {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
-    
+
     if (!data || data.length === 0) {
         ctx.parentElement.innerHTML = '<div class="empty-state small"><p>No data</p></div>';
         return null;
     }
-    
+
     return new Chart(ctx, {
         type: 'bar',
         data: {

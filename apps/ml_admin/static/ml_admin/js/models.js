@@ -1,3 +1,6 @@
+/* Author: Lian Shi*/
+
+
 /**
  * ML Admin - Models Page
  */
@@ -9,11 +12,11 @@ document.addEventListener('DOMContentLoaded', function() {
 // Deploy model
 async function deployModel(id, name) {
     if (!confirm(`Deploy "${name}" as the active model?`)) return;
-    
+
     const { ok, data } = await apiCall(`/ml-admin/api/models/${id}/activate/`, {
         method: 'POST'
     });
-    
+
     if (ok && data.success) {
         toast(data.message);
         setTimeout(() => location.reload(), 1000);
@@ -25,11 +28,11 @@ async function deployModel(id, name) {
 // Delete model
 async function deleteModel(id, name) {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-    
+
     const { ok, data } = await apiCall(`/ml-admin/api/models/${id}/delete/`, {
         method: 'POST'
     });
-    
+
     if (ok && data.success) {
         toast('Model deleted');
         setTimeout(() => location.reload(), 1000);
@@ -41,10 +44,10 @@ async function deleteModel(id, name) {
 // Model comparison chart
 function initComparisonChart() {
     if (typeof modelsData === 'undefined' || !modelsData || modelsData.length < 2) return;
-    
+
     const ctx = document.getElementById('compareChart');
     if (!ctx) return;
-    
+
     new Chart(ctx, {
         type: 'bar',
         data: {
