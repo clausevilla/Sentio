@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+from apps.ml_admin.models import ModelVersion
+
 
 class TextSubmission(models.Model):
     """
@@ -28,13 +30,26 @@ class PredictionResult(models.Model):
     TODO: Possibly adding JSONField to recommendations for more flexible recommendation storage.
     """
 
+    MENTAL_STATE_CHOICES = [
+        ('normal', 'Normal'),
+        ('stress', 'Stress'),
+        ('depression', 'Depression'),
+        ('suicidal', 'Suicidal'),
+    ]
+
     submission = models.OneToOneField(TextSubmission, on_delete=models.CASCADE)
-    # model_version = models.ForeignKey(ModelVersion, on_delete=models.PROTECT)
-    model_version = models.TextField()
-    stress_level = models.IntegerField()
-    prediction = models.TextField()
-    emotional_tone = models.FloatField(default=0.0)
-    social_confidence = models.FloatField(default=0.0)
-    confidence = models.FloatField(default=0.0)
+    model_version = models.ForeignKey(ModelVersion, on_delete=models.PROTECT)
+
+    mental_state = models.CharField(
+        max_length=20,
+        choices=MENTAL_STATE_CHOICES,
+        default='normal',
+    )
+    confidence = models.FloatField(default=0)
+
+    anxiety_level = models.IntegerField(null=True, blank=True)
+    negativity_level = models.IntegerField(null=True, blank=True)
+    emotional_intensity = models.IntegerField(null=True, blank=True)
+
     recommendations = models.TextField()
     predicted_at = models.DateTimeField(auto_now_add=True)

@@ -1,5 +1,7 @@
 import joblib
 
+from apps.ml_admin.models import ModelVersion
+
 # Loads the model
 MODEL_PATH = 'ml_pipeline/toy_models/LRmodel.pkl'
 MODEL = joblib.load(MODEL_PATH)
@@ -7,18 +9,10 @@ MODEL = joblib.load(MODEL_PATH)
 
 def analyze_text(analyzed_text):
     prediction = MODEL.predict([analyzed_text])
-    outputMap = {
-        0: 'Normal',
-        1: 'Depression',
-        2: 'Suicidal',
-        3: 'Anxiety',
-        4: 'Stress',
-        5: 'Bipolar',
-        6: 'Personality disorder',
-    }
-    label = outputMap.get(int(prediction[0]))
+
+    label = prediction[0]
     proba = MODEL.predict_proba([analyzed_text])[0]
     confidence = max(proba)
-    model_version = 'v1.0.0'  # Set Dynamically in the future
+    model_version = ModelVersion.objects.first()
 
     return (label, confidence, model_version)
