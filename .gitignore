@@ -44,4 +44,4 @@ venv/
 *.sqlite3
 
 # Pickle
-*.pkl
+#*.pkl
