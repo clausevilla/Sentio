@@ -14,7 +14,7 @@ __pycache__
 # Apple specific
 .DS_Store
 
-#Anaconda
+# Anaconda
 anaconda_projects/
 
 # Unit test / coverage reports
@@ -42,3 +42,6 @@ venv/
 
 # Database
 *.sqlite3
+
+# Pickle
+*.pkl

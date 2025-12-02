@@ -1,4 +1,4 @@
-# Author: Marcus Berggren, Lian Shi
+# Author: Marcus Berggren, Lian Shi, Karl Byland
 
 from django.shortcuts import redirect, render
 
