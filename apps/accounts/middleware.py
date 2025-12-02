@@ -21,7 +21,7 @@ class ConsentMiddleware:
         '/static/',
         '/media/',
         '/admin/',
-        '/ml-admin/'
+        '/ml-admin/',
     ]
 
     # Exact paths that are exempt
@@ -46,6 +46,9 @@ class ConsentMiddleware:
 
         # Only check consent for authenticated users
         if request.user.is_authenticated:
+            # Exempt staff and superusers from consent check
+            if request.user.is_staff or request.user.is_superuser:
+                return self.get_response(request)
             try:
                 from .models import UserConsent
 
