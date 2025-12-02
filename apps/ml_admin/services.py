@@ -1,3 +1,5 @@
+# Authors: Julia McCall, Claudia Sevilla
+
 import csv
 import logging
 import threading

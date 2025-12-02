@@ -1,4 +1,4 @@
-/* Author: Lian Shi */
+/* Author: Lian Shi, Claudia Sevilla */
 /* Disclaimer: LLM has been used to help generate initial styles and manual adjustments were made later */
 
 /* ===================================
@@ -57,17 +57,33 @@
 /* Classification Card */
 .classification-card {
     background: var(--color-bg-white);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-3xl);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-xl) var(--spacing-lg);
     box-shadow: var(--shadow-lg);
-    margin-bottom: var(--spacing-xl);
-    text-align: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.card-content {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--spacing-xl);
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
 .card-title {
-    font-size: var(--font-2xl);
+    font-size: var(--font-3xl);
     color: var(--color-text-dark);
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.text-column {
+    flex: 1;
+    min-width: 300px;
+    text-align: left;
 }
 
 /* Circular Progress */
@@ -75,7 +91,7 @@
     position: relative;
     width: 220px;
     height: 220px;
-    margin: 0 auto var(--spacing-xl);
+    margin: 0 auto var(--spacing-lg);
 }
 
 .circular-progress {
@@ -86,6 +102,10 @@
     fill: none;
     stroke: #E9ECEF;
     stroke-width: 12;
+}
+
+.progress-column {
+    flex-shrink: 0;
 }
 
 .progress-bar {
@@ -108,12 +128,13 @@
     font-weight: 700;
     color: var(--color-primary);
     line-height: 1;
+    margin-bottom: var(--spacing-xs);
 }
 
 .score-subtitle {
     font-size: var(--font-base);
     color: var(--color-text-light);
-    margin-top: var(--spacing-xs);
+    margin-top: 0;
 }
 
 /* Mental State Badge */
@@ -167,11 +188,18 @@
 }
 
 .state-description {
-    max-width: 600px;
-    margin: 0 auto;
     color: var(--color-text-light);
     font-size: var(--font-base);
     line-height: 1.7;
+}
+
+.recommendations {
+    background: var(--color-bg-cream);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    border-left: 4px solid var(--color-primary);
+    margin-top: var(--spacing-lg);
+    font-style: italic;
 }
 
 /* Indicators Grid */
@@ -253,7 +281,6 @@
 }
 
 
-
 /* Analyzed Text Card */
 .analyzed-text-card {
     background: var(--color-bg-white);
@@ -264,7 +291,7 @@
 }
 
 .analyzed-text-card h3 {
-    font-size: var(--font-xl);
+    font-size: var(--font-lg);
     color: var(--color-text-dark);
     margin-bottom: var(--spacing-md);
 }
@@ -370,10 +397,18 @@
     text-decoration: none;
 }
 
+.btn-large-action:hover {
+    background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    text-decoration: none !important;
+}
+
 /* Responsive Design */
 @media (max-width: 968px) {
     .classification-card {
         padding: var(--spacing-xl);
+        grid-template-columns: 1fr;
     }
 
     .indicators-grid {
@@ -381,12 +416,51 @@
     }
 
     .score-container {
-        width: 180px;
-        height: 180px;
+        width: 220px;
+        height: 220px;
     }
 
     .score-text {
         font-size: 2.8rem;
+    }
+
+    .card-content {
+        flex-direction: column;
+        align-items: center;
+        gap: var(--spacing-lg);
+    }
+
+    .text-column {
+        text-align: center;
+        width: 100%;
+    }
+
+    .recommendations {
+        text-align: left;
+    }
+}
+
+@media (max-width: 768px) {
+    .card-content {
+        flex-direction: column;
+        align-items: center;
+        gap: var(--spacing-lg);
+    }
+
+    .text-column, .progress-column {
+        width: 100%;
+    }
+
+    .text-column {
+        text-align: center;
+    }
+
+    .progress-column {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+        margin: 0;
     }
 }
 
@@ -419,6 +493,14 @@
     .state-icon {
         font-size: 1.5rem;
     }
+
+    .score-text {
+        font-size: 2.5rem;
+    }
+
+    .card-title {
+        font-size: var(--font-2xl);
+    }
 }
 
 /* Print Styles */
@@ -443,5 +525,10 @@
     body {
         margin: 0;
         padding: 0;
+    }
+
+    .card-content {
+        display: flex;
+        align-items: flex-start;
     }
 }
