@@ -1,3 +1,5 @@
+/* Author: Lian Shi */
+
 // predictions/input.js - Text analysis input page functionality
 
 

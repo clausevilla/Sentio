@@ -1,9 +1,16 @@
+# Author: Lian Shi
+# Disclaimer: LLM has been used to help generate tests for change password and delete account API endpoints.
+
 import json
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.messages import get_messages
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
+
+from apps.accounts.middleware import ConsentMiddleware
+from apps.accounts.models import UserConsent
 
 
 class RegistrationViewTests(TestCase):
@@ -24,17 +31,25 @@ class RegistrationViewTests(TestCase):
             'email': 'testuser@example.com',
             'password1': 'strongpassword123',
             'password2': 'strongpassword123',
+            'consent': True,
         }
         response = self.client.post(self.register_url, data=form_data)
+
         self.assertEqual(
             response.status_code, 302
         )  # Redirect after successful registration
+
         self.assertTrue(User.objects.filter(username='testuser').exists())
         user = User.objects.get(username='testuser')
         self.assertTrue(user.check_password('strongpassword123'))
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(len(messages) >= 1)
         self.assertIn('Your account has been created successfully', str(messages[0]))
+        self.assertTrue(
+            UserConsent.objects.filter(
+                user__username='testuser', has_consented=True
+            ).exists()
+        )
 
     # Test registration with password mismatch
     def test_register_view_post_password_mismatch(self):
@@ -128,6 +143,10 @@ class ProfileViewTests(TestCase):
         self.user = User.objects.create_user(
             username='testuser', password='strongpassword123'
         )
+
+        UserConsent.objects.create(
+            user=self.user, has_consented=True, consent_at=timezone.now()
+        )
         self.profile_url = reverse('accounts:profile')
 
     # Test profile view requires login
@@ -198,6 +217,10 @@ class LogoutViewTests(TestCase):
             username='testuser', password='strongpassword123'
         )
 
+        UserConsent.objects.create(
+            user=self.user, has_consented=True, consent_at=timezone.now()
+        )
+
     # Test logout view redirects to login view when not logged in
     def test_logout_view_requires_login(self):
         response = self.client.get(self.logout_url)
@@ -219,6 +242,10 @@ class ProfileAPITests(TestCase):
             username='testuser',
             email='testuser@example.com',
             password='strongpassword123',
+        )
+
+        UserConsent.objects.create(
+            user=self.user, has_consented=True, consent_at=timezone.now()
         )
         self.change_password_url = reverse('accounts:change_password_api')
         self.delete_data_url = reverse('accounts:delete_all_data_api')
@@ -447,3 +474,125 @@ class ProfileAPITests(TestCase):
             content_type='application/json',
         )
         self.assertEqual(response.status_code, 302)  # Redirect to login page
+
+
+#  Consent Model Tests
+class UserConsentModelTests(TestCase):
+    # Tests for UserConsent model to ensure consent records are created and updated correctly
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='consentuser', password='consentpassword'
+        )
+
+    def test_create_user_consent(self):
+        consent = UserConsent.objects.create(
+            user=self.user, has_consented=True, consent_at=timezone.now()
+        )
+        self.assertEqual(consent.user, self.user)
+        self.assertTrue(consent.has_consented)
+
+    def test_revoke_consent(self):
+        consent = UserConsent.objects.create(
+            user=self.user, has_consented=True, consent_at=timezone.now()
+        )
+        consent.revoke_consent()
+        self.assertFalse(consent.has_consented)
+        self.assertIsNotNone(consent.revoked_at)
+
+
+class ConsentMiddlewareTests(TestCase):
+    # Tests for ConsentMiddleware to ensure proper redirection based on user consent status
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='middlewareuser', password='middlewarepassword'
+        )
+        self.middleware = ConsentMiddleware(get_response=lambda r: None)
+        self.consent_url = reverse('accounts:consent')
+
+    def test_exempt_paths(self):
+        exempt_paths = [
+            '/',
+            '/accounts/login',
+            '/accounts/logout',
+            '/accounts/register',
+            '/accounts/consent',
+            '/accounts/privacy',
+            '/about/',
+            '/static/somefile.css',
+            '/media/image.png',
+            '/admin/dashboard',
+            '/ml-admin/panel',
+        ]
+        for path in exempt_paths:
+            request = self.client.request().wsgi_request
+            request.path = path
+            request.user = self.user
+            response = self.middleware(request)
+            self.assertIsNone(response)  # Should proceed without redirection
+
+    def test_non_exempt_path_no_consent(self):
+        request = self.client.request().wsgi_request
+        request.path = '/some/protected/path'
+        request.user = self.user
+        response = self.middleware(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.consent_url, response['Location'])
+
+    def test_non_exempt_path_with_consent(self):
+        UserConsent.objects.create(
+            user=self.user, has_consented=True, consent_at=timezone.now()
+        )
+        request = self.client.request().wsgi_request
+        request.path = '/some/protected/path'
+        request.user = self.user
+        response = self.middleware(request)
+        self.assertIsNone(response)  # Should proceed without redirection
+
+    def test_non_exempt_path_revoked_consent(self):
+        UserConsent.objects.create(
+            user=self.user,
+            has_consented=False,
+            consent_at=timezone.now(),
+            revoked_at=timezone.now(),
+        )
+        request = self.client.request().wsgi_request
+        request.path = '/some/protected/path'
+        request.user = self.user
+        response = self.middleware(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.consent_url, response['Location'])
+
+    def test_non_authenticated_user(self):
+        request = self.client.request().wsgi_request
+        request.path = '/some/protected/path'
+        request.user = AnonymousUser()
+        response = self.middleware(request)
+        self.assertIsNone(response)  # Should proceed without redirection
+
+
+class DataExportTests(TestCase):
+    # Tests for data export API endpoint
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='exportuser', password='exportpass'
+        )
+        UserConsent.objects.create(
+            user=self.user, has_consented=True, consent_at=timezone.now()
+        )
+        self.export_url = reverse('accounts:export_data_api')
+
+    def test_export_requires_login(self):
+        response = self.client.get(self.export_url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_export_data_success(self):
+        self.client.login(username='exportuser', password='exportpass')
+        response = self.client.get(self.export_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/json')
+
+        # Response is a download, content is JSON string
+        data = json.loads(response.content)
+        self.assertIn('user_profile', data)
+        self.assertIn('consent_data', data)

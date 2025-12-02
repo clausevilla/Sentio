@@ -14,7 +14,7 @@ __pycache__
 # Apple specific
 .DS_Store
 
-#Anaconda
+# Anaconda
 anaconda_projects/
 
 # Unit test / coverage reports
@@ -47,3 +47,4 @@ venv/
 sentio_results/
 ml-models/
 .pt
+#*.pkl

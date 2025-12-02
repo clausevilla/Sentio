@@ -1,4 +1,7 @@
-/*register page style*/
+/* Author: Lian Shi */
+/* Disclaimer: LLM has been used to generate initial style, and fine tuning was done manually to different elements */
+
+/* Register Page Style */
 .register_container {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -23,7 +26,7 @@
 .register_left h2 {
     font-size: 2.5rem;
     color: white;
-    margin-bottom: 3rem;
+    margin-bottom: 1.5rem;
     margin-top: 1rem;
     font-weight: 700;
 }
@@ -39,6 +42,7 @@
     list-style: none;
     padding: 0;
 }
+
 .register_left .feature-list li {
     color: rgba(255, 255, 255, 0.95);
     margin-bottom: 1rem;
@@ -49,15 +53,16 @@
 }
 
 .register_left .feature-list li::before {
-    content: "✓";
+    content: "✔";
     position: absolute;
     left: 0;
     color: white;
     font-weight: bold;
     font-size: 1.3rem;
 }
+
 .register_right {
-    padding: 4rem;
+    padding: 3rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -65,14 +70,14 @@
 }
 
 .register_right h2 {
-    font-size: 2rem;
+    font-size: 1.8rem;
     color: var(--color-text-dark);
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     text-align: center;
 }
 
 .register_right .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 .register_right label {
@@ -85,7 +90,7 @@
 
 .register_right .form-control {
     width: 100%;
-    padding: 0.9rem 1.2rem;
+    padding: 0.8rem 1rem;
     border: 2px solid #D4E1DD;
     border-radius: 10px;
     font-size: 1rem;
@@ -98,6 +103,11 @@
     outline: none;
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+}
+
+.register_right .form-control.error {
+    border-color: #e74c3c;
+    background: #fff5f5;
 }
 
 .register_right .btn-primary {
@@ -139,7 +149,7 @@
 
 .input-wrapper .form-control {
     flex: 1;
-    padding-right: 45px;  /* Make room for the toggle */
+    padding-right: 45px;
 }
 
 .input-wrapper .password-toggle {
@@ -152,11 +162,9 @@
     cursor: pointer;
     padding: 8px;
     color: #666;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     z-index: 10;
 }
-
-
 
 .password-toggle:hover {
     color: #333;
@@ -164,43 +172,238 @@
 
 .password-toggle:focus {
     outline: none;
-    color: #7FAF93;
+    color: var(--color-primary);
+}
+
+/* Password Strength Indicator */
+.password-strength {
+    margin-top: 0.5rem;
+    display: none;
+}
+
+.strength-bar {
+    height: 4px;
+    background: #e0e0e0;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.strength-bar-fill {
+    height: 100%;
+    width: 0;
+    transition: all 0.3s ease;
+    border-radius: 2px;
+}
+
+.strength-text {
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+    font-weight: 600;
+}
+
+/* Error and Success Messages */
+.error-message {
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-top: 0.35rem;
+}
+
+.success-message {
+    color: #27ae60;
+    font-size: 0.85rem;
+    margin-top: 0.35rem;
+}
+
+/* ===================================
+   Consent Section Styles
+   =================================== */
+.consent-section {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s;
+}
+
+.consent-section.error {
+    border-color: #e74c3c;
+    background: #fff5f5;
+}
+
+.consent-checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.consent-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.consent-label {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #555;
+    cursor: pointer;
+    font-weight: normal !important;
+}
+
+.consent-label a {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.consent-label a:hover {
+    text-decoration: underline;
+}
+
+/* Consent Error - HIDDEN BY DEFAULT */
+.consent-error {
+    display: none;
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: #ffebee;
+    border-radius: 6px;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.consent-error i {
+    flex-shrink: 0;
+}
+
+/* Show error when consent section has error class */
+.consent-section.error .consent-error {
+    display: flex;
+}
+
+/* ===================================
+   Data Info Box Styles
+   =================================== */
+.data-info-box {
+    background: #e8f5e9;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--color-primary);
+}
+
+.data-info-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+}
+
+.data-info-header i {
+    font-size: 1.1rem;
+}
+
+.data-info-list {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.data-info-list li {
+    margin-bottom: 0.35rem;
+    line-height: 1.4;
+}
+
+.data-info-note {
+    margin: 0.75rem 0 0 0;
+    font-size: 0.8rem;
+    color: #666;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(74, 124, 89, 0.2);
+}
+
+.data-info-note strong {
+    color: var(--color-primary);
+}
+
+/* Alert Messages */
+.alert {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.alert-error, .alert-danger {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+}
+
+.alert-success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+.alert-warning {
+    background: #fff3e0;
+    color: #ef6c00;
+    border: 1px solid #ffe0b2;
 }
 
 /* Responsive Design */
 @media (max-width: 968px) {
     .register_container {
         grid-template-columns: 1fr;
-        margin: 2rem 1rem;
+        margin: 1rem;
     }
 
     .register_left {
-        padding: 3rem 2rem;
+        padding: 2rem;
     }
 
-    .register_left h1 {
+    .register_left h2 {
         font-size: 2rem;
     }
 
     .register_right {
-        padding: 3rem 2rem;
+        padding: 2rem;
     }
 }
 
 @media (max-width: 640px) {
     .register_left {
-        padding: 2rem 1.5rem;
+        padding: 1.5rem;
     }
 
-    .register_left h1 {
-        font-size: 1.8rem;
+    .register_left h2 {
+        font-size: 1.6rem;
     }
 
     .register_right {
-        padding: 2rem 1.5rem;
+        padding: 1.5rem;
     }
 
     .register_right h2 {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
+    }
+
+    .consent-checkbox-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .consent-checkbox {
+        margin-top: 0;
     }
 }

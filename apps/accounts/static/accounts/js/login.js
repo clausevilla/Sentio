@@ -1,3 +1,5 @@
+// Author: Lian Shi
+
 // accounts/login.js - Login page functionality
 
 document.addEventListener('DOMContentLoaded', function () {
