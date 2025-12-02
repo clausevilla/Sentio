@@ -19,11 +19,11 @@
         </div>
 
         <!-- Alert Box (if needed) -->
-        {% if mental_state != 'normal' and confidence >= 70 %}
+        {% if mental_state_label != 'normal' and confidence >= 70 %}
         <div class="alert alert-warning">
             <h3>⚠️ Mental Health Indicator Detected</h3>
-            <p>Your text shows patterns associated with {{ mental_state_label
-                }}. Please review the personalized recommendations below and
+            <p>Your text shows patterns associated with {{ mental_state_label }}.
+                Please review the personalized recommendations below and
                 consider reaching out to a mental health professional if
                 needed.</p>
         </div>
@@ -31,7 +31,7 @@
 
         <!-- Main Classification Card -->
         <div class="classification-card">
-            <h2 class="card-title">Mental State Classification</h2>
+            <h2 class="card-title">Mental State Classificcation</h2>
 
             <div class="score-container">
                 <svg class="circular-progress" width="220" height="220">
@@ -39,8 +39,7 @@
                     <circle class="progress-bar" id="progressBar" cx="110" cy="110" r="95"></circle>
                 </svg>
                 <div class="score-content">
-                    <div class="score-text" id="scoreText">{{ confidence
-                        }}%</div>
+                    <div class="score-text" id="scoreText">{{ confidence }}%</div>
                     <div class="score-subtitle">Confidence</div>
                 </div>
             </div>

@@ -1,12 +1,39 @@
-# Author: Marcus Berggren, Lian Shi
+# Author: Marcus Berggren, Lian Shi, Karl Byland
 
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 
+from apps.predictions.services import get_prediction_result
 
 # Create your views here.
+
+
 def input_view(request):
-    return render(request, 'predictions/input.html', {})
+    if request.method == 'POST':
+        user_text = request.POST.get('text')
+
+        request.session['user_text'] = user_text
+
+        return redirect('predictions:result')
+
+    return render(request, 'predictions/input.html')
 
 
 def result_view(request):
-    return render(request, 'predictions/result.html')
+    user_text = request.session.get('user_text')
+
+    if not user_text:
+        return redirect('predictions:input')
+
+    # Get logged-in user or None
+    user = request.user if request.user.is_authenticated else None
+    # Saves the submission and prediction to the databast if the user is logged in
+    prediction, confidence_percentage = get_prediction_result(user, user_text)
+    return render(
+        request,
+        'predictions/result.html',
+        {
+            'analyzed_text': user_text,
+            'mental_state_label': prediction,
+            'confidence': confidence_percentage,
+        },
+    )
