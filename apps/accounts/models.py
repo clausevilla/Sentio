@@ -32,7 +32,7 @@ class UserConsent(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='consent')
     has_consented = models.BooleanField(default=False)
     consent_at = models.DateTimeField(null=True, blank=True)
-    consent_revoked_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         verbose_name = 'User Consent'
@@ -46,11 +46,11 @@ class UserConsent(models.Model):
         """Record that the user has given consent."""
         self.has_consented = True
         self.consent_at = timezone.now()
-        self.consent_revoked_at = None
+        self.revoked_at = None
         self.save()
 
     def revoke_consent(self):
         """Record that the user has revoked consent."""
         self.has_consented = False
-        self.consent_revoked_at = timezone.now()
+        self.revoked_at = timezone.now()
         self.save()

@@ -315,7 +315,7 @@ def delete_all_data_api(request):
             UserConsent.objects.create(
                 user=request.user,
                 has_consented=False,
-                consent_revoked_at=timezone.now(),
+                revoked_at=timezone.now(),
             )
 
         return JsonResponse(
@@ -572,8 +572,8 @@ def export_data_api(request):
                 'consent_at': consent.consent_at.isoformat()
                 if consent.consent_at
                 else None,
-                'consent_revoked_at': consent.consent_revoked_at.isoformat()
-                if consent.consent_revoked_at
+                'revoked_at': consent.revoked_at.isoformat()
+                if consent.revoked_at
                 else None,
             }
         except UserConsent.DoesNotExist:
