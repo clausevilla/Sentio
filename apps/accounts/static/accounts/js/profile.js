@@ -1,3 +1,6 @@
+// Author: Lian Shi
+// Disclaimer: LLM has used to help with deleting data/user accounts API handling*/
+
 // ===================================
 // Simple Profile Page
 // ===================================
@@ -210,10 +213,11 @@ document.getElementById('deleteDataForm')?.addEventListener('submit', async func
 
         if (response.ok) {
             closeDeleteDataModal();
-            showMessage('All your data has been deleted', 'success');
+            showMessage('All your data has been deleted. Redirecting to consent page...', 'success');
+            // Redirect to consent page since consent was revoked
             setTimeout(() => {
-                window.location.reload();
-            }, 3000);
+                window.location.href = '/accounts/consent/';
+            }, 2000);
         } else {
             if (data.error === 'incorrect_password') {
                 showMessage('Incorrect password. Please try again.', 'error');

@@ -1,3 +1,6 @@
+<!-- Author: Lian Shi -->
+<!-- Disclaimer: LLM has been used to help with page layout and manual adjustments were done after -->
+
 {% extends 'base.html' %}
 {% load static %}
 
@@ -60,8 +63,8 @@
                 <div class="feature-icon">
                     <i class="fas fa-bullseye"></i>
                 </div>
-                <h3>Six Mental Health States</h3>
-                <p>Identifies Normal, Depression, Suicidal thoughts, Anxiety, Stress, Bi-Polar indicators in your text.</p>
+                <h3> Four Mental Health States</h3>
+                <p>Identifies Normal, Depression, Suicidal thoughts, and Stress indicators in your text.</p>
             </div>
 
             <div class="feature-card">
@@ -115,7 +118,7 @@
             <div class="step">
                 <div class="step-number">2</div>
                 <h3>AI Analysis</h3>
-                <p>Our NLP model analyzes linguistic patterns and emotional content to classify your text into one of 6 mental health states.</p>
+                <p>Our NLP model analyzes linguistic patterns and emotional content to classify your text into one of 4 mental health states.</p>
             </div>
 
             <div class="step">
@@ -138,7 +141,7 @@
     <div class="container">
         <div class="stats-grid">
             <div class="stat">
-                <h3>6</h3>
+                <h3>4</h3>
                 <p>Mental Health Categories</p>
             </div>
             <div class="stat">
@@ -174,14 +177,43 @@
     </div>
 </section>
 
-<!-- Disclaimer Section -->
-<section class="disclaimer-section">
-    <div class="container">
-        <div class="disclaimer">
-            <strong>⚠️ Important Medical Disclaimer</strong><br>
-            This tool analyzes text to identify potential mental health patterns. It is NOT a medical diagnostic tool and does NOT provide medical advice. Results should not be used for self-diagnosis or to replace professional mental health care.
-        </div>
+
+   <!-- Disclaimer Section -->
+    <div class="disclaimer-section">
+        <h2><i class="fas fa-exclamation-triangle"></i> Important Medical Disclaimer</h2>
+        <p>
+            <strong>This tool is for informational and educational purposes only.</strong> It is NOT a medical
+            diagnostic tool, does NOT provide medical advice, and should NOT be used for self-diagnosis or to make
+            treatment decisions.
+        </p>
+        <p>
+            The classification results are based on text analysis and may not accurately reflect your actual mental
+            health state. Many factors influence mental health that cannot be determined from text alone.
+        </p>
+        <p>
+            <strong>⚠️ If you are experiencing any of the following, please seek immediate help:</strong>
+        </p>
+        <ul>
+            <li>Thoughts of suicide or self-harm</li>
+            <li>Plans to hurt yourself or others</li>
+            <li>Severe depression or anxiety that interferes with daily life</li>
+            <li>Sudden mood changes or loss of touch with reality</li>
+        </ul>
+        <p>
+            <strong>🆘 Crisis Resources (Available 24/7):</strong>
+        </p>
+        <ul>
+            <li><strong>Sweden Suicide Prevention:</strong> Call 90101 or visit <a href="https://mind.se"
+                    target="_blank">mind.se</a></li>
+            <li><strong>Sweden Healthcare Advice:</strong> Call 1177</li>
+            <li><strong>Emergency (Sweden):</strong> Call 112</li>
+            <li><strong>International Crisis Lines:</strong> <a href="https://findahelpline.com"
+                    target="_blank">findahelpline.com</a></li>
+        </ul>
+        <p>
+            <strong>For non-emergency mental health support:</strong> Please consult with a licensed mental health
+            professional such as a psychologist, psychiatrist, or counselor.
+        </p>
     </div>
-</section>
 
 {% endblock %}
