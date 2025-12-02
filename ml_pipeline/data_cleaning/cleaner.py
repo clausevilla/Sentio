@@ -1,11 +1,15 @@
 import logging
+import os
 from typing import Dict, Tuple
 
 import pandas as pd
 
-from apps.ml_admin.models import DatasetRecord, DataUpload
-
 logger = logging.getLogger(__name__)
+
+MIN_WORD_COUNT = 3
+MIN_TEXT_LENGTH = 10
+MAX_TEXT_LENGTH = 5000
+VALID_LABELS = ['Normal', 'Depression', 'Suicidal', 'Stress']
 
 
 class DataCleaningPipeline:
@@ -16,11 +20,6 @@ class DataCleaningPipeline:
     """
 
     def __init__(self):
-        self.min_word_count = 3
-        self.min_text_length = 10
-        self.max_text_length = 5000
-        self.valid_labels = ['Normal', 'Depression', 'Suicidal', 'Stress']
-
         self.report = {
             'original_count': 0,
             'removed_missing_labels': 0,
@@ -76,11 +75,40 @@ class DataCleaningPipeline:
         logger.info('=== Starting Data Cleaning Pipeline ===')
         logger.info(f'File: {file_path}')
 
+        # Validation step 1: check the file format
+        _, file_extension = os.path.splitext(str(file_path))
+
+        if not str(file_path).endswith('.csv'):
+            # Create a readable error message even if extension is missing
+            received = file_extension if file_extension else 'no file extension'
+            raise ValueError(
+                f'Invalid file format. Expected .csv, got {received}'
+                f'(File: {os.path.basename(file_path)})'
+            )
+
         try:
-            # Load data
+            # Load data and handle malformed rows if necessary
             df = pd.read_csv(file_path)
             self.report['original_count'] = len(df)
             logger.info(f'Loaded {len(df):,} rows')
+
+            # Validation step 2: check column names
+            allowed_text_cols = ['statement', 'text', 'Text']
+            allowed_label_cols = ['status', 'label', 'Label']
+
+            found_text = [col for col in df.columns if col in allowed_text_cols]
+            found_label = [col for col in df.columns if col in allowed_label_cols]
+
+            # Raise error if columns are invalid or missing
+            if not found_text or not found_label:
+                raise ValueError(
+                    f'Invalid CSV columns. Found: {list(df.columns)}. '
+                    f'Expected one text column from {allowed_text_cols} and one label column from {allowed_label_cols}.'
+                )
+
+            # Standardize the columns to 'text' and 'label'
+            rename_map = {found_text[0]: 'text', found_label[0]: 'label'}
+            df.rename(columns=rename_map, inplace=True)
 
             # Execute all cleaning steps
             df = self._remove_missing_labels(df)
@@ -92,6 +120,7 @@ class DataCleaningPipeline:
             df = self._fix_encoding(df)
             df = self._remove_duplicates(df)
             df = df.reset_index(drop=True)
+
             df = self._create_label_encodings(df)
 
             self.report['final_count'] = len(df)
@@ -125,23 +154,23 @@ class DataCleaningPipeline:
         initial = len(df)
         df['word_count'] = df['text'].str.split().str.len()
         df = df[
-            (df['text'].str.len() >= self.min_text_length)
-            & (df['word_count'] >= self.min_word_count)
+            (df['text'].str.len() >= MIN_TEXT_LENGTH)
+            & (df['word_count'] >= MIN_WORD_COUNT)
         ]
         df = df.drop(columns=['word_count'])
         removed = initial - len(df)
         self.report['removed_short_text'] = removed
 
         logger.info(
-            f'Removed {removed:,} rows with "text" column having < {self.min_text_length} characters or < {self.min_word_count} words'
+            f'Removed {removed:,} rows with "text" column having < {MIN_TEXT_LENGTH} characters or < {MIN_WORD_COUNT} words'
         )
         return df
 
     def _trim_long_text(self, df: pd.DataFrame) -> pd.DataFrame:
-        long_count = (df['text'].str.len() > self.max_text_length).sum()
-        df['text'] = df['text'].str[: self.max_text_length]
+        long_count = (df['text'].str.len() > MAX_TEXT_LENGTH).sum()
+        df['text'] = df['text'].str[:MAX_TEXT_LENGTH]
         self.report['trimmed_long_text'] = long_count
-        logger.info(f'Trimmed {long_count:,} text to {self.max_text_length} chars')
+        logger.info(f'Trimmed {long_count:,} text to {MAX_TEXT_LENGTH} chars')
         return df
 
     def _combine_anxiety_stress(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -155,12 +184,12 @@ class DataCleaningPipeline:
         return df
 
     def _remove_invalid_labels(self, df: pd.DataFrame) -> pd.DataFrame:
-        invalid = df[~df['label'].isin(self.valid_labels)]['label'].value_counts()
+        invalid = df[~df['label'].isin(VALID_LABELS)]['label'].value_counts()
         if len(invalid) > 0:
             logger.info(f'Invalid labels found: {invalid.to_dict()}')
 
         initial = len(df)
-        df = df[df['label'].isin(self.valid_labels)]
+        df = df[df['label'].isin(VALID_LABELS)]
         removed = initial - len(df)
         self.report['removed_invalid_labels'] = removed
         logger.info(f'Removed {removed:,} rows with invalid labels')
@@ -195,82 +224,12 @@ class DataCleaningPipeline:
         normal, depression, suicidal, stress (one-hot encoding): for RNN
         """
         # Numeric encoding
-        label_to_id = {
-            label: idx for idx, label in enumerate(sorted(self.valid_labels))
-        }
+        label_to_id = {label: idx for idx, label in enumerate(sorted(VALID_LABELS))}
         df['category_id'] = df['label'].map(label_to_id)
 
-        for label in self.valid_labels:
+        for label in VALID_LABELS:
             label_lowercase = f'{label.replace("/", "_").replace("-", "_").lower()}'
             df[label_lowercase] = (df['label'] == label).astype(int)
 
         logger.info(f'Created encodings: {label_to_id}')
         return df
-
-
-def run_cleaning_pipeline(data_upload_id: int) -> Dict:
-    """
-    Clean data and save to database.
-
-    Args:
-        data_upload_id: ID of DataUpload record,
-        necessary for the data cleaning pipeline to get triggered
-
-    Returns:
-        Dict with 'success', 'row_count', or 'error'
-    """
-    try:
-        # Get upload record from DataUpload
-        upload = DataUpload.objects.get(id=data_upload_id)
-        logger.info(f'Processing upload ID {data_upload_id}: {upload.file_name}')
-
-        # Run cleaning pipeline
-        cleaner = DataCleaningPipeline()
-        df_cleaned, report = cleaner.clean_file(upload.file_path)
-
-        # Save cleaned data to database
-        _save_to_database(df_cleaned, upload)
-
-        # Update upload metadata
-        upload.row_count = len(df_cleaned)
-        upload.is_validated = True
-        upload.save()
-
-        logger.info(f'=== Pipeline complete: {len(df_cleaned):,} records saved ===')
-
-        return {'success': True, 'row_count': len(df_cleaned), 'report': report}
-
-    except DataUpload.DoesNotExist:
-        error = f'Upload ID {data_upload_id} not found'
-        logger.error(error)
-        return {'success': False, 'error': error}
-
-    except Exception as e:
-        error = f'Cleaning failed: {str(e)}'
-        logger.exception(error)
-        return {'success': False, 'error': error}
-
-
-def _save_to_database(df: pd.DataFrame, upload: DataUpload):
-    """Save cleaned DataFrame to DatasetRecord model."""
-    # Delete old records
-    DatasetRecord.objects.filter(data_upload=upload).delete()
-
-    # Bulk create new records
-    records = []
-    for _, row in df.iterrows():
-        record = DatasetRecord(
-            data_upload=upload,
-            text=row['text'],
-            label=row['label'],
-            category_id=row['category_id'],
-            normal=row['normal'],
-            depression=row['depression'],
-            suicidal=row['suicidal'],
-            stress=row['stress'],
-            dataset_type='train',
-        )
-        records.append(record)
-
-    DatasetRecord.objects.bulk_create(records, batch_size=1000)
-    logger.info(f'=== Saved {len(records):,} records to database ===')
