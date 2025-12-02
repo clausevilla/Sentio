@@ -14,7 +14,3 @@ Note: We're using Django's built-in User model which already includes:
 The built-in User model provides everything we need for basic authentication.
 
 """
-
-
-
-

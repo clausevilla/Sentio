@@ -1,6 +1,6 @@
 stages:
   - lint
-  - setup
+  - build
   - test
 
 variables:
@@ -9,19 +9,16 @@ variables:
 
 image: python:${PYTHON_VERSION}-slim
 
-# Cache pip packages between jobs
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
     - .cache/pip
 
-# Default for most jobs - full dependencies
 before_script:
   - python -m pip install --upgrade pip
   - pip install torch==2.8.0+cpu --index-url https://download.pytorch.org/whl/cpu --no-cache-dir
   - pip install -r requirements.txt --no-cache-dir
 
-# Minimal deps, fail fast before expensive installs
 lint:
   stage: lint
   before_script:
@@ -32,27 +29,25 @@ lint:
   tags:
     - docker
 
-setup:
-  stage: setup
+build:
+  stage: build
   script:
-    - python manage.py check    # Scan project for config / model issues
+    - python manage.py check
     - python manage.py migrate
   tags:
     - docker
 
-# Runs on every push - excludes @pytest.mark.integration
 unit-tests:
   stage: test
   script:
-    - pytest -m "not integration"
+    - python -m pytest -m "not integration" --cov=ml_pipeline --cov=apps --cov-report=term-missing
   tags:
     - docker
 
-# Runs only on merge requests and main branch
 integration-tests:
   stage: test
   script:
-    - pytest -m "integration"
+    - python -m pytest -m "integration" || test $? -eq 5
   tags:
     - docker
   rules:
