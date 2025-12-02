@@ -1,3 +1,5 @@
+# Author: Marcus Berggren
+
 from django.contrib import admin
 
 from .models import PredictionResult, TextSubmission
@@ -27,6 +29,6 @@ class TextSubmissionAdmin(admin.ModelAdmin):
 
 @admin.register(PredictionResult)
 class PredictionResultAdmin(admin.ModelAdmin):
-    list_display = ['id', 'submission', 'model_version', 'mental_state', 'predicted_at']
-    list_filter = ['predicted_at', 'mental_state', 'model_version']
+    list_display = ['id', 'submission', 'model_version', 'predicted_at']
+    list_filter = ['predicted_at', 'model_version']
     search_fields = ['submission__text_content']

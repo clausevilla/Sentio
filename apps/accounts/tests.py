@@ -1,9 +1,16 @@
+# Author: Lian Shi
+# Disclaimer: LLM has been used to help generate tests for change password and delete account API endpoints.
+
 import json
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.messages import get_messages
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
+
+from apps.accounts.middleware import ConsentMiddleware
+from apps.accounts.models import UserConsent
 
 
 class RegistrationViewTests(TestCase):
@@ -24,17 +31,25 @@ class RegistrationViewTests(TestCase):
             'email': 'testuser@example.com',
             'password1': 'strongpassword123',
             'password2': 'strongpassword123',
+            'consent': True,
         }
         response = self.client.post(self.register_url, data=form_data)
+
         self.assertEqual(
             response.status_code, 302
         )  # Redirect after successful registration
+
         self.assertTrue(User.objects.filter(username='testuser').exists())
         user = User.objects.get(username='testuser')
         self.assertTrue(user.check_password('strongpassword123'))
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(len(messages) >= 1)
         self.assertIn('Your account has been created successfully', str(messages[0]))
+        self.assertTrue(
+            UserConsent.objects.filter(
+                user__username='testuser', has_consented=True
+            ).exists()
+        )
 
     # Test registration with password mismatch
     def test_register_view_post_password_mismatch(self):
@@ -71,7 +86,8 @@ class RegistrationViewTests(TestCase):
     # Test registration with exisiting email
     def test_register_view_post_existing_email(self):
         User.objects.create_user(
-            username='user1', email='existingemail@example.com', password='somepassword')
+            username='user1', email='existingemail@example.com', password='somepassword'
+        )
         form_data = {
             'username': 'newuser',
             'email': 'existingemail@example.com',
@@ -122,11 +138,14 @@ class RegistrationViewTests(TestCase):
         )
 
 
-
 class ProfileViewTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser', password='strongpassword123'
+        )
+
+        UserConsent.objects.create(
+            user=self.user, has_consented=True, consent_at=timezone.now()
         )
         self.profile_url = reverse('accounts:profile')
 
@@ -190,13 +209,16 @@ class LoginViewTests(TestCase):
         self.assertContains(response, 'Invalid username or password. Please try again.')
 
 
-
 # Tests for logout view to ensure users can log out properly
 class LogoutViewTests(TestCase):
     def setUp(self):
         self.logout_url = reverse('accounts:logout')
         self.user = User.objects.create_user(
             username='testuser', password='strongpassword123'
+        )
+
+        UserConsent.objects.create(
+            user=self.user, has_consented=True, consent_at=timezone.now()
         )
 
     # Test logout view redirects to login view when not logged in
@@ -212,15 +234,18 @@ class LogoutViewTests(TestCase):
         self.assertFalse(response.wsgi_request.user.is_authenticated)
 
 
-
 class ProfileAPITests(TestCase):
-    #Test suite for profile-related API endpoints
+    # Test suite for profile-related API endpoints
 
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
             email='testuser@example.com',
             password='strongpassword123',
+        )
+
+        UserConsent.objects.create(
+            user=self.user, has_consented=True, consent_at=timezone.now()
         )
         self.change_password_url = reverse('accounts:change_password_api')
         self.delete_data_url = reverse('accounts:delete_all_data_api')
@@ -229,7 +254,7 @@ class ProfileAPITests(TestCase):
     # Change Password API Tests
 
     def test_change_password_success(self):
-        #Test successful password change with valid credentials
+        # Test successful password change with valid credentials
         self.client.login(username='testuser', password='strongpassword123')
         data = {
             'currentPassword': 'strongpassword123',
@@ -252,7 +277,7 @@ class ProfileAPITests(TestCase):
         self.assertTrue(response.wsgi_request.user.is_authenticated)
 
     def test_change_password_incorrect_current_password(self):
-        #Test that password change fails with incorrect current password
+        # Test that password change fails with incorrect current password
         self.client.login(username='testuser', password='strongpassword123')
         data = {
             'currentPassword': 'wrongpassword',
@@ -269,7 +294,7 @@ class ProfileAPITests(TestCase):
         self.assertEqual(response_data['error'], 'incorrect_password')
 
     def test_change_password_same_as_current(self):
-        #Test that password change fails when new password matches current password
+        # Test that password change fails when new password matches current password
         self.client.login(username='testuser', password='strongpassword123')
         data = {
             'currentPassword': 'strongpassword123',
@@ -286,7 +311,7 @@ class ProfileAPITests(TestCase):
         self.assertEqual(response_data['error'], 'same_password')
 
     def test_change_password_too_short(self):
-        #Test that password change fails when new password is too short
+        # Test that password change fails when new password is too short
         self.client.login(username='testuser', password='strongpassword123')
         data = {
             'currentPassword': 'strongpassword123',
@@ -303,7 +328,7 @@ class ProfileAPITests(TestCase):
         self.assertEqual(response_data['error'], 'weak_password')
 
     def test_change_password_missing_fields(self):
-        #Test that password change fails when required fields are missing
+        # Test that password change fails when required fields are missing
         self.client.login(username='testuser', password='strongpassword123')
         data = {'currentPassword': 'strongpassword123'}
         response = self.client.post(
@@ -317,7 +342,7 @@ class ProfileAPITests(TestCase):
         self.assertEqual(response_data['error'], 'missing_fields')
 
     def test_change_password_requires_authentication(self):
-        #Test that password change endpoint requires authentication
+        # Test that password change endpoint requires authentication
         data = {
             'currentPassword': 'strongpassword123',
             'newPassword': 'NewStrongPass456',
@@ -332,7 +357,7 @@ class ProfileAPITests(TestCase):
     # Delete All Data API Tests
 
     def test_delete_all_data_success(self):
-        #Test successful deletion of all user data with correct password
+        # Test successful deletion of all user data with correct password
         self.client.login(username='testuser', password='strongpassword123')
         data = {'password': 'strongpassword123'}
         response = self.client.post(
@@ -351,7 +376,7 @@ class ProfileAPITests(TestCase):
         self.assertTrue(response.wsgi_request.user.is_authenticated)
 
     def test_delete_all_data_incorrect_password(self):
-        #Test that data deletion fails with incorrect password
+        # Test that data deletion fails with incorrect password
         self.client.login(username='testuser', password='strongpassword123')
         data = {'password': 'wrongpassword'}
         response = self.client.post(
@@ -365,7 +390,7 @@ class ProfileAPITests(TestCase):
         self.assertEqual(response_data['error'], 'incorrect_password')
 
     def test_delete_all_data_missing_password(self):
-        #Test that data deletion fails when password is not provided
+        # Test that data deletion fails when password is not provided
         self.client.login(username='testuser', password='strongpassword123')
         data = {}
         response = self.client.post(
@@ -379,7 +404,7 @@ class ProfileAPITests(TestCase):
         self.assertEqual(response_data['error'], 'missing_password')
 
     def test_delete_all_data_requires_authentication(self):
-        #Test that data deletion endpoint requires authentication
+        # Test that data deletion endpoint requires authentication
         data = {'password': 'strongpassword123'}
         response = self.client.post(
             self.delete_data_url,
@@ -391,7 +416,7 @@ class ProfileAPITests(TestCase):
     # Delete Account API Tests
 
     def test_delete_account_success(self):
-        #Test successful account deletion with correct password
+        # Test successful account deletion with correct password
         self.client.login(username='testuser', password='strongpassword123')
         data = {'password': 'strongpassword123'}
         response = self.client.post(
@@ -410,7 +435,7 @@ class ProfileAPITests(TestCase):
         self.assertFalse(response.wsgi_request.user.is_authenticated)
 
     def test_delete_account_incorrect_password(self):
-        #Test that account deletion fails with incorrect password
+        # Test that account deletion fails with incorrect password
         self.client.login(username='testuser', password='strongpassword123')
         data = {'password': 'wrongpassword'}
         response = self.client.post(
@@ -427,7 +452,7 @@ class ProfileAPITests(TestCase):
         self.assertTrue(User.objects.filter(username='testuser').exists())
 
     def test_delete_account_missing_password(self):
-        #Test that account deletion fails when password is not provided
+        # Test that account deletion fails when password is not provided
         self.client.login(username='testuser', password='strongpassword123')
         data = {}
         response = self.client.post(
@@ -441,11 +466,133 @@ class ProfileAPITests(TestCase):
         self.assertEqual(response_data['error'], 'missing_password')
 
     def test_delete_account_requires_authentication(self):
-        #Test that account deletion endpoint requires authentication
+        # Test that account deletion endpoint requires authentication
         data = {'password': 'strongpassword123'}
         response = self.client.post(
             self.delete_account_url,
             data=json.dumps(data),
             content_type='application/json',
         )
-        self.assertEqual(response.status_code, 302) # Redirect to login page
+        self.assertEqual(response.status_code, 302)  # Redirect to login page
+
+
+#  Consent Model Tests
+class UserConsentModelTests(TestCase):
+    # Tests for UserConsent model to ensure consent records are created and updated correctly
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='consentuser', password='consentpassword'
+        )
+
+    def test_create_user_consent(self):
+        consent = UserConsent.objects.create(
+            user=self.user, has_consented=True, consent_at=timezone.now()
+        )
+        self.assertEqual(consent.user, self.user)
+        self.assertTrue(consent.has_consented)
+
+    def test_revoke_consent(self):
+        consent = UserConsent.objects.create(
+            user=self.user, has_consented=True, consent_at=timezone.now()
+        )
+        consent.revoke_consent()
+        self.assertFalse(consent.has_consented)
+        self.assertIsNotNone(consent.revoked_at)
+
+
+class ConsentMiddlewareTests(TestCase):
+    # Tests for ConsentMiddleware to ensure proper redirection based on user consent status
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='middlewareuser', password='middlewarepassword'
+        )
+        self.middleware = ConsentMiddleware(get_response=lambda r: None)
+        self.consent_url = reverse('accounts:consent')
+
+    def test_exempt_paths(self):
+        exempt_paths = [
+            '/',
+            '/accounts/login',
+            '/accounts/logout',
+            '/accounts/register',
+            '/accounts/consent',
+            '/accounts/privacy',
+            '/about/',
+            '/static/somefile.css',
+            '/media/image.png',
+            '/admin/dashboard',
+            '/ml-admin/panel',
+        ]
+        for path in exempt_paths:
+            request = self.client.request().wsgi_request
+            request.path = path
+            request.user = self.user
+            response = self.middleware(request)
+            self.assertIsNone(response)  # Should proceed without redirection
+
+    def test_non_exempt_path_no_consent(self):
+        request = self.client.request().wsgi_request
+        request.path = '/some/protected/path'
+        request.user = self.user
+        response = self.middleware(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.consent_url, response['Location'])
+
+    def test_non_exempt_path_with_consent(self):
+        UserConsent.objects.create(
+            user=self.user, has_consented=True, consent_at=timezone.now()
+        )
+        request = self.client.request().wsgi_request
+        request.path = '/some/protected/path'
+        request.user = self.user
+        response = self.middleware(request)
+        self.assertIsNone(response)  # Should proceed without redirection
+
+    def test_non_exempt_path_revoked_consent(self):
+        UserConsent.objects.create(
+            user=self.user,
+            has_consented=False,
+            consent_at=timezone.now(),
+            revoked_at=timezone.now(),
+        )
+        request = self.client.request().wsgi_request
+        request.path = '/some/protected/path'
+        request.user = self.user
+        response = self.middleware(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.consent_url, response['Location'])
+
+    def test_non_authenticated_user(self):
+        request = self.client.request().wsgi_request
+        request.path = '/some/protected/path'
+        request.user = AnonymousUser()
+        response = self.middleware(request)
+        self.assertIsNone(response)  # Should proceed without redirection
+
+
+class DataExportTests(TestCase):
+    # Tests for data export API endpoint
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='exportuser', password='exportpass'
+        )
+        UserConsent.objects.create(
+            user=self.user, has_consented=True, consent_at=timezone.now()
+        )
+        self.export_url = reverse('accounts:export_data_api')
+
+    def test_export_requires_login(self):
+        response = self.client.get(self.export_url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_export_data_success(self):
+        self.client.login(username='exportuser', password='exportpass')
+        response = self.client.get(self.export_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/json')
+
+        # Response is a download, content is JSON string
+        data = json.loads(response.content)
+        self.assertIn('user_profile', data)
+        self.assertIn('consent_data', data)
