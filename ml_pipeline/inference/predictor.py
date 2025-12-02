@@ -83,16 +83,7 @@ class Predictor:
         self.label_encoder = checkpoint['label_encoder']
         self.config = checkpoint['config']
 
-        model_name = self.config.get('model_name', None)
-        if model_name is None:
-            if 'transformer' in model_path.lower():
-                model_name = 'transformer'
-            elif 'lstm' in model_path.lower():
-                model_name = 'lstm'
-            else:
-                model_name = 'transformer'
-
-        model_class = self.PYTORCH_MODELS[model_name]
+        model_class = self.PYTORCH_MODELS[checkpoint['model_type']]
         model_wrapper = model_class(self.config)
         model_wrapper.build_model(
             vocab_size=self.tokenizer.vocab_size_actual(),

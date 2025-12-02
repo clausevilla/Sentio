@@ -139,6 +139,7 @@ class StorageHandler:
         label_encoder,
         config: Dict[str, Any],
         filename: str,
+        model_type: str,
         to_gcs: bool = False,
     ) -> str:
         """
@@ -155,6 +156,7 @@ class StorageHandler:
             'tokenizer': tokenizer,
             'label_encoder': label_encoder,
             'config': config,
+            'model_type': model_type,
         }
 
         if to_gcs and self.gcs_client:

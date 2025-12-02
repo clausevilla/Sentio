@@ -88,11 +88,17 @@ def run_full_pipeline(data_upload_id: int):
             upload = DataUpload.objects.get(id=data_upload_id)
             upload.status = 'failed'
             upload.save()
-        except:
-            pass
-        error = f'Pipeline failed: {str(e)}'
-        logger.exception(error)
-        return {'success': False, 'error': error}
+        except Exception as e:
+            logger.exception('Cleaning pipeline failed')
+            try:
+                upload = DataUpload.objects.get(id=data_upload_id)
+                upload.status = 'failed'
+                upload.save()
+            except DataUpload.DoesNotExist:
+                logger.warning(
+                    'DataUpload %s not found during error handling', data_upload_id
+                )
+        return {'success': False, 'error': str(e)}
 
 
 def run_cleaning_only(data_upload_id: int):
@@ -122,16 +128,16 @@ def run_cleaning_only(data_upload_id: int):
         return {'success': False, 'error': error}
 
     except Exception as e:
-        logger.exception(f'Cleaning pipeline failed: {e}')
+        logger.exception('Cleaning pipeline failed')
         try:
             upload = DataUpload.objects.get(id=data_upload_id)
             upload.status = 'failed'
             upload.save()
-        except:
-            pass
-        error = f'Cleaning pipeline failed: {str(e)}'
-        logger.exception(error)
-        return {'success': False, 'error': error}
+        except DataUpload.DoesNotExist:
+            logger.warning(
+                'DataUpload %s not found during error handling', data_upload_id
+            )
+        return {'success': False, 'error': str(e)}
 
 
 def run_preprocessing_only(data_upload_id: int):
@@ -196,11 +202,11 @@ def run_preprocessing_only(data_upload_id: int):
             upload = DataUpload.objects.get(id=data_upload_id)
             upload.status = 'failed'
             upload.save()
-        except:
-            pass
-        error = f'Preprocessing pipeline failed: {str(e)}'
-        logger.exception(error)
-        return {'success': False, 'error': error}
+        except DataUpload.DoesNotExist:
+            logger.warning(
+                'DataUpload %s not found during error handling', data_upload_id
+            )
+        return {'success': False, 'error': str(e)}
 
 
 def _save_dataset_records(df: pd.DataFrame, upload: DataUpload):

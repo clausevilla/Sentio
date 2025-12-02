@@ -67,7 +67,6 @@ def mock_label_encoder():
 @pytest.fixture
 def saved_transformer_model(storage_handler, mock_tokenizer, mock_label_encoder):
     config = {
-        'model_name': 'transformer',
         'max_seq_len': 32,
         'd_model': 32,
         'nhead': 2,
@@ -88,6 +87,7 @@ def saved_transformer_model(storage_handler, mock_tokenizer, mock_label_encoder)
         label_encoder=mock_label_encoder,
         config=config,
         filename='transformer_test.pt',
+        model_type='transformer',
     )
     return path
 
@@ -95,7 +95,6 @@ def saved_transformer_model(storage_handler, mock_tokenizer, mock_label_encoder)
 @pytest.fixture
 def saved_lstm_model(storage_handler, mock_tokenizer, mock_label_encoder):
     config = {
-        'model_name': 'lstm',
         'max_seq_len': 32,
         'embed_dim': 32,
         'hidden_dim': 32,
@@ -115,6 +114,7 @@ def saved_lstm_model(storage_handler, mock_tokenizer, mock_label_encoder):
         label_encoder=mock_label_encoder,
         config=config,
         filename='lstm_test.pt',
+        model_type='lstm',
     )
     return path
 

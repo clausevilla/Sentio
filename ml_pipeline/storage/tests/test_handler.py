@@ -147,6 +147,7 @@ class TestNeuralModelSave:
             label_encoder=mock_label_encoder,
             config={'test': True},
             filename='model.pt',
+            model_type='transformer',
         )
 
         assert isinstance(path, str)
@@ -161,6 +162,7 @@ class TestNeuralModelSave:
             label_encoder=mock_label_encoder,
             config={},
             filename='model.pt',
+            model_type='transformer',
         )
 
         assert (handler.model_dir / 'model.pt').exists()
@@ -174,11 +176,28 @@ class TestNeuralModelSave:
             label_encoder=mock_label_encoder,
             config={},
             filename='model.pt',
+            model_type='transformer',
         )
 
         checkpoint = torch.load(path, map_location='cpu', weights_only=False)
 
         assert 'model_state_dict' in checkpoint
+
+    def test_saves_model_type(
+        self, handler, simple_model, mock_tokenizer, mock_label_encoder
+    ):
+        path = handler.save_neural_model(
+            model=simple_model,
+            tokenizer=mock_tokenizer,
+            label_encoder=mock_label_encoder,
+            config={},
+            filename='model.pt',
+            model_type='lstm',
+        )
+
+        checkpoint = torch.load(path, map_location='cpu', weights_only=False)
+
+        assert checkpoint['model_type'] == 'lstm'
 
 
 class TestNeuralModelLoad:
@@ -196,6 +215,7 @@ class TestNeuralModelLoad:
             label_encoder=mock_label_encoder,
             config={'d_model': 128, 'num_layers': 2},
             filename='model.pt',
+            model_type='transformer',
         )
 
     def test_returns_dict(self, handler, saved_model_path):
@@ -210,6 +230,7 @@ class TestNeuralModelLoad:
         assert 'tokenizer' in checkpoint
         assert 'label_encoder' in checkpoint
         assert 'config' in checkpoint
+        assert 'model_type' in checkpoint
 
     def test_preserves_model_weights(
         self, handler, simple_model, mock_tokenizer, mock_label_encoder
@@ -222,6 +243,7 @@ class TestNeuralModelLoad:
             label_encoder=mock_label_encoder,
             config={},
             filename='model.pt',
+            model_type='transformer',
         )
 
         checkpoint = handler.load_neural_model(path)
@@ -249,6 +271,11 @@ class TestNeuralModelLoad:
 
         assert checkpoint['config']['d_model'] == 128
         assert checkpoint['config']['num_layers'] == 2
+
+    def test_preserves_model_type(self, handler, saved_model_path):
+        checkpoint = handler.load_neural_model(saved_model_path)
+
+        assert checkpoint['model_type'] == 'transformer'
 
 
 class TestListModels:

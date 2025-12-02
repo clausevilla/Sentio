@@ -355,6 +355,7 @@ class ModelTrainer:
             label_encoder=label_encoder,
             config=use_config,
             filename=f'{model_name}_{job_id}.pt',
+            model_type=model_name,
         )
 
         logger.info(

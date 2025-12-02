@@ -4,14 +4,19 @@ line-length = 88 # Ruff's default line length is 88
 [tool.ruff.format]
 quote-style = "single" # Ruff's default is double quotes, Django prefers single quotes
 
+[tool.ruff.lint.per-file-ignores]
+"sentio/settings/*.py" = ["F401", "F403", "F405"]
+
 [tool.pytest.ini_options] # pytest configuration
 DJANGO_SETTINGS_MODULE = "sentio.settings.testing"
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 pythonpath = ["."]
-
 testpaths = ["ml_pipeline", "apps", "tests"]
+markers = [
+    "integration: marks tests as integration tests",
+]
 
 addopts = [
     "--reuse-db",
