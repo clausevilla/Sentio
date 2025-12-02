@@ -1,5 +1,139 @@
+/* Author: Lian Shi */
+
 /* ========================================
    ML Admin - Analytics Page
    ======================================== */
 
-/* Add analytics-specific styles here */
+/* Chart Containers */
+.chart-wrap {
+    position: relative;
+    height: 250px;
+}
+
+.chart-wrap.chart-wide {
+    height: 280px;
+}
+
+/* Stats Row Adjustments */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stats-row.small {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+}
+
+/* Stat Card */
+.stat-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.stat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.stat-value {
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: 700;
+    color: var(--gray-800);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+}
+
+/* Section Headers */
+.section-header {
+    margin: 2rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--gray-200);
+}
+
+.section-header:first-child {
+    margin-top: 0;
+}
+
+.section-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-header h2 i {
+    color: var(--primary);
+}
+
+/* Grid Layout */
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .stats-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-row.small {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .chart-wrap,
+    .chart-wrap.chart-wide {
+        height: 220px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-row.small {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .chart-wrap,
+    .chart-wrap.chart-wide {
+        height: 200px;
+    }
+}

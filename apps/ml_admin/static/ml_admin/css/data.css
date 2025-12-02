@@ -1,12 +1,45 @@
 /* Author: Lian Shi*/
-/*Disclaimer: LLM has used to generate initial style, and fine tuning was done manually to different elements */
+/* Disclaimer: LLM has used to generate initial style, and fine tuning was done manually to different elements */
 
+/* ML Admin - Data Page - List Layout */
 
-/* ========================================
-   ML Admin - Data Page
-   ======================================== */
+/* Stats Row */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
 
-/* Upload Panel (inline) */
+.stat-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.stat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.stat-value {
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+}
+
+/* Upload Panel */
 .upload-panel .card-body {
     padding: 1.25rem;
 }
@@ -111,21 +144,183 @@
     font-size: 0.75rem;
 }
 
-/* Upload Tasks Queue */
+/* Header Count */
+.header-count {
+    font-size: 0.85rem;
+    font-weight: normal;
+    opacity: 0.8;
+}
+
+/* Dataset List */
+.dataset-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.dataset-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--gray-100);
+    transition: background 0.2s;
+}
+
+.dataset-row:hover {
+    background: var(--gray-50);
+}
+
+.dataset-row:last-child {
+    border-bottom: none;
+}
+
+.dataset-row.pending {
+    opacity: 0.7;
+}
+
+/* Dataset Main Info */
+.dataset-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.dataset-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(74, 124, 89, 0.1);
+    color: var(--primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.dataset-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.dataset-name {
+    font-weight: 600;
+    color: var(--gray-800);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+
+.dataset-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--gray-500);
+}
+
+.dataset-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.dataset-meta i {
+    font-size: 0.75rem;
+    color: var(--gray-400);
+}
+
+/* Split Badges */
+.dataset-split {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.split-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.split-badge.training {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.split-badge.test {
+    background: rgba(123, 104, 166, 0.1);
+    color: #7B68A6;
+}
+
+.split-badge i {
+    font-size: 0.7rem;
+}
+
+/* Label Chips */
+.dataset-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-width: 200px;
+}
+
+.label-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--gray-100);
+    border-radius: 10px;
+    font-size: 0.7rem;
+    color: var(--gray-600);
+    white-space: nowrap;
+}
+
+.label-chip.more {
+    background: var(--gray-200);
+    color: var(--gray-500);
+}
+
+/* Dataset Status */
+.dataset-status {
+    min-width: 100px;
+}
+
+/* Dataset Actions */
+.dataset-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.dataset-actions .btn {
+    padding: 6px 10px;
+}
+
+.dataset-actions .btn i {
+    margin: 0;
+}
+
+/* Upload Tasks */
 .upload-tasks {
     margin-bottom: 1.5rem;
 }
 
 .task-list {
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
 }
 
 .task-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
-    padding: 12px 16px;
+    padding: 16px;
     border-bottom: 1px solid var(--gray-100);
 }
 
@@ -134,13 +329,14 @@
 }
 
 .task-icon {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    flex-shrink: 0;
 }
 
 .task-icon.processing {
@@ -160,69 +356,106 @@
 
 .task-info {
     flex: 1;
+    min-width: 0;
 }
 
 .task-name {
     font-weight: 500;
     color: var(--gray-800);
+    margin-bottom: 4px;
 }
 
 .task-status {
-    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
     color: var(--gray-500);
-    margin-top: 2px;
 }
 
-.task-status.processing {
-    color: var(--info);
+.task-status.processing { color: var(--info); }
+.task-status.success { color: var(--success); }
+.task-status.error { color: var(--danger); }
+
+.task-stages {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 8px;
+    padding: 8px 0;
 }
 
-.task-status.success {
-    color: var(--success);
+.stage-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--gray-400);
+    position: relative;
 }
 
-.task-status.error {
-    color: var(--danger);
+.stage-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: calc(100% + 4px);
+    width: 8px;
+    height: 1px;
+    background: var(--gray-300);
 }
+
+.stage-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gray-300);
+    transition: all 0.3s;
+}
+
+.stage-item.active .stage-dot {
+    background: var(--info);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    animation: pulse 1.5s infinite;
+}
+
+.stage-item.done .stage-dot {
+    background: var(--success);
+}
+
+.stage-item.active .stage-name,
+.stage-item.done .stage-name {
+    color: var(--gray-700);
+    font-weight: 500;
+}
+
+.stage-item.active .stage-name { color: var(--info); }
+.stage-item.done .stage-name { color: var(--success); }
 
 .task-progress {
     width: 100%;
     height: 4px;
     background: var(--gray-100);
     border-radius: 2px;
-    margin-top: 6px;
+    margin-top: 8px;
     overflow: hidden;
 }
 
 .task-progress-bar {
     height: 100%;
-    background: var(--info);
+    background: linear-gradient(90deg, var(--primary), var(--info));
     border-radius: 2px;
-    transition: width 0.3s;
-    animation: progress-pulse 1.5s ease-in-out infinite;
+    transition: width 0.3s ease;
+    animation: progress-shimmer 1.5s ease-in-out infinite;
 }
 
-@keyframes progress-pulse {
+@keyframes progress-shimmer {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+@keyframes pulse {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
-}
-
-.task-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.task-dismiss {
-    background: none;
-    border: none;
-    color: var(--gray-400);
-    cursor: pointer;
-    padding: 4px;
-    font-size: 1rem;
-}
-
-.task-dismiss:hover {
-    color: var(--gray-600);
+    50% { opacity: 0.5; }
 }
 
 .task-type-badge {
@@ -232,91 +465,15 @@
     border-radius: 10px;
     font-size: 0.7rem;
     font-weight: 500;
-    margin-left: 8px;
     color: var(--gray-600);
 }
 
-/* Dataset Grid */
-.dataset-grid {
+/* Grid Layout */
+.grid-2 {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
 }
-
-/* Dataset Card */
-.dataset-card .card-header { background: var(--gray-50); }
-
-.dataset-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-}
-
-.dataset-title i { color: var(--primary); }
-
-.dataset-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    font-size: 0.85rem;
-    color: var(--gray-500);
-    margin-bottom: 1rem;
-}
-
-.dataset-meta i { margin-right: 4px; }
-
-.dataset-actions { display: flex; gap: 0.5rem; }
-
-/* Type Badges */
-.type-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin: 0.75rem 0;
-}
-
-.type-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
-.type-badge.training { background: rgba(16, 185, 129, 0.1); color: #059669; }
-.type-badge.test { background: rgba(123, 104, 166, 0.1); color: #7B68A6; }
-.type-badge.unlabeled { background: rgba(245, 158, 11, 0.1); color: #d97706; }
-
-/* Distribution Bars */
-.distribution-bars { margin: 1rem 0; }
-
-.dist-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-}
-
-.dist-label { width: 80px; font-size: 0.8rem; color: var(--gray-600); }
-
-.dist-bar {
-    flex: 1;
-    height: 8px;
-    background: var(--gray-100);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.dist-fill {
-    height: 100%;
-    background: var(--primary);
-    border-radius: 4px;
-}
-
-.dist-count { width: 60px; font-size: 0.8rem; color: var(--gray-500); text-align: right; }
 
 /* Label Stats */
 .label-stats {
@@ -365,50 +522,57 @@
     text-align: right;
 }
 
-/* Upload Zone */
-.upload-zone {
-    border: 2px dashed var(--gray-300);
-    border-radius: var(--radius);
-    padding: 3rem;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
+/* Distribution Modal */
+.dist-modal-chart {
+    height: 200px;
+    margin-bottom: 1rem;
 }
 
-.upload-zone:hover,
-.upload-zone.dragover {
-    border-color: var(--primary);
-    background: rgba(74, 124, 89, 0.05);
+.dist-modal-bars {
+    max-height: 200px;
+    overflow-y: auto;
 }
 
-.upload-zone i { font-size: 3rem; color: var(--gray-300); margin-bottom: 1rem; }
-.upload-zone p { color: var(--gray-500); }
-
-.file-preview {
+.dist-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 1rem;
-    background: var(--gray-50);
-    border-radius: var(--radius-sm);
+    gap: 8px;
+    margin-bottom: 8px;
 }
 
-.file-preview i { font-size: 2rem; color: var(--primary); }
-
-.file-preview button {
-    margin-left: auto;
-    background: none;
-    border: none;
-    font-size: 1.25rem;
-    cursor: pointer;
-    color: var(--gray-400);
+.dist-label {
+    width: 80px;
+    font-size: 0.8rem;
+    color: var(--gray-600);
 }
 
-.help-text { margin-top: 1rem; font-size: 0.85rem; color: var(--gray-500); }
-.help-text code { background: var(--gray-100); padding: 2px 6px; border-radius: 4px; }
+.dist-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--gray-100);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.dist-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 4px;
+}
+
+.dist-count {
+    width: 80px;
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    text-align: right;
+}
 
 /* Split Modal */
-.split-title { text-align: center; margin-bottom: 1rem; color: var(--gray-700); }
+.split-title {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: var(--gray-700);
+}
 
 .split-current {
     display: flex;
@@ -417,9 +581,21 @@
     margin-bottom: 1rem;
 }
 
-.split-stat { text-align: center; }
-.split-stat .split-count { display: block; font-size: 1.5rem; font-weight: 700; }
-.split-stat .split-label { font-size: 0.8rem; color: var(--gray-500); }
+.split-stat {
+    text-align: center;
+}
+
+.split-stat .split-count {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.split-stat .split-label {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+}
+
 .split-stat.training .split-count { color: var(--success); }
 .split-stat.test .split-count { color: var(--purple); }
 .split-stat.unlabeled .split-count { color: var(--warning); }
@@ -432,8 +608,15 @@
     background: var(--gray-100);
 }
 
-.split-bar-train { background: var(--success); transition: width 0.3s; }
-.split-bar-test { background: var(--purple); transition: width 0.3s; }
+.split-bar-train {
+    background: var(--success);
+    transition: width 0.3s;
+}
+
+.split-bar-test {
+    background: var(--purple);
+    transition: width 0.3s;
+}
 
 .split-bar-labels {
     display: flex;
@@ -447,6 +630,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
+    margin-top: 1.5rem;
 }
 
 .split-slider-group label,
@@ -483,9 +667,18 @@
     cursor: pointer;
 }
 
-.split-quick-actions { display: flex; flex-direction: column; }
-.split-quick-actions .btn { margin-top: 0.5rem; }
-.split-quick-actions .btn:first-of-type { margin-top: auto; }
+.split-quick-actions {
+    display: flex;
+    flex-direction: column;
+}
+
+.split-quick-actions .btn {
+    margin-top: 0.5rem;
+}
+
+.split-quick-actions .btn:first-of-type {
+    margin-top: auto;
+}
 
 .split-note {
     margin-top: 1rem;
@@ -497,12 +690,86 @@
     text-align: center;
 }
 
-.split-note i { margin-right: 6px; color: var(--info); }
+.split-note i {
+    margin-right: 6px;
+    color: var(--info);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dataset-row {
+        grid-template-columns: 1fr auto auto auto;
+    }
+
+    .dataset-labels {
+        display: none;
+    }
+}
+
+@media (max-width: 992px) {
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .dataset-row {
+        grid-template-columns: 1fr auto auto;
+    }
+
+    .dataset-split {
+        display: none;
+    }
+}
 
 @media (max-width: 768px) {
-    .dataset-grid { grid-template-columns: 1fr; }
-    .split-actions { grid-template-columns: 1fr; }
-    .split-current { gap: 1rem; }
-    .upload-row { flex-direction: column; align-items: stretch; }
-    .upload-row .btn { width: 100%; }
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .upload-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .upload-row .btn {
+        width: 100%;
+    }
+
+    .dataset-row {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .dataset-main {
+        grid-column: 1;
+    }
+
+    .dataset-status {
+        order: -1;
+    }
+
+    .dataset-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .split-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .split-current {
+        gap: 1rem;
+    }
+
+    .task-stages {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .stage-item:not(:last-child)::after {
+        display: none;
+    }
 }

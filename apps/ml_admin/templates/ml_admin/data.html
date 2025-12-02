@@ -1,3 +1,6 @@
+/* Author: Lian Shi*/
+ /* Disclaimer: LLM has used to generate initial layout, and fine tuning was done manually to different elements */
+
 {% extends 'ml_admin/base_admin.html' %}
 {% load static %}
 {% block title %}Data{% endblock %}
@@ -5,38 +8,48 @@
 {% block page_css %}<link rel="stylesheet" href="{% static 'ml_admin/css/data.css' %}">{% endblock %}
 
 {% block content %}
+<!-- Toast Container -->
+<div id="toasts"></div>
+
 <!-- Stats -->
 <div class="stats-row">
     <div class="stat-card">
         <div class="stat-icon blue"><i class="fas fa-database"></i></div>
-        <div class="stat-value">{{ total_uploads }}</div>
-        <div class="stat-label">Datasets</div>
+        <div class="stat-info">
+            <div class="stat-value">{{ total_uploads }}</div>
+            <div class="stat-label">Datasets</div>
+        </div>
     </div>
     <div class="stat-card">
         <div class="stat-icon green"><i class="fas fa-graduation-cap"></i></div>
-        <div class="stat-value">{{ type_breakdown.training }}</div>
-        <div class="stat-label">Training Records</div>
+        <div class="stat-info">
+            <div class="stat-value">{{ type_breakdown.training }}</div>
+            <div class="stat-label">Training Records</div>
+        </div>
     </div>
     <div class="stat-card">
         <div class="stat-icon purple"><i class="fas fa-flask"></i></div>
-        <div class="stat-value">{{ type_breakdown.test }}</div>
-        <div class="stat-label">Test Records</div>
+        <div class="stat-info">
+            <div class="stat-value">{{ type_breakdown.test }}</div>
+            <div class="stat-label">Test Records</div>
+        </div>
     </div>
     <div class="stat-card">
         <div class="stat-icon coral"><i class="fas fa-question-circle"></i></div>
-        <div class="stat-value">{{ type_breakdown.unlabeled }}</div>
-        <div class="stat-label">Unlabeled</div>
+        <div class="stat-info">
+            <div class="stat-value">{{ type_breakdown.unlabeled }}</div>
+            <div class="stat-label">Unlabeled</div>
+        </div>
     </div>
 </div>
 
-<!-- Upload Panel (inline, not modal) -->
+<!-- Upload Panel -->
 <div class="card upload-panel" style="margin-bottom: 1.5rem;">
     <div class="card-header">
         <h3><i class="fas fa-upload"></i> Upload Dataset</h3>
     </div>
     <div class="card-body">
         <div class="upload-row">
-            <!-- File Selection -->
             <div class="upload-file-section">
                 <div class="upload-zone-inline" id="uploadZone" onclick="document.getElementById('fileInput').click()">
                     <i class="fas fa-file-csv"></i>
@@ -50,7 +63,6 @@
                 </div>
             </div>
 
-            <!-- Dataset Type -->
             <div class="upload-type-section">
                 <label>Dataset Type</label>
                 <select id="datasetType" class="form-select">
@@ -60,7 +72,6 @@
                 </select>
             </div>
 
-            <!-- Upload Button -->
             <button class="btn btn-primary" id="uploadBtn" onclick="uploadFile()" disabled>
                 <i class="fas fa-upload"></i> Upload & Process
             </button>
@@ -68,7 +79,7 @@
 
         <div class="upload-help">
             <i class="fas fa-info-circle"></i>
-            Required columns: <code>text</code> and <code>label</code>
+            Required columns: <code>text</code> or <code>statement</code> and <code>label</code> or <code>status</code>
         </div>
     </div>
 </div>
@@ -80,9 +91,7 @@
             <h3><i class="fas fa-tasks"></i> Processing Tasks</h3>
         </div>
         <div class="card-body no-pad">
-            <div class="task-list" id="taskList">
-                <!-- Tasks will be added here dynamically -->
-            </div>
+            <div class="task-list" id="taskList"></div>
         </div>
     </div>
 </div>
@@ -112,78 +121,93 @@
 </div>
 {% endif %}
 
-<!-- Dataset Cards -->
-<div class="dataset-grid">
-    {% for item in uploads %}
-    <div class="card dataset-card">
-        <div class="card-header">
-            <div class="dataset-title">
-                <i class="fas fa-file-csv"></i>
-                <span>{{ item.upload.file_name }}</span>
-            </div>
-            {% if item.upload.is_validated %}
-            <span class="badge success">Validated</span>
-            {% else %}
-            <span class="badge warning">Pending</span>
-            {% endif %}
-        </div>
-        <div class="card-body">
-            <div class="dataset-meta">
-                <span><i class="fas fa-calendar"></i> {{ item.upload.uploaded_at|date:"M d, Y" }}</span>
-                <span><i class="fas fa-user"></i> {{ item.upload.uploaded_by.username|default:"-" }}</span>
-                <span><i class="fas fa-table"></i> {{ item.upload.row_count|default:0 }} rows</span>
-            </div>
-
-            <!-- Dataset Type Breakdown -->
-            {% if item.type_breakdown %}
-            <div class="type-badges">
-                {% if item.type_breakdown.Training %}
-                <span class="type-badge training"><i class="fas fa-graduation-cap"></i> {{ item.type_breakdown.Training }} train</span>
-                {% endif %}
-                {% if item.type_breakdown.Test %}
-                <span class="type-badge test"><i class="fas fa-flask"></i> {{ item.type_breakdown.Test }} test</span>
-                {% endif %}
-                {% if item.type_breakdown.Unlabeled %}
-                <span class="type-badge unlabeled"><i class="fas fa-question"></i> {{ item.type_breakdown.Unlabeled }} unlabeled</span>
-                {% endif %}
-            </div>
-            {% endif %}
-
-            <!-- Inline Distribution -->
-            {% if item.distribution %}
-            <div class="distribution-bars">
-                {% for d in item.distribution %}
-                <div class="dist-item">
-                    <span class="dist-label">{{ d.label }}</span>
-                    <div class="dist-bar">
-                        <div class="dist-fill" style="width: {% widthratio d.count item.upload.row_count 100 %}%"></div>
+<!-- Dataset List -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-list"></i> All Datasets</h3>
+        <span class="header-count">{{ total_uploads }} total</span>
+    </div>
+    <div class="card-body no-pad">
+        {% if uploads %}
+        <div class="dataset-list">
+            {% for item in uploads %}
+            <div class="dataset-row {% if not item.upload.is_validated %}pending{% endif %}">
+                <!-- Main Info -->
+                <div class="dataset-main">
+                    <div class="dataset-icon">
+                        <i class="fas fa-file-csv"></i>
                     </div>
-                    <span class="dist-count">{{ d.count }}</span>
+                    <div class="dataset-info">
+                        <div class="dataset-name">{{ item.upload.file_name }}</div>
+                        <div class="dataset-meta">
+                            <span><i class="fas fa-calendar"></i> {{ item.upload.uploaded_at|date:"M d, Y" }}</span>
+                            <span><i class="fas fa-user"></i> {{ item.upload.uploaded_by.username|default:"—" }}</span>
+                            <span><i class="fas fa-table"></i> {{ item.upload.row_count|default:0 }} rows</span>
+                        </div>
+                    </div>
                 </div>
-                {% endfor %}
-            </div>
-            {% endif %}
 
-            <div class="dataset-actions">
-                <button class="btn btn-sm btn-secondary" onclick="viewRecords({{ item.upload.id }}, '{{ item.upload.file_name }}')">
-                    <i class="fas fa-eye"></i> Records
-                </button>
-                <button class="btn btn-sm btn-secondary" onclick="manageSplit({{ item.upload.id }}, '{{ item.upload.file_name }}')">
-                    <i class="fas fa-random"></i> Split
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteDataset({{ item.upload.id }}, '{{ item.upload.file_name }}')">
-                    <i class="fas fa-trash"></i>
-                </button>
+                <!-- Split Info -->
+                <div class="dataset-split">
+                    <div class="split-badge training" title="Training records">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>{{ item.training_count|default:0 }}</span>
+                    </div>
+                    <div class="split-badge test" title="Test records">
+                        <i class="fas fa-flask"></i>
+                        <span>{{ item.test_count|default:0 }}</span>
+                    </div>
+                </div>
+
+                <!-- Label Distribution (mini) -->
+                <div class="dataset-labels">
+                    {% for d in item.distribution|slice:":3" %}
+                    <span class="label-chip" title="{{ d.label }}: {{ d.count }}">{{ d.label|truncatechars:8 }}</span>
+                    {% endfor %}
+                    {% if item.distribution|length > 3 %}
+                    <span class="label-chip more">+{{ item.distribution|length|add:"-3" }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Status -->
+                <div class="dataset-status">
+                    {% if item.upload.is_validated %}
+                    <span class="badge success"><i class="fas fa-check"></i> Validated</span>
+                    {% elif item.upload.status == 'processing' %}
+                    <span class="badge running"><i class="fas fa-spinner fa-spin"></i> Processing</span>
+                    {% elif item.upload.status == 'failed' %}
+                    <span class="badge failed"><i class="fas fa-times"></i> Failed</span>
+                    {% else %}
+                    <span class="badge pending"><i class="fas fa-clock"></i> Pending</span>
+                    {% endif %}
+                </div>
+
+                <!-- Actions -->
+                <div class="dataset-actions">
+                    <button class="btn btn-sm btn-secondary" onclick="viewRecords({{ item.upload.id }}, '{{ item.upload.file_name }}')" title="View Records">
+                        <i class="fas fa-eye"></i> View
+                    </button>
+                    <button class="btn btn-sm btn-secondary" onclick="viewDistribution({{ item.upload.id }}, '{{ item.upload.file_name }}')" title="View Distribution">
+                        <i class="fas fa-chart-pie"></i>
+                    </button>
+                    <button class="btn btn-sm btn-secondary" onclick="manageSplit({{ item.upload.id }}, '{{ item.upload.file_name }}')" title="Manage Split">
+                        <i class="fas fa-random"></i> Split
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteDataset({{ item.upload.id }}, '{{ item.upload.file_name }}')" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </div>
+            {% endfor %}
         </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h4>No Datasets Yet</h4>
+            <p>Upload your first CSV using the panel above</p>
+        </div>
+        {% endif %}
     </div>
-    {% empty %}
-    <div class="empty-state full">
-        <i class="fas fa-cloud-upload-alt"></i>
-        <h4>No Datasets Yet</h4>
-        <p>Upload your first CSV using the panel above</p>
-    </div>
-    {% endfor %}
 </div>
 
 <!-- Records Modal -->
@@ -198,6 +222,21 @@
                 <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
             </div>
             <div class="pagination" id="recordsPagination"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Distribution Modal -->
+<div class="modal" id="distributionModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-chart-pie"></i> <span id="distModalTitle">Label Distribution</span></h3>
+            <button class="modal-close" onclick="closeModal('distributionModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="distModalContent">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+            </div>
         </div>
     </div>
 </div>

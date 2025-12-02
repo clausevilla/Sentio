@@ -8,6 +8,7 @@ ML Admin Dashboard - 6 Pages: Dashboard, Data, Training, Models, Users, Analytic
 import json
 import os
 from datetime import timedelta
+from venv import logger
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
@@ -21,13 +22,13 @@ from django.views.decorators.http import require_http_methods
 
 from .models import DatasetRecord, DataUpload, ModelVersion, TrainingJob
 
-# Import cleaning pipeline
+# Import full pipeline (cleaning + preprocessing)
 try:
-    from ml_pipeline.data_cleaning.cleaner import run_cleaning_pipeline
+    from apps.ml_admin.services import trigger_full_pipeline_in_background
 
-    CLEANING_AVAILABLE = True
+    PIPELINE_AVAILABLE = True
 except ImportError:
-    CLEANING_AVAILABLE = False
+    PIPELINE_AVAILABLE = False
 
 # Import predictions
 try:
@@ -81,7 +82,8 @@ def dashboard_view(request):
     if PREDICTIONS_AVAILABLE:
         try:
             stats['predictions'] = PredictionResult.objects.count()
-        except:
+        except Exception as e:
+            logger.exception(f'Failed to get prediction count: {e}')
             pass
 
     jobs = {
@@ -158,19 +160,25 @@ def data_view(request):
             .values('label')
             .annotate(count=Count('id'))
         )
-        # Get dataset_type breakdown for this upload
-        type_breakdown = list(
-            DatasetRecord.objects.filter(data_upload=upload)
-            .values('dataset_type')
-            .annotate(count=Count('id'))
-        )
+
+        # Get counts by dataset_type
+        training_count = DatasetRecord.objects.filter(
+            data_upload=upload, dataset_type='Training'
+        ).count()
+        test_count = DatasetRecord.objects.filter(
+            data_upload=upload, dataset_type='Test'
+        ).count()
+        unlabeled_count = DatasetRecord.objects.filter(
+            data_upload=upload, dataset_type='Unlabeled'
+        ).count()
+
         uploads_with_stats.append(
             {
                 'upload': upload,
                 'distribution': dist,
-                'type_breakdown': {
-                    t['dataset_type']: t['count'] for t in type_breakdown
-                },
+                'training_count': training_count,
+                'test_count': test_count,
+                'unlabeled_count': unlabeled_count,
             }
         )
 
@@ -221,7 +229,6 @@ def upload_csv_api(request):
                 {'success': False, 'error': 'File must be CSV'}, status=400
             )
 
-        # Get dataset type from request
         dataset_type = request.POST.get('dataset_type', 'Training')
         if dataset_type not in ['Training', 'Test', 'Unlabeled']:
             dataset_type = 'Training'
@@ -241,41 +248,99 @@ def upload_csv_api(request):
             file_name=csv_file.name,
             file_path=file_path,
             is_validated=False,
+            status='pending',
         )
 
-        if CLEANING_AVAILABLE:
-            result = run_cleaning_pipeline(upload.id)
-            if result.get('success'):
-                # Update dataset_type AFTER cleaning completes
-                DatasetRecord.objects.filter(data_upload=upload).update(
-                    dataset_type=dataset_type
-                )
-                return JsonResponse(
-                    {
-                        'success': True,
-                        'message': f'Processed {result.get("row_count", 0)} records',
-                        'upload_id': upload.id,
-                        'row_count': result.get('row_count', 0),
-                    }
-                )
-            else:
-                return JsonResponse(
-                    {
-                        'success': False,
-                        'error': result.get('error', 'Cleaning failed'),
-                    },
-                    status=400,
-                )
+        if PIPELINE_AVAILABLE:
+            trigger_full_pipeline_in_background(upload.id)
+            return JsonResponse(
+                {
+                    'success': True,
+                    'message': 'Upload started. Processing in background...',
+                    'upload_id': upload.id,
+                }
+            )
+        else:
+            return JsonResponse(
+                {
+                    'success': True,
+                    'message': 'Uploaded (pipeline not available)',
+                    'upload_id': upload.id,
+                }
+            )
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@staff_member_required
+@require_http_methods(['GET'])
+def get_upload_status_api(request, upload_id):
+    """
+    Get the current processing status of an upload.
+    Used for polling during file upload/processing.
+    """
+    try:
+        upload = get_object_or_404(DataUpload, id=upload_id)
 
         return JsonResponse(
             {
                 'success': True,
-                'message': 'Uploaded (run cleaning manually)',
-                'upload_id': upload.id,
-                'row_count': 0,
+                'upload_id': upload_id,
+                'status': upload.status,
+                'is_validated': upload.is_validated,
+                'row_count': upload.row_count or 0,
+                'file_name': upload.file_name,
             }
         )
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+
+@staff_member_required
+@require_http_methods(['GET'])
+def get_upload_distribution_api(request, upload_id):
+    """
+    Get the label distribution for a specific upload.
+    Used for the distribution modal.
+    """
+    try:
+        upload = get_object_or_404(DataUpload, id=upload_id)
+
+        # Get label distribution
+        distribution = list(
+            DatasetRecord.objects.filter(data_upload=upload)
+            .values('label')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+
+        # Get total count
+        total = DatasetRecord.objects.filter(data_upload=upload).count()
+
+        # Get type breakdown
+        type_breakdown = {
+            'training': DatasetRecord.objects.filter(
+                data_upload=upload, dataset_type='Training'
+            ).count(),
+            'test': DatasetRecord.objects.filter(
+                data_upload=upload, dataset_type='Test'
+            ).count(),
+            'unlabeled': DatasetRecord.objects.filter(
+                data_upload=upload, dataset_type='Unlabeled'
+            ).count(),
+        }
+
+        return JsonResponse(
+            {
+                'success': True,
+                'upload_id': upload_id,
+                'file_name': upload.file_name,
+                'distribution': distribution,
+                'total': total,
+                'type_breakdown': type_breakdown,
+            }
+        )
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
@@ -325,15 +390,14 @@ def get_upload_split_api(request, upload_id):
 @staff_member_required
 @require_http_methods(['POST'])
 def update_upload_split_api(request, upload_id):
-    """Update train/test split for an upload"""
     import random
 
     try:
         upload = get_object_or_404(DataUpload, id=upload_id)
         data = json.loads(request.body)
 
-        action = data.get('action')  # 'split', 'all_training', 'all_test'
-        test_percent = data.get('test_percent', 20)  # Default 20% test
+        action = data.get('action')
+        test_percent = data.get('test_percent', 20)
 
         records = list(DatasetRecord.objects.filter(data_upload=upload))
 
@@ -353,10 +417,8 @@ def update_upload_split_api(request, upload_id):
             message = f'All {len(records)} records set to Test'
 
         elif action == 'split':
-            # Stratified split by label
             from collections import defaultdict
 
-            # Group by label
             by_label = defaultdict(list)
             for record in records:
                 by_label[record.label].append(record)
@@ -374,7 +436,6 @@ def update_upload_split_api(request, upload_id):
                     else:
                         training_ids.append(record.id)
 
-            # Update in bulk
             DatasetRecord.objects.filter(id__in=training_ids).update(
                 dataset_type='Training'
             )
@@ -387,7 +448,6 @@ def update_upload_split_api(request, upload_id):
                 {'success': False, 'error': 'Invalid action'}, status=400
             )
 
-        # Return updated breakdown
         breakdown = {
             'training': DatasetRecord.objects.filter(
                 data_upload=upload, dataset_type='Training'
@@ -414,7 +474,6 @@ def update_upload_split_api(request, upload_id):
 
 @staff_member_required
 def get_dataset_records_api(request, upload_id):
-    """API to get records for modal display"""
     upload = get_object_or_404(DataUpload, id=upload_id)
     page = int(request.GET.get('page', 1))
     per_page = 20
@@ -440,6 +499,30 @@ def get_dataset_records_api(request, upload_id):
     )
 
 
+@staff_member_required
+def get_dataset_distribution_api(request, upload_id):
+    upload = get_object_or_404(DataUpload, id=upload_id)
+
+    distribution = list(
+        DatasetRecord.objects.filter(data_upload=upload)
+        .values('label')
+        .annotate(count=Count('id'))
+        .order_by('-count')
+    )
+
+    total = sum(d['count'] for d in distribution)
+
+    return JsonResponse(
+        {
+            'success': True,
+            'upload_id': upload_id,
+            'file_name': upload.file_name,
+            'distribution': distribution,
+            'total': total,
+        }
+    )
+
+
 # ============================================
 # PAGE 3: Training
 # ============================================
@@ -453,15 +536,13 @@ def training_view(request):
     )
     active_model = ModelVersion.objects.filter(is_active=True).first()
 
-    # Add record counts and distribution for each upload (Training records only)
     uploads_with_counts = []
     for upload in available_uploads:
-        # Only count Training records
         training_count = DatasetRecord.objects.filter(
             data_upload=upload, dataset_type='Training'
         ).count()
 
-        if training_count > 0:  # Only show uploads with training data
+        if training_count > 0:
             dist = list(
                 DatasetRecord.objects.filter(
                     data_upload=upload, dataset_type='Training'
@@ -473,11 +554,11 @@ def training_view(request):
                 {
                     'upload': upload,
                     'count': training_count,
+                    'distribution': dist,
                     'distribution_json': json.dumps(dist),
                 }
             )
 
-    # Fixed test set info
     test_set_info = {
         'total': DatasetRecord.objects.filter(dataset_type='Test').count(),
         'distribution': list(
@@ -487,17 +568,14 @@ def training_view(request):
         ),
     }
 
-    # Training data totals
     training_totals = {
         'records': DatasetRecord.objects.filter(dataset_type='Training').count(),
         'uploads': len(uploads_with_counts),
     }
 
-    # All models for retraining (only deep learning models can be retrained)
     all_models = ModelVersion.objects.order_by('-created_at')
     retrainable_models = []
     for model in all_models:
-        # Include model type info if available
         model_info = {
             'id': model.id,
             'version_name': model.version_name,
@@ -533,28 +611,25 @@ def start_training_api(request):
     try:
         data = json.loads(request.body)
         upload_ids = data.get('upload_ids', [])
-        mode = data.get('mode', 'new')  # 'new' or 'retrain'
+        mode = data.get('mode', 'new')
         algorithm = data.get('algorithm', 'logistic_regression')
-        base_model_id = data.get('base_model_id')  # For retrain mode
+        base_model_id = data.get('base_model_id')
 
         if not upload_ids:
             return JsonResponse(
                 {'success': False, 'error': 'No datasets selected'}, status=400
             )
 
-        # Validate mode
         if mode not in ['new', 'retrain']:
             return JsonResponse(
                 {'success': False, 'error': 'Invalid training mode'}, status=400
             )
 
-        # For new training, validate algorithm
         if mode == 'new' and algorithm not in ML_ALGORITHMS:
             return JsonResponse(
                 {'success': False, 'error': 'Invalid algorithm'}, status=400
             )
 
-        # For retrain, validate base model
         base_model = None
         if mode == 'retrain':
             if not base_model_id:
@@ -583,29 +658,11 @@ def start_training_api(request):
                 {'success': False, 'error': 'Training already running'}, status=400
             )
 
-        # Create training job
         job = TrainingJob.objects.create(
             data_upload=uploads.first(),
             status='PENDING',
             initiated_by=request.user,
         )
-
-        # TODO
-        # Store training config in job (we may want to add these fields to our model)
-        # job.config = {
-        #     'mode': mode,
-        #     'algorithm': algorithm if mode == 'new' else None,
-        #     'base_model_id': base_model_id if mode == 'retrain' else None,
-        #     'upload_ids': upload_ids,
-        # }
-        # job.save()
-
-        # TODO: Trigger actual training
-        # from ml_pipeline.training import train_model
-        # if mode == 'retrain':
-        #     train_model.delay(job.id, upload_ids, base_model_id=base_model_id)
-        # else:
-        #     train_model.delay(job.id, upload_ids, algorithm=algorithm)
 
         if mode == 'retrain':
             message = f'Started retraining based on {base_model.version_name}'
@@ -637,11 +694,31 @@ def models_view(request):
     models = ModelVersion.objects.order_by('-created_at')
     active_model = ModelVersion.objects.filter(is_active=True).first()
 
-    # Add training job info to each model
     models_with_info = []
     for model in models:
         job = TrainingJob.objects.filter(resulting_model=model).first()
-        models_with_info.append({'model': model, 'job': job})
+
+        training_records = 0
+        training_labels = []
+        if job and job.data_upload:
+            training_records = DatasetRecord.objects.filter(
+                data_upload=job.data_upload, dataset_type='Training'
+            ).count()
+            training_labels = list(
+                DatasetRecord.objects.filter(data_upload=job.data_upload)
+                .values('label')
+                .annotate(count=Count('id'))
+                .order_by('-count')[:4]
+            )
+
+        models_with_info.append(
+            {
+                'model': model,
+                'job': job,
+                'training_records': training_records,
+                'training_labels': training_labels,
+            }
+        )
 
     return render(
         request,
@@ -695,7 +772,6 @@ def delete_model_api(request, model_id):
 def users_view(request):
     users = User.objects.order_by('-date_joined')
 
-    # Filter
     status = request.GET.get('status', '')
     if status == 'active':
         users = users.filter(is_active=True)
@@ -707,7 +783,6 @@ def users_view(request):
     paginator = Paginator(users, 20)
     page_obj = paginator.get_page(request.GET.get('page'))
 
-    # Get prediction counts per user if available
     user_stats = {}
     if PREDICTIONS_AVAILABLE:
         try:
@@ -715,7 +790,8 @@ def users_view(request):
                 user_stats[user.id] = PredictionResult.objects.filter(
                     submission__user=user
                 ).count()
-        except:
+        except Exception as e:
+            logger.exception(f'Failed to get user prediction counts: {e}')
             pass
 
     return render(
@@ -745,8 +821,8 @@ def analytics_view(request):
     today = timezone.now().date()
     week_ago = today - timedelta(days=7)
     month_ago = today - timedelta(days=30)
+    two_weeks_ago = today - timedelta(days=13)
 
-    # Prediction stats
     prediction_stats = {
         'available': PREDICTIONS_AVAILABLE,
         'total': 0,
@@ -774,7 +850,6 @@ def analytics_view(request):
                 predicted_at__date__gte=month_ago
             ).count()
 
-            # Mental state distribution
             distribution = list(
                 PredictionResult.objects.values('mental_state')
                 .annotate(count=Count('id'))
@@ -783,22 +858,24 @@ def analytics_view(request):
             prediction_stats['distribution'] = distribution
             prediction_distribution_json = json.dumps(distribution)
 
-            # Daily prediction counts (last 14 days)
-            daily_counts = list(
-                PredictionResult.objects.filter(
-                    predicted_at__date__gte=today - timedelta(days=14)
-                )
+            # Daily prediction counts (last 14 days) - FILL ALL DAYS
+            daily_counts_db = dict(
+                PredictionResult.objects.filter(predicted_at__date__gte=two_weeks_ago)
                 .annotate(date=TruncDate('predicted_at'))
                 .values('date')
                 .annotate(count=Count('id'))
-                .order_by('date')
+                .values_list('date', 'count')
             )
-            for item in daily_counts:
-                item['date'] = item['date'].strftime('%m/%d')
+
+            daily_counts = []
+            for i in range(13, -1, -1):
+                day = today - timedelta(days=i)
+                count = daily_counts_db.get(day, 0)
+                daily_counts.append({'date': day.strftime('%m/%d'), 'count': count})
+
             prediction_stats['daily_counts'] = daily_counts
             prediction_daily_json = json.dumps(daily_counts)
 
-            # Average confidence
             avg = PredictionResult.objects.aggregate(avg=Avg('confidence'))
             prediction_stats['avg_confidence'] = (
                 round(avg['avg'], 1) if avg['avg'] else None
@@ -807,7 +884,6 @@ def analytics_view(request):
         except Exception as e:
             prediction_stats['error'] = str(e)
 
-    # Submission stats
     submission_stats = {
         'available': PREDICTIONS_AVAILABLE,
         'total': 0,
@@ -824,10 +900,10 @@ def analytics_view(request):
             submission_stats['week'] = TextSubmission.objects.filter(
                 submitted_at__date__gte=week_ago
             ).count()
-        except:
+        except Exception as e:
+            logger.exception(f'Failed to get submission counts: {e}')
             pass
 
-    # User stats
     user_stats = {
         'total': User.objects.count(),
         'active': User.objects.filter(is_active=True).count(),
@@ -835,16 +911,20 @@ def analytics_view(request):
         'new_month': User.objects.filter(date_joined__date__gte=month_ago).count(),
     }
 
-    # User signups (last 30 days)
-    user_signups = list(
+    # User signups (last 30 days) - FILL ALL DAYS
+    signups_db = dict(
         User.objects.filter(date_joined__date__gte=month_ago)
         .annotate(date=TruncDate('date_joined'))
         .values('date')
         .annotate(count=Count('id'))
-        .order_by('date')
+        .values_list('date', 'count')
     )
-    for item in user_signups:
-        item['date'] = item['date'].strftime('%m/%d')
+
+    user_signups = []
+    for i in range(29, -1, -1):
+        day = today - timedelta(days=i)
+        count = signups_db.get(day, 0)
+        user_signups.append({'date': day.strftime('%m/%d'), 'count': count})
 
     return render(
         request,
@@ -855,7 +935,7 @@ def analytics_view(request):
             'prediction_daily_json': prediction_daily_json,
             'submission_stats': submission_stats,
             'user_stats': user_stats,
-            'user_signups': user_signups if len(user_signups) > 1 else None,
+            'user_signups': user_signups,
             'user_signups_json': json.dumps(user_signups),
             'active_model': ModelVersion.objects.filter(is_active=True).first(),
         },

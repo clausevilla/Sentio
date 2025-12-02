@@ -1,3 +1,6 @@
+/* Author: Lian Shi*/
+/* Disclaimer: LLM has used to generate initial layout, and fine tuning was done manually to
+
 {% extends 'ml_admin/base_admin.html' %}
 {% load static %}
 {% block title %}Models{% endblock %}
@@ -8,7 +11,7 @@
 {% if active_model %}
 <div class="alert success">
     <i class="fas fa-check-circle"></i>
-    <span><strong>Active:</strong> {{ active_model.version_name }} 
+    <span><strong>Active:</strong> {{ active_model.version_name }}
     {% if active_model.accuracy %}• {{ active_model.accuracy|floatformat:1 }}% accuracy{% endif %}</span>
 </div>
 {% else %}
@@ -51,7 +54,7 @@
                     <span class="metric-label">F1 Score</span>
                 </div>
             </div>
-            
+
             <!-- Training Info -->
             {% if item.job %}
             <div class="model-info">
@@ -59,7 +62,7 @@
                 <span><i class="fas fa-user"></i> {{ item.model.created_by.username|default:"-" }}</span>
             </div>
             {% endif %}
-            
+
             <!-- Actions -->
             <div class="model-actions">
                 <button class="btn btn-sm btn-secondary" onclick="showModelDetail({{ item.model.id }})">
@@ -134,16 +137,16 @@
         },
         {% endfor %}
     ];
-    
+
     // Create lookup by ID
     const modelsById = {};
     modelsData.forEach(m => modelsById[m.id] = m);
-    
+
     // Show model detail in modal
     function showModelDetail(id) {
         const model = modelsById[id];
         if (!model) return;
-        
+
         document.getElementById('modalModelName').textContent = model.name;
         document.getElementById('modalContent').innerHTML = `
             <div class="detail-section">

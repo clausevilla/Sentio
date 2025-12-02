@@ -1,5 +1,5 @@
 /* Author: Lian Shi*/
-/*Disclaimer: LLM has used to generate initial style, and fine tuning was done manually to different elements */
+/* Disclaimer: LLM has used to generate initial style, and fine tuning was done manually to different elements */
 
 /* ========================================
    ML Admin - Dashboard Page
@@ -15,17 +15,48 @@
     margin-bottom: 1.5rem;
 }
 
+
+.stat-card {
+    min-width: 0; /* Allow flex item to shrink */
+    overflow: hidden;
+}
+
+.stat-card.clickable {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-info {
+    min-width: 0; /* Allow text to shrink */
+    overflow: hidden;
+}
+
+.stat-value {
+    font-size: clamp(1rem, 4vw, 1.5rem); /* Responsive font size */
+    font-weight: 700;
+    color: var(--gray-800);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Format large numbers */
+.stat-value[data-format="number"] {
+    font-variant-numeric: tabular-nums;
+}
+
 .stats-label {
     font-size: 0.875rem;
-    color: var(
-        --primary
-    );
+    color: var(--primary);
     text-transform: uppercase;
     margin-bottom: 0.5rem;
     white-space: nowrap;
 }
-
-
 
 /* Model Display */
 .model-display { text-align: center; }
@@ -109,6 +140,98 @@
 }
 .job-stat.failed span { color: var(--danger); }
 
+
+.recent-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.recent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-100);
+    gap: 12px;
+}
+
+.recent-item:last-child {
+    border-bottom: none;
+}
+
+.recent-item.clickable {
+    cursor: pointer;
+    margin: 0 -1.5rem;
+    padding: 12px 1.5rem;
+    border-radius: 0;
+    transition: background 0.2s;
+}
+
+.recent-item.clickable:hover {
+    background: var(--gray-50);
+}
+
+.recent-item-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0; /* Allow shrinking */
+    flex: 1;
+}
+
+.recent-item-icon {
+    width: 36px;
+    height: 36px;
+    background: rgba(74, 124, 89, 0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.recent-item-icon i {
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+.recent-item-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Allow text truncation */
+}
+
+.recent-item-title {
+    font-weight: 500;
+    color: var(--gray-800);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.recent-item-subtitle {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.recent-item-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.recent-item-date {
+    font-size: 0.75rem;
+    color: var(--gray-400);
+    white-space: nowrap;
+}
+
 /* Quick Actions */
 .quick-actions {
     display: grid;
@@ -133,16 +256,39 @@
 .action-btn i { font-size: 1.5rem; }
 .action-btn span { font-size: 0.85rem; font-weight: 500; }
 
-
-@media (max-width: 992px ) {
-    .job-stats { grid-template-columns: repeat(2, 2fr);
-
+/* Responsive */
+@media (max-width: 1200px) {
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
+@media (max-width: 992px) {
+    .job-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
 
 @media (max-width: 768px) {
     .quick-actions { grid-template-columns: 1fr; }
     .model-metrics { gap: 1rem; }
     .job-stats { grid-template-columns: repeat(2, 1fr); }
-}
+
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .recent-item {
+        flex-wrap: wrap;
+    }
+
+    .recent-item-right {
+        flex-direction: row;
+        gap: 8px;
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: 4px;
+        padding-left: 48px; /* Align with text */
+    }
 }

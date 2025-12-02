@@ -1,6 +1,4 @@
 /* Author: Lian Shi*/
-/*Disclaimer: LLM has used to help with data page functions especially regarding splitting dataset to training and testing */
-
 /**
  * ML Admin - Data Page
  */
@@ -9,6 +7,8 @@ let selectedFile = null;
 let currentUploadId = null;
 let taskIdCounter = 0;
 let activeTasks = {};
+let statusPollingIntervals = {};
+let distModalChart = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     initDragAndDrop();
@@ -104,14 +104,16 @@ function hideTasksPanel() {
     }
 }
 
-function addTask(fileName, datasetType) {
+function addTask(fileName, datasetType, uploadId = null) {
     const taskId = ++taskIdCounter;
 
     activeTasks[taskId] = {
         id: taskId,
         fileName: fileName,
         datasetType: datasetType,
-        status: 'processing'
+        uploadId: uploadId,
+        status: 'processing',
+        stage: 'uploading'
     };
 
     showTasksPanel();
@@ -125,11 +127,25 @@ function addTask(fileName, datasetType) {
             <div class="task-info">
                 <div class="task-name">${escapeHtml(fileName)}</div>
                 <div class="task-status processing">
-                    <span class="task-status-text">Uploading and processing...</span>
+                    <span class="task-status-text">Uploading...</span>
                     <span class="task-type-badge">${datasetType}</span>
                 </div>
+                <div class="task-stages">
+                    <div class="stage-item active" data-stage="upload">
+                        <span class="stage-dot"></span>
+                        <span class="stage-name">Upload</span>
+                    </div>
+                    <div class="stage-item" data-stage="cleaning">
+                        <span class="stage-dot"></span>
+                        <span class="stage-name">Cleaning and preprocessing</span>
+                    </div>
+                    <div class="stage-item" data-stage="complete">
+                        <span class="stage-dot"></span>
+                        <span class="stage-name">Complete</span>
+                    </div>
+                </div>
                 <div class="task-progress">
-                    <div class="task-progress-bar" style="width: 30%"></div>
+                    <div class="task-progress-bar" style="width: 10%"></div>
                 </div>
             </div>
         </div>
@@ -140,11 +156,48 @@ function addTask(fileName, datasetType) {
     return taskId;
 }
 
+function updateTaskStage(taskId, stage, statusText = null, progress = null) {
+    const task = activeTasks[taskId];
+    if (!task) return;
+
+    task.stage = stage;
+
+    const taskEl = document.getElementById(`task-${taskId}`);
+    if (!taskEl) return;
+
+    const stages = ['upload', 'cleaning and preprocessing', 'complete'];
+    const stageIndex = stages.indexOf(stage);
+
+    taskEl.querySelectorAll('.stage-item').forEach((el, i) => {
+        el.classList.remove('active', 'done');
+        if (i < stageIndex) {
+            el.classList.add('done');
+        } else if (i === stageIndex) {
+            el.classList.add('active');
+        }
+    });
+
+    if (statusText) {
+        const statusTextEl = taskEl.querySelector('.task-status-text');
+        if (statusTextEl) statusTextEl.textContent = statusText;
+    }
+
+    if (progress !== null) {
+        const progressBar = taskEl.querySelector('.task-progress-bar');
+        if (progressBar) progressBar.style.width = `${progress}%`;
+    }
+}
+
 function updateTaskStatus(taskId, status, message, details = null) {
     const task = activeTasks[taskId];
     if (!task) return;
 
     task.status = status;
+
+    if (statusPollingIntervals[taskId]) {
+        clearInterval(statusPollingIntervals[taskId]);
+        delete statusPollingIntervals[taskId];
+    }
 
     const taskEl = document.getElementById(`task-${taskId}`);
     if (!taskEl) return;
@@ -153,96 +206,115 @@ function updateTaskStatus(taskId, status, message, details = null) {
     const statusEl = taskEl.querySelector('.task-status');
     const statusTextEl = taskEl.querySelector('.task-status-text');
     const progressEl = taskEl.querySelector('.task-progress');
+    const stagesEl = taskEl.querySelector('.task-stages');
 
-    // Update icon
     iconEl.className = `task-icon ${status}`;
     if (status === 'processing') {
         iconEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     } else if (status === 'success') {
         iconEl.innerHTML = '<i class="fas fa-check"></i>';
+        taskEl.querySelectorAll('.stage-item').forEach(el => {
+            el.classList.remove('active');
+            el.classList.add('done');
+        });
     } else if (status === 'error') {
         iconEl.innerHTML = '<i class="fas fa-times"></i>';
     }
 
-    // Update status text
     statusEl.className = `task-status ${status}`;
     statusTextEl.textContent = message;
 
-    // Hide progress bar when done
     if (status === 'success' || status === 'error') {
-        progressEl.style.display = 'none';
+        if (progressEl) progressEl.style.display = 'none';
+        if (stagesEl) stagesEl.style.display = 'none';
 
-        // Add dismiss button
-        const actionsEl = document.createElement('div');
-        actionsEl.className = 'task-actions';
-        actionsEl.innerHTML = `
-            <button class="task-dismiss" onclick="dismissTask(${taskId})" title="Dismiss">
-                <i class="fas fa-times"></i>
-            </button>
+        const actionsHtml = `
+            <div class="task-actions">
+                ${status === 'success' && details ? `<span class="task-detail">${details}</span>` : ''}
+                <button class="task-dismiss" onclick="dismissTask(${taskId})">Dismiss</button>
+            </div>
         `;
-        taskEl.appendChild(actionsEl);
-
-        // Add details if provided
-        if (details && status === 'success') {
-            statusTextEl.innerHTML = `${message} <span style="color: var(--gray-400);">· ${details}</span>`;
+        const existingActions = taskEl.querySelector('.task-actions');
+        if (existingActions) {
+            existingActions.remove();
         }
+        taskEl.querySelector('.task-info').insertAdjacentHTML('beforeend', actionsHtml);
     }
 }
 
 function dismissTask(taskId) {
+    if (statusPollingIntervals[taskId]) {
+        clearInterval(statusPollingIntervals[taskId]);
+        delete statusPollingIntervals[taskId];
+    }
+
     const taskEl = document.getElementById(`task-${taskId}`);
     if (taskEl) {
         taskEl.style.opacity = '0';
         taskEl.style.transform = 'translateX(20px)';
-        taskEl.style.transition = 'all 0.3s';
         setTimeout(() => {
             taskEl.remove();
             delete activeTasks[taskId];
             hideTasksPanel();
-        }, 300);
+        }, 200);
     }
 }
 
-// ================================
-// Upload File
-// ================================
+// Status Polling
+function startStatusPolling(taskId, uploadId) {
+    statusPollingIntervals[taskId] = setInterval(async () => {
+        try {
+            const response = await fetch(`/management/api/data/${uploadId}/status/`);
+            const data = await response.json();
 
+            if (data.success) {
+                if (data.status === 'processing') {
+                    updateTaskStage(taskId, 'cleaning', 'Processing data...', 40);
+                } else if (data.status === 'completed') {
+                    updateTaskStatus(taskId, 'success', 'Completed', `${formatNumber(data.row_count)} records`);
+                    setTimeout(() => location.reload(), 2000);
+                } else if (data.status === 'failed') {
+                    updateTaskStatus(taskId, 'error', 'Processing failed');
+                }
+            }
+        } catch (error) {
+            console.error('Status polling error:', error);
+        }
+    }, 2000);
+}
+
+// Upload File
 async function uploadFile() {
-    if (!selectedFile) return;
-    // Keep reference to the file
-    const file = selectedFile;
+    console.log('uploadFile() called');
+    console.log('selectedFile:', selectedFile);
+    console.log('URLS:', URLS);
+
+    if (!selectedFile) {
+        toast('Please select a file first', 'error');
+        return;
+    }
+
+    // Save file reference BEFORE clearing
+    const fileToUpload = selectedFile;
     const fileName = selectedFile.name;
     const datasetType = document.getElementById('datasetType').value;
 
-    // Disable button and clear selection
-    const btn = document.getElementById('uploadBtn');
-    btn.disabled = true;
+    console.log('Uploading:', fileName, 'as', datasetType);
+    console.log('Upload URL:', URLS.uploadCsv);
 
-    // Create task
-    const taskId = addTask(fileName, datasetType);
-
-
-    // Clear file selection
-    clearFile();
-
-    // Prepare form data
+    // Create FormData with the file BEFORE clearing
     const formData = new FormData();
-    formData.append('csv_file', file);
+    formData.append('csv_file', fileToUpload);
     formData.append('dataset_type', datasetType);
 
-    // Reset selectedFile after adding to FormData
-    selectedFile = null;
+    // Now we can clear the UI
+    const taskId = addTask(fileName, datasetType);
+    clearFile();
 
     try {
-        // Simulate stages for better UX
-        setTimeout(() => {
-            if (activeTasks[taskId]?.status === 'processing') {
-                const progressBar = document.querySelector(`#task-${taskId} .task-progress-bar`);
-                if (progressBar) progressBar.style.width = '60%';
-                const statusText = document.querySelector(`#task-${taskId} .task-status-text`);
-                if (statusText) statusText.textContent = 'Validating and cleaning data...';
-            }
-        }, 1500);
+        updateTaskStage(taskId, 'upload', 'Uploading...', 10);
+
+        console.log('Making fetch request to:', URLS.uploadCsv);
 
         const response = await fetch(URLS.uploadCsv, {
             method: 'POST',
@@ -250,25 +322,29 @@ async function uploadFile() {
             body: formData,
         });
 
+        console.log('Response status:', response.status);
+
         const data = await response.json();
+        console.log('Response data:', data);
 
         if (data.success) {
-            updateTaskStatus(taskId, 'success', 'Upload complete', `${data.row_count || ''} records processed`);
-
-            // Refresh page after a delay
-            setTimeout(() => location.reload(), 2000);
+            activeTasks[taskId].uploadId = data.upload_id;
+            updateTaskStage(taskId, 'cleaning', 'Processing...', 30);
+            startStatusPolling(taskId, data.upload_id);
         } else {
             updateTaskStatus(taskId, 'error', data.error || 'Upload failed');
         }
     } catch (error) {
-        updateTaskStatus(taskId, 'error', 'Upload failed: Network error');
+        console.error('Upload error:', error);
+        console.error('Error stack:', error.stack);
+        updateTaskStatus(taskId, 'error', 'Upload failed: ' + error.message);
     }
 }
 
 // Delete Dataset
 function deleteDataset(id, name) {
     confirmAction(`Delete "${name}" and all its records?`, async function() {
-        const { ok, data } = await apiCall(`/ml-admin/api/data/${id}/delete/`, {
+        const { ok, data } = await apiCall(`/management/api/data/${id}/delete/`, {
             method: 'POST'
         });
 
@@ -295,7 +371,7 @@ async function loadRecords(page) {
     content.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
 
     try {
-        const response = await fetch(`/ml-admin/api/data/${currentUploadId}/records/?page=${page}`);
+        const response = await fetch(`/management/api/data/${currentUploadId}/records/?page=${page}`);
         const data = await response.json();
 
         if (!data.records || data.records.length === 0) {
@@ -304,7 +380,6 @@ async function loadRecords(page) {
             return;
         }
 
-        // Build table
         let html = `
             <table class="data-table">
                 <thead>
@@ -330,7 +405,6 @@ async function loadRecords(page) {
         html += '</tbody></table>';
         content.innerHTML = html;
 
-        // Pagination
         const pagination = document.getElementById('recordsPagination');
         if (data.pages > 1) {
             let pagHtml = '';
@@ -348,6 +422,76 @@ async function loadRecords(page) {
 
     } catch (error) {
         content.innerHTML = '<div class="empty-state small"><p>Error loading records</p></div>';
+    }
+}
+
+// View Distribution Modal
+async function viewDistribution(id, name) {
+    document.getElementById('distModalTitle').textContent = `${name} - Label Distribution`;
+    openModal('distributionModal');
+
+    const content = document.getElementById('distModalContent');
+    content.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+    try {
+        const response = await fetch(`/management/api/data/${id}/distribution/`);
+        const data = await response.json();
+
+        if (!data.success || !data.distribution || data.distribution.length === 0) {
+            content.innerHTML = '<div class="empty-state small"><p>No distribution data</p></div>';
+            return;
+        }
+
+        const total = data.total || 1;
+
+        let barsHtml = '';
+        data.distribution.forEach((item, i) => {
+            const percent = ((item.count / total) * 100).toFixed(1);
+            barsHtml += `
+                <div class="dist-item">
+                    <span class="dist-label">${item.label}</span>
+                    <div class="dist-bar">
+                        <div class="dist-fill" style="width: ${percent}%; background: ${CHART_COLORS[i % CHART_COLORS.length]}"></div>
+                    </div>
+                    <span class="dist-count">${formatNumber(item.count)} (${percent}%)</span>
+                </div>
+            `;
+        });
+
+        content.innerHTML = `
+            <div class="dist-modal-chart"><canvas id="distModalChart"></canvas></div>
+            <div class="dist-modal-bars">${barsHtml}</div>
+            <p class="hint text-center" style="margin-top: 1rem;"><strong>${formatNumber(total)}</strong> total records</p>
+        `;
+
+        // Create chart
+        if (distModalChart) {
+            distModalChart.destroy();
+        }
+
+        const ctx = document.getElementById('distModalChart');
+        if (ctx) {
+            distModalChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.distribution.map(d => d.label),
+                    datasets: [{
+                        data: data.distribution.map(d => d.count),
+                        backgroundColor: CHART_COLORS.slice(0, data.distribution.length),
+                        borderWidth: 0,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    cutout: '60%',
+                }
+            });
+        }
+
+    } catch (error) {
+        content.innerHTML = '<div class="empty-state small"><p>Error loading distribution</p></div>';
     }
 }
 
@@ -375,7 +519,7 @@ async function loadSplitInfo(id, name) {
     content.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
 
     try {
-        const response = await fetch(`/ml-admin/api/data/${id}/split/`);
+        const response = await fetch(`/management/api/data/${id}/split/`);
         const data = await response.json();
 
         if (!data.success) {
@@ -413,8 +557,6 @@ async function loadSplitInfo(id, name) {
                 <span>Training ${100 - testPercent}%</span>
                 <span>Test ${testPercent}%</span>
             </div>
-
-            <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--gray-200);">
 
             <div class="split-actions">
                 <div class="split-slider-group">
@@ -470,7 +612,7 @@ async function applySplit(action) {
     content.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Updating...</div>';
 
     try {
-        const { ok, data } = await apiCall(`/ml-admin/api/data/${currentSplitUploadId}/split/update/`, {
+        const { ok, data } = await apiCall(`/management/api/data/${currentSplitUploadId}/split/update/`, {
             method: 'POST',
             body: JSON.stringify({
                 action: action,

@@ -1,5 +1,5 @@
 /* Author: Lian Shi*/
-/*Disclaimer: LLM has used to generate initial style, and fine tuning was done manually to different elements */
+/* Disclaimer: LLM has used to generate initial style, and fine tuning was done manually to different elements */
 
 /* ========================================
    ML Admin - Components
@@ -41,9 +41,6 @@
     color: white;
     text-decoration: none;
 }
-
-/*change card header icon color to white*/
-
 
 .card-header .link:hover { text-decoration: underline; }
 
@@ -88,6 +85,7 @@
     border-radius: 12px;
     font-size: 0.75rem;
     font-weight: 500;
+    white-space: nowrap;
 }
 
 .badge.success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
@@ -113,7 +111,7 @@
 .alert.warning { background: rgba(245, 158, 11, 0.1); color: #92400e; }
 .alert.info { background: rgba(59, 130, 246, 0.1); color: #1e40af; }
 
-/* Stats */
+/* Stats - FIXED for large numbers */
 .stats-row {
     display: flex;
     gap: 1.5rem;
@@ -133,11 +131,14 @@
     gap: 1rem;
     flex: 1;
     min-width: 150px;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .stat-icon {
     width: 48px;
     height: 48px;
+    min-width: 48px; /* Prevent shrinking */
     background: rgba(74, 124, 89, 0.1);
     color: var(--primary);
     border-radius: 12px;
@@ -152,8 +153,36 @@
 .stat-icon.purple { background: rgba(123, 104, 166, 0.1); color: var(--purple); }
 .stat-icon.coral { background: rgba(224, 122, 95, 0.1); color: var(--coral); }
 
-.stat-value { font-size: 1.5rem; font-weight: 700; color: var(--gray-800); }
-.stat-label { font-size: 0.85rem; color: var(--gray-500); }
+/* Stat info container - allows proper text handling */
+.stat-info {
+    min-width: 0; /* Allow flex item to shrink below content size */
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+/* Responsive stat value for very large numbers */
+@media (max-width: 1400px) {
+    .stat-value {
+        font-size: 1.25rem;
+    }
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
 /* Modals */
 .modal {
@@ -347,7 +376,7 @@
 
 .section-header h2 i { color: var(--primary); }
 
-/* Simple List */
+/* Simple List - Improved */
 .simple-list { list-style: none; }
 
 .simple-list li {
@@ -360,14 +389,16 @@
 }
 
 .simple-list li:last-child { border-bottom: none; }
-.simple-list .meta { margin-left: auto; color: var(--gray-400); font-size: 0.8rem; }
+.simple-list .meta { margin-left: auto; color: var(--gray-400); font-size: 0.8rem; flex-shrink: 0; }
 
 /* Status Dot */
 .status-dot {
     width: 8px;
     height: 8px;
+    min-width: 8px;
     border-radius: 50%;
     background: var(--gray-300);
+    flex-shrink: 0;
 }
 
 .status-dot.pending { background: var(--warning); }
@@ -378,6 +409,11 @@
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
+}
+
+/* Clickable utility class */
+.clickable {
+    cursor: pointer;
 }
 
 /* Detail Sections */
@@ -421,6 +457,206 @@
 
 .detail-metric .value { display: block; font-size: 1.5rem; font-weight: 700; color: var(--primary); }
 .detail-metric .label { font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase; }
+
+
+/* ===================================
+   Toast Notifications
+   =================================== */
+
+#toasts {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-radius: 8px;
+    background: #333;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideIn 0.3s ease;
+    min-width: 250px;
+    max-width: 400px;
+}
+
+.toast.success {
+    background: #4CAF50;
+}
+
+.toast.error {
+    background: #f44336;
+}
+
+.toast.warning {
+    background: #ff9800;
+}
+
+.toast.info {
+    background: #2196F3;
+}
+
+.toast i {
+    font-size: 18px;
+}
+
+.toast.fade {
+    animation: slideOut 0.3s ease forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* ===================================
+   Modal Styles
+   =================================== */
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal.open {
+    display: flex;
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    animation: modalIn 0.3s ease;
+}
+
+.modal-content.wide {
+    max-width: 800px;
+}
+
+@keyframes modalIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(90vh - 80px);
+}
+
+/* Loading state */
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.loading i {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-state.small {
+    padding: 30px 20px;
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state h4 {
+    margin: 0 0 8px;
+    color: #666;
+}
+
+.empty-state p {
+    margin: 0;
+}
 
 /* Responsive - Components */
 @media (max-width: 1024px) {
