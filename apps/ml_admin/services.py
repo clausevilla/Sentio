@@ -22,9 +22,7 @@ CATEGORY_MAP = {  # Define category mapping
     'normal': 0,
     'depression': 1,
     'suicidal': 2,
-    'anxiety': 3,
-    'bipolar': 4,
-    'stress': 5,
+    'stress': 3,
 }
 
 
@@ -334,6 +332,10 @@ def _run_training(
     Background training task
     """
 
+    # Count existing versions of this model type
+    existing_count = ModelVersion.objects.filter(model_type=model_name).count()
+    version_name = f'{model_name}_v{existing_count + 1}'
+
     job = TrainingJob.objects.get(id=job_id)
 
     try:
@@ -356,7 +358,8 @@ def _run_training(
         )
 
         model_version = ModelVersion.objects.create(
-            version_name=job.job_id,
+            model_type=model_name,
+            version_name=version_name,
             created_at=datetime.now(),
             model_file_path=result['model_path'],
             accuracy=result['metrics']['accuracy'],

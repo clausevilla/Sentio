@@ -12,6 +12,14 @@ class ModelVersion(models.Model):
     Uses SET_NULL for created_by to preserve model history even if user deleted.
     """
 
+    MODEL_TYPES = [
+        ('logistic_regression', 'Logistic Regression'),
+        ('random_forest', 'Random Forest'),
+        ('lstm', 'LSTM'),
+        ('transformer', 'Transformer'),
+    ]
+
+    model_type = models.CharField(max_length=30, choices=MODEL_TYPES)
     version_name = models.CharField(max_length=100, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     model_file_path = models.CharField(max_length=255)
@@ -115,16 +123,23 @@ class TrainingJob(models.Model):
     OneToOne relationship with resulting_model ensures one job produces at most one model.
     """
 
+    MODEL_TYPES = [
+        ('logistic_regression', 'Logistic Regression'),
+        ('random_forest', 'Random Forest'),
+        ('lstm', 'LSTM'),
+        ('transformer', 'Transformer'),
+    ]
+
     STATUS_CHOICES = {
         'PENDING': 'Pending',
         'RUNNING': 'Running',
         'COMPLETED': 'Completed',
         'FAILED': 'Failed',
     }
+    model_type = models.CharField(max_length=30, choices=MODEL_TYPES)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
     started_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
-    data_upload = models.ForeignKey(DataUpload, on_delete=models.CASCADE)
     resulting_model = models.OneToOneField(
         ModelVersion, on_delete=models.SET_NULL, null=True
     )
