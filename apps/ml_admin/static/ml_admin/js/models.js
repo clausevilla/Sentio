@@ -5,7 +5,7 @@
  * ML Admin - Models Page
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initComparisonChart();
 });
 
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function deployModel(id, name) {
     if (!confirm(`Deploy "${name}" as the active model?`)) return;
 
-    const { ok, data } = await apiCall(`/ml-admin/api/models/${id}/activate/`, {
+    const { ok, data } = await apiCall(`/management/api/models/${id}/activate/`, {
         method: 'POST'
     });
 
@@ -29,7 +29,7 @@ async function deployModel(id, name) {
 async function deleteModel(id, name) {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
 
-    const { ok, data } = await apiCall(`/ml-admin/api/models/${id}/delete/`, {
+    const { ok, data } = await apiCall(`/management/api/models/${id}/delete/`, {
         method: 'POST'
     });
 

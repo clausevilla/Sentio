@@ -82,7 +82,8 @@ def run_full_pipeline(data_upload_id: int):
             upload = DataUpload.objects.get(id=data_upload_id)
             upload.status = 'failed'
             upload.save()
-        except:
+        except Exception as e:
+            logger.exception(f'Failed to update upload status: {e}')
             pass
         error = f'Pipeline failed: {str(e)}'
         logger.exception(error)
@@ -121,7 +122,8 @@ def run_cleaning_only(data_upload_id: int):
             upload = DataUpload.objects.get(id=data_upload_id)
             upload.status = 'failed'
             upload.save()
-        except:
+        except Exception as e:
+            logger.exception(f'Failed to update upload status: {e}')
             pass
         error = f'Cleaning pipeline failed: {str(e)}'
         logger.exception(error)
@@ -190,7 +192,8 @@ def run_preprocessing_only(data_upload_id: int):
             upload = DataUpload.objects.get(id=data_upload_id)
             upload.status = 'failed'
             upload.save()
-        except:
+        except Exception as e:
+            logger.exception(f'Failed to update upload status: {e}')
             pass
         error = f'Preprocessing pipeline failed: {str(e)}'
         logger.exception(error)

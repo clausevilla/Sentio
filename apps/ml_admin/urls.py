@@ -38,6 +38,16 @@ urlpatterns = [
         views.update_upload_split_api,
         name='update_split',
     ),
+    path(
+        'api/data/<int:upload_id>/status/',
+        views.get_upload_status_api,
+        name='get_status',
+    ),
+    path(
+        'api/data/<int:upload_id>/distribution/',
+        views.get_upload_distribution_api,
+        name='get_distribution',
+    ),
     # Training APIs
     path('api/training/start/', views.start_training_api, name='start_training'),
     # Model APIs
