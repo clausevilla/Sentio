@@ -1,3 +1,6 @@
+# Author: Lian Shi
+# Disclaimer: LLM has been used to help with initial form validation logic implementation from the beginning and manual adjustment was done to different validation elements
+
 """
 Forms for user registration and authentication
 """
@@ -55,9 +58,23 @@ class RegisterForm(UserCreationForm):
         ),
     )
 
+    # Consent checkbox field
+    consent = forms.BooleanField(
+        required=True,
+        widget=forms.CheckboxInput(
+            attrs={
+                'class': 'consent-checkbox',
+                'id': 'consent',
+            }
+        ),
+        error_messages={
+            'required': 'You must agree to the Privacy Policy to register.'
+        },
+    )
+
     class Meta:
         model = User
-        fields = ['username', 'email', 'password1', 'password2']
+        fields = ['username', 'email', 'password1', 'password2', 'consent']
 
     def clean_username(self):
         """
@@ -105,6 +122,16 @@ class RegisterForm(UserCreationForm):
             raise ValidationError('Passwords do not match.')
 
         return password2
+
+    # Validate consent checkbox
+    def clean_consent(self):
+        """
+        Validate that consent checkbox is checked
+        """
+        consent = self.cleaned_data.get('consent')
+        if not consent:
+            raise ValidationError('You must agree to the Privacy Policy to register.')
+        return consent
 
     def save(self, commit=True):
         """
