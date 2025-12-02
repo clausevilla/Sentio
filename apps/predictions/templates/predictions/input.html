@@ -1,3 +1,6 @@
+<!--Author: Lian Shi -->
+<!-- Disclaimer: LLM has been used to help with page structure setup and manual adjustments were done after -->
+
 {% extends 'base.html' %}
 {% load static %}
 
@@ -8,6 +11,62 @@
 {% endblock %}
 
 {% block content %}
+
+<!-- Privacy Notice for Unregistered users -->
+{% if not user.is_authenticated %}
+<div class="privacy-notice-overlay" id="privacyNoticeOverlay">
+    <div class="privacy-notice-modal">
+        <div class="privacy-notice-header">
+            <i class="fas fa-user-shield"></i>
+            <h2>Welcome to Sentio - Trial Mode</h2>
+        </div>
+
+        <div class="privacy-notice-content">
+            <p>
+                You're about to try our mental health text analysis tool <strong>without an account</strong>.
+                Here's what you should know:
+            </p>
+
+            <div class="privacy-highlight">
+                <h4><i class="fas fa-check-circle" style="color: #4CAF50;"></i> What happens to your data:</h4>
+                <ul>
+                    <li><strong>Not stored:</strong> Your text and analysis results are NOT saved anywhere permanently</li>
+                    <li><strong>Session only:</strong> Data exists only during this browser session</li>
+                    <li><strong>No tracking:</strong> We don't track or identify you</li>
+                    <li><strong>Disappears:</strong> Close the tab and everything is gone</li>
+                </ul>
+            </div>
+
+            <div class="privacy-warning">
+                <p>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Important:</strong> This is a student project for educational purposes.
+                    The AI predictions should NOT be used as a substitute for professional mental health assessment.
+                </p>
+            </div>
+
+            <p>
+                <strong>Want to save your analysis history?</strong>
+                <a href="{% url 'accounts:register' %}">Create a free account</a> to track your mental health patterns over time.
+            </p>
+        </div>
+
+        <div class="privacy-notice-actions">
+            <button type="button" class="btn btn-understand" id="acceptPrivacyNotice">
+                <i class="fas fa-check"></i> I Understand - Try Now
+            </button>
+            <a href="{% url 'accounts:login' %}" class="btn btn-login-instead">
+                <i class="fas fa-sign-in-alt"></i> Login Instead
+            </a>
+            <a href="{% url 'home' %}" class="btn btn-go-back">
+                <i class="fas fa-arrow-left"></i> Go Back to Home
+            </a>
+
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <section class="input-section">
     <div class="container">
         <div class="page-header">
@@ -65,12 +124,10 @@
                 </div>
 
                 <div class="action-buttons">
-                  <button type="submit" class="btn-analyze" id="analyzeBtn">
-                   Analyze Mental State
-                  </button>
-
+                    <button type="submit" class="btn-analyze" id="analyzeBtn">
+                        <i class="fas fa-search"></i> Analyze Mental State
+                    </button>
                     <button type="button" class="btn-clear" id="clearBtn">Clear</button>
-
                 </div>
             </form>
         </div>
@@ -84,6 +141,51 @@
         <h3>Analyzing Your Text</h3>
     </div>
 </div>
+
+{% if not user.is_authenticated %}
+<script>
+// Privacy notice modal
+document.addEventListener('DOMContentLoaded', function() {
+    const privacyOverlay = document.getElementById('privacyNoticeOverlay');
+    const acceptBtn = document.getElementById('acceptPrivacyNotice');
+    const textInput = document.getElementById('textInput');
+
+    // Check if user has already acknowledged the privacy notice in this session
+    const hasAcknowledged = sessionStorage.getItem('privacyNoticeAcknowledged');
+
+    if (!hasAcknowledged && privacyOverlay) {
+        // Show the privacy notice after a short delay
+        setTimeout(function() {
+            privacyOverlay.classList.add('active');
+        }, 500);
+
+        // Disable the text input until acknowledged
+        if (textInput) {
+            textInput.disabled = true;
+            textInput.placeholder = 'Please acknowledge the privacy notice to continue...';
+        }
+    }
+
+    // Handle accept button click
+    if (acceptBtn) {
+        acceptBtn.addEventListener('click', function() {
+            // Store acknowledgment in session storage
+            sessionStorage.setItem('privacyNoticeAcknowledged', 'true');
+
+            // Hide the overlay
+            privacyOverlay.classList.remove('active');
+
+            // Enable the text input
+            if (textInput) {
+                textInput.disabled = false;
+                textInput.placeholder = "Paste text from social media, a message, or write about what's on your mind...\n\nExamples:\n• Social media posts\n• Personal reflections\n• Journal entries\n• Messages that made you feel concerned\n\nThe more you write, the more accurate the analysis!";
+                textInput.focus();
+            }
+        });
+    }
+});
+</script>
+{% endif %}
 
 <script src="{% static 'predictions/js/input.js' %}"></script>
 {% endblock %}

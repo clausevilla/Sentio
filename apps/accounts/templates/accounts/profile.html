@@ -1,3 +1,6 @@
+<!-- Author: Lian Shi -->
+<!-- Disclaimer: LLM has been used to help with page layout and manual adjustments were done after -->
+
 {% extends 'base.html' %}
 {% load static %}
 
@@ -12,7 +15,7 @@
     <div class="container">
         <!-- Page Header -->
         <div class="text-center mb-xl">
-            <h1>👤 My Profile</h1>
+            <h2>👤 My Profile</h2>
             <p
                 style="color: var(--color-text-light); font-size: var(--font-lg);">Manage
                 your account settings</p>
@@ -51,6 +54,29 @@
                         <span class="info-value">{{ total_analyses }}
                             predictions</span>
                     </div>
+                </div>
+            </div>
+
+            <!-- Export Your Data - NEW SECTION -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📦 Your Data</h2>
+                </div>
+                <div class="card-body">
+                    <p style="color: var(--color-text-light); margin-bottom: 1rem;">
+                        You have the right to access and download all your personal data stored in Sentio.
+                    </p>
+                    <div class="export-info" style="background: #e8f5e9; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <p style="margin: 0; font-size: 0.9rem; color: #2e7d32;">
+                            <strong>📥 Export includes:</strong><br>
+                            • Account information (username, email)<br>
+                            • Consent records<br>
+                            • All your text analysis history
+                        </p>
+                    </div>
+                    <a href="{% url 'accounts:export_data_api' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-download"></i> Download My Data
+                    </a>
                 </div>
             </div>
 

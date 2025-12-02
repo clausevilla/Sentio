@@ -1,3 +1,5 @@
+# Author: Marcus Berggren
+
 from django.contrib import admin
 
 from .models import PredictionResult, TextSubmission

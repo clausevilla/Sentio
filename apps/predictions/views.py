@@ -1,3 +1,5 @@
+# Author: Marcus Berggren, Lian Shi
+
 from django.shortcuts import redirect, render
 
 from apps.predictions.services import get_prediction_result
