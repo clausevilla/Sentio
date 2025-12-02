@@ -21,10 +21,20 @@ def analyze_text(analyzed_text):
     return (label, confidence, model_version)
 
 
-def save_prediction_to_database(user, user_text):
+def get_prediction_result(user, user_text):
     prediction, confidence, model_version = analyze_text(user_text)
+
+    if user:
+        save_prediction_to_database(
+            user, user_text, prediction, confidence, model_version
+        )
+
     confidence_percentage = round(confidence * 100)
 
+    return prediction, confidence_percentage
+
+
+def save_prediction_to_database(user, user_text, prediction, confidence, model_version):
     if user:
         submission = TextSubmission.objects.create(user=user, text_content=user_text)
         # Save to database
@@ -35,4 +45,3 @@ def save_prediction_to_database(user, user_text):
             confidence=confidence,
             recommendations='Follow recommended steps',  # placeholder text
         )
-    return prediction, confidence_percentage

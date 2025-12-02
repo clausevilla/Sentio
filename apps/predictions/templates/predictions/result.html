@@ -16,11 +16,11 @@
         </div>
 
         <!-- Alert Box (if needed) -->
-        {% if mental_state != 'normal' and confidence >= 70 %}
+        {% if mental_state_label != 'normal' and confidence >= 70 %}
         <div class="alert alert-warning">
             <h3>⚠️ Mental Health Indicator Detected</h3>
-            <p>Your text shows patterns associated with {{ mental_state_label
-                }}. Please review the personalized recommendations below and
+            <p>Your text shows patterns associated with {{ mental_state_label }}.
+                Please review the personalized recommendations below and
                 consider reaching out to a mental health professional if
                 needed.</p>
         </div>

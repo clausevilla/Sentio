@@ -1,6 +1,6 @@
 from django.shortcuts import redirect, render
 
-from apps.predictions.services import save_prediction_to_database
+from apps.predictions.services import get_prediction_result
 
 # Create your views here.
 
@@ -25,7 +25,7 @@ def result_view(request):
     # Get logged-in user or None
     user = request.user if request.user.is_authenticated else None
     # Saves the submission and prediction to the databast if the user is logged in
-    prediction, confidence_percentage = save_prediction_to_database(user, user_text)
+    prediction, confidence_percentage = get_prediction_result(user, user_text)
     return render(
         request,
         'predictions/result.html',
