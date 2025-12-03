@@ -1,5 +1,5 @@
 # Author: Lian Shi
-# Disclaimer: LLM has been used to help with code structure and basic implementations OF views.py, with manual tuning and adjustments made throughout.
+# Disclaimer: LLM has been used to help with initial structure of views.py, with manual tuning and adjustments made throughout.
 
 """
 ML Admin Dashboard - 6 Pages: Dashboard, Data, Training, Models, Users, Analytics
@@ -544,9 +544,7 @@ def training_view(request):
 
         if training_count > 0:
             dist = list(
-                DatasetRecord.objects.filter(
-                    data_upload=upload, dataset_type='train'
-                )
+                DatasetRecord.objects.filter(data_upload=upload, dataset_type='train')
                 .values('label')
                 .annotate(count=Count('id'))
             )

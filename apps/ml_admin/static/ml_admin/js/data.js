@@ -1,4 +1,5 @@
 /* Author: Lian Shi*/
+
 /**
  * ML Admin - Data Page
  */
@@ -10,7 +11,7 @@ let activeTasks = {};
 let statusPollingIntervals = {};
 let distModalChart = null;
 
-// Display names for dataset types (lowercase value -> display name)
+// Display names for dataset types
 const DATASET_TYPE_LABELS = {
     'train': 'Training',
     'test': 'Test',

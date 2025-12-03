@@ -22,11 +22,15 @@ CATEGORY_MAP = {  # Define category mapping
 }
 
 
-def trigger_full_pipeline_in_background(data_upload_id: int, dataset_type: str = 'train'):
+def trigger_full_pipeline_in_background(
+    data_upload_id: int, dataset_type: str = 'train'
+):
     """
     Wrapper to run the pipeline in a separate thread.
     """
-    thread = threading.Thread(target=run_full_pipeline, args=(data_upload_id, dataset_type))
+    thread = threading.Thread(
+        target=run_full_pipeline, args=(data_upload_id, dataset_type)
+    )
     thread.daemon = True
     thread.start()
 
@@ -200,7 +204,9 @@ def run_preprocessing_only(data_upload_id: int):
         return {'success': False, 'error': error}
 
 
-def _save_dataset_records(df: pd.DataFrame, upload: DataUpload, dataset_type: str = 'train'):
+def _save_dataset_records(
+    df: pd.DataFrame, upload: DataUpload, dataset_type: str = 'train'
+):
     """
     Handles the bulk creation of records.
     """

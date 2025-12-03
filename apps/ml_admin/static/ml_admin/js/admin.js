@@ -1,5 +1,5 @@
 /* Author: Lian Shi*/
-/*Disclaimer: LLM has used to help with implement toast, modal and chart display functions */
+/* Disclaimer: LLM has used to help with implement chart display functions */
 
 /**
  * ML Admin - Common Utilities JS
