@@ -1,4 +1,4 @@
-# Author : Marcus Berggren, Karl Byland
+# Author : Marcus Berggren, Karl Byland, Lian Shi
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -40,7 +40,9 @@ class PredictionResult(models.Model):
     ]
 
     submission = models.OneToOneField(TextSubmission, on_delete=models.CASCADE)
-    model_version = models.ForeignKey(ModelVersion, on_delete=models.PROTECT)
+    model_version = models.ForeignKey(
+        ModelVersion, on_delete=models.PROTECT, null=True, blank=True
+    )
 
     mental_state = models.CharField(
         max_length=20,

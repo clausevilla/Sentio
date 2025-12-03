@@ -522,7 +522,7 @@ class ConsentMiddlewareTests(TestCase):
             '/static/somefile.css',
             '/media/image.png',
             '/admin/dashboard',
-            '/ml-admin/panel',
+            '/management/api/',
         ]
         for path in exempt_paths:
             request = self.client.request().wsgi_request
