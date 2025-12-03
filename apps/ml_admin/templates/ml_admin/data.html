@@ -66,9 +66,9 @@
             <div class="upload-type-section">
                 <label>Dataset Type</label>
                 <select id="datasetType" class="form-select">
-                    <option value="Training">Training Data</option>
-                    <option value="Test">Test Data</option>
-                    <option value="Unlabeled">Unlabeled</option>
+                    <option value="train">Training Data</option>
+                    <option value="test">Test Data</option>
+                    <option value="unlabeled">Unlabeled</option>
                 </select>
             </div>
 
@@ -79,7 +79,7 @@
 
         <div class="upload-help">
             <i class="fas fa-info-circle"></i>
-            Required columns: <code>text</code> or <code>statement</code> and <code>label</code> or <code>status</code>
+            Required columns: <code>text</code> and <code>label</code>
         </div>
     </div>
 </div>
@@ -159,13 +159,13 @@
                     </div>
                 </div>
 
-                <!-- Label Distribution (mini) -->
+                <!-- Label Distribution -->
                 <div class="dataset-labels">
-                    {% for d in item.distribution|slice:":3" %}
-                    <span class="label-chip" title="{{ d.label }}: {{ d.count }}">{{ d.label|truncatechars:8 }}</span>
+                    {% for d in item.distribution|slice:":4" %}
+                    <span class="label-chip" title="{{ d.label }}: {{ d.count }}">{{ d.label|truncatechars:10 }}</span>
                     {% endfor %}
-                    {% if item.distribution|length > 3 %}
-                    <span class="label-chip more">+{{ item.distribution|length|add:"-3" }}</span>
+                    {% if item.distribution|length > 4 %}
+                    <span class="label-chip more">+{{ item.distribution|length|add:"-4" }}</span>
                     {% endif %}
                 </div>
 
@@ -188,7 +188,7 @@
                         <i class="fas fa-eye"></i> View
                     </button>
                     <button class="btn btn-sm btn-secondary" onclick="viewDistribution({{ item.upload.id }}, '{{ item.upload.file_name }}')" title="View Distribution">
-                        <i class="fas fa-chart-pie"></i>
+                        <i class="fas fa-chart-pie"></i> Distribution
                     </button>
                     <button class="btn btn-sm btn-secondary" onclick="manageSplit({{ item.upload.id }}, '{{ item.upload.file_name }}')" title="Manage Split">
                         <i class="fas fa-random"></i> Split

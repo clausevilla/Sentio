@@ -114,9 +114,9 @@ def dashboard_view(request):
 
     # Dataset overview
     dataset_overview = {
-        'training': DatasetRecord.objects.filter(dataset_type='Training').count(),
-        'test': DatasetRecord.objects.filter(dataset_type='Test').count(),
-        'unlabeled': DatasetRecord.objects.filter(dataset_type='Unlabeled').count(),
+        'train': DatasetRecord.objects.filter(dataset_type='train').count(),
+        'test': DatasetRecord.objects.filter(dataset_type='test').count(),
+        'unlabeled': DatasetRecord.objects.filter(dataset_type='unlabeled').count(),
     }
     dataset_overview['total'] = sum(dataset_overview.values())
 
@@ -163,13 +163,13 @@ def data_view(request):
 
         # Get counts by dataset_type
         training_count = DatasetRecord.objects.filter(
-            data_upload=upload, dataset_type='Training'
+            data_upload=upload, dataset_type='train'
         ).count()
         test_count = DatasetRecord.objects.filter(
-            data_upload=upload, dataset_type='Test'
+            data_upload=upload, dataset_type='test'
         ).count()
         unlabeled_count = DatasetRecord.objects.filter(
-            data_upload=upload, dataset_type='Unlabeled'
+            data_upload=upload, dataset_type='unlabeled'
         ).count()
 
         uploads_with_stats.append(
@@ -191,9 +191,9 @@ def data_view(request):
 
     # Overall breakdown by dataset_type
     type_breakdown = {
-        'training': DatasetRecord.objects.filter(dataset_type='Training').count(),
-        'test': DatasetRecord.objects.filter(dataset_type='Test').count(),
-        'unlabeled': DatasetRecord.objects.filter(dataset_type='Unlabeled').count(),
+        'training': DatasetRecord.objects.filter(dataset_type='train').count(),
+        'test': DatasetRecord.objects.filter(dataset_type='test').count(),
+        'unlabeled': DatasetRecord.objects.filter(dataset_type='unlabeled').count(),
     }
 
     total_records = DatasetRecord.objects.count()
@@ -229,9 +229,9 @@ def upload_csv_api(request):
                 {'success': False, 'error': 'File must be CSV'}, status=400
             )
 
-        dataset_type = request.POST.get('dataset_type', 'Training')
-        if dataset_type not in ['Training', 'Test', 'Unlabeled']:
-            dataset_type = 'Training'
+        dataset_type = request.POST.get('dataset_type', 'train')
+        if dataset_type not in ['train', 'test', 'unlabeled']:
+            dataset_type = 'train'
 
         upload_dir = os.path.join('data', 'uploads')
         os.makedirs(upload_dir, exist_ok=True)
@@ -321,13 +321,13 @@ def get_upload_distribution_api(request, upload_id):
         # Get type breakdown
         type_breakdown = {
             'training': DatasetRecord.objects.filter(
-                data_upload=upload, dataset_type='Training'
+                data_upload=upload, dataset_type='train'
             ).count(),
             'test': DatasetRecord.objects.filter(
-                data_upload=upload, dataset_type='Test'
+                data_upload=upload, dataset_type='test'
             ).count(),
             'unlabeled': DatasetRecord.objects.filter(
-                data_upload=upload, dataset_type='Unlabeled'
+                data_upload=upload, dataset_type='unlabeled'
             ).count(),
         }
 
@@ -366,13 +366,13 @@ def get_upload_split_api(request, upload_id):
 
     breakdown = {
         'training': DatasetRecord.objects.filter(
-            data_upload=upload, dataset_type='Training'
+            data_upload=upload, dataset_type='train'
         ).count(),
         'test': DatasetRecord.objects.filter(
-            data_upload=upload, dataset_type='Test'
+            data_upload=upload, dataset_type='test'
         ).count(),
         'unlabeled': DatasetRecord.objects.filter(
-            data_upload=upload, dataset_type='Unlabeled'
+            data_upload=upload, dataset_type='unlabeled'
         ).count(),
     }
     breakdown['total'] = sum(breakdown.values())
@@ -408,12 +408,12 @@ def update_upload_split_api(request, upload_id):
 
         if action == 'all_training':
             DatasetRecord.objects.filter(data_upload=upload).update(
-                dataset_type='Training'
+                dataset_type='train'
             )
             message = f'All {len(records)} records set to Training'
 
         elif action == 'all_test':
-            DatasetRecord.objects.filter(data_upload=upload).update(dataset_type='Test')
+            DatasetRecord.objects.filter(data_upload=upload).update(dataset_type='test')
             message = f'All {len(records)} records set to Test'
 
         elif action == 'split':
@@ -437,9 +437,9 @@ def update_upload_split_api(request, upload_id):
                         training_ids.append(record.id)
 
             DatasetRecord.objects.filter(id__in=training_ids).update(
-                dataset_type='Training'
+                dataset_type='train'
             )
-            DatasetRecord.objects.filter(id__in=test_ids).update(dataset_type='Test')
+            DatasetRecord.objects.filter(id__in=test_ids).update(dataset_type='test')
 
             message = f'Split: {len(training_ids)} training, {len(test_ids)} test ({test_percent}%)'
 
@@ -450,13 +450,13 @@ def update_upload_split_api(request, upload_id):
 
         breakdown = {
             'training': DatasetRecord.objects.filter(
-                data_upload=upload, dataset_type='Training'
+                data_upload=upload, dataset_type='train'
             ).count(),
             'test': DatasetRecord.objects.filter(
-                data_upload=upload, dataset_type='Test'
+                data_upload=upload, dataset_type='test'
             ).count(),
             'unlabeled': DatasetRecord.objects.filter(
-                data_upload=upload, dataset_type='Unlabeled'
+                data_upload=upload, dataset_type='unlabeled'
             ).count(),
         }
 
@@ -539,13 +539,13 @@ def training_view(request):
     uploads_with_counts = []
     for upload in available_uploads:
         training_count = DatasetRecord.objects.filter(
-            data_upload=upload, dataset_type='Training'
+            data_upload=upload, dataset_type='train'
         ).count()
 
         if training_count > 0:
             dist = list(
                 DatasetRecord.objects.filter(
-                    data_upload=upload, dataset_type='Training'
+                    data_upload=upload, dataset_type='train'
                 )
                 .values('label')
                 .annotate(count=Count('id'))
@@ -560,16 +560,16 @@ def training_view(request):
             )
 
     test_set_info = {
-        'total': DatasetRecord.objects.filter(dataset_type='Test').count(),
+        'total': DatasetRecord.objects.filter(dataset_type='test').count(),
         'distribution': list(
-            DatasetRecord.objects.filter(dataset_type='Test')
+            DatasetRecord.objects.filter(dataset_type='test')
             .values('label')
             .annotate(count=Count('id'))
         ),
     }
 
     training_totals = {
-        'records': DatasetRecord.objects.filter(dataset_type='Training').count(),
+        'records': DatasetRecord.objects.filter(dataset_type='train').count(),
         'uploads': len(uploads_with_counts),
     }
 
@@ -702,7 +702,7 @@ def models_view(request):
         training_labels = []
         if job and job.data_upload:
             training_records = DatasetRecord.objects.filter(
-                data_upload=job.data_upload, dataset_type='Training'
+                data_upload=job.data_upload, dataset_type='train'
             ).count()
             training_labels = list(
                 DatasetRecord.objects.filter(data_upload=job.data_upload)
