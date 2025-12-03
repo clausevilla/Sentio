@@ -10,9 +10,17 @@ let activeTasks = {};
 let statusPollingIntervals = {};
 let distModalChart = null;
 
-document.addEventListener('DOMContentLoaded', function() {
+// Display names for dataset types (lowercase value -> display name)
+const DATASET_TYPE_LABELS = {
+    'train': 'Training',
+    'test': 'Test',
+    'unlabeled': 'Unlabeled'
+};
+
+document.addEventListener('DOMContentLoaded', function () {
     initDragAndDrop();
     initLabelDistChart();
+    resumePendingUploads();
 });
 
 // Label Distribution Chart
@@ -31,17 +39,17 @@ function initDragAndDrop() {
     const zone = document.getElementById('uploadZone');
     if (!zone) return;
 
-    zone.addEventListener('dragover', function(e) {
+    zone.addEventListener('dragover', function (e) {
         e.preventDefault();
         zone.classList.add('dragover');
     });
 
-    zone.addEventListener('dragleave', function(e) {
+    zone.addEventListener('dragleave', function (e) {
         e.preventDefault();
         zone.classList.remove('dragover');
     });
 
-    zone.addEventListener('drop', function(e) {
+    zone.addEventListener('drop', function (e) {
         e.preventDefault();
         zone.classList.remove('dragover');
 
@@ -107,6 +115,9 @@ function hideTasksPanel() {
 function addTask(fileName, datasetType, uploadId = null) {
     const taskId = ++taskIdCounter;
 
+    // Get display label for the dataset type
+    const displayLabel = DATASET_TYPE_LABELS[datasetType] || datasetType;
+
     activeTasks[taskId] = {
         id: taskId,
         fileName: fileName,
@@ -128,7 +139,7 @@ function addTask(fileName, datasetType, uploadId = null) {
                 <div class="task-name">${escapeHtml(fileName)}</div>
                 <div class="task-status processing">
                     <span class="task-status-text">Uploading...</span>
-                    <span class="task-type-badge">${datasetType}</span>
+                    <span class="task-type-badge">${displayLabel}</span>
                 </div>
                 <div class="task-stages">
                     <div class="stage-item active" data-stage="upload">
@@ -165,7 +176,7 @@ function updateTaskStage(taskId, stage, statusText = null, progress = null) {
     const taskEl = document.getElementById(`task-${taskId}`);
     if (!taskEl) return;
 
-    const stages = ['upload', 'cleaning and preprocessing', 'complete'];
+    const stages = ['upload', 'cleaning', 'complete'];
     const stageIndex = stages.indexOf(stage);
 
     taskEl.querySelectorAll('.stage-item').forEach((el, i) => {
@@ -283,6 +294,28 @@ function startStatusPolling(taskId, uploadId) {
     }, 2000);
 }
 
+function resumePendingUploads() {
+    if (typeof pendingUploads === 'undefined' || pendingUploads.length === 0) {
+        return;
+    }
+
+    pendingUploads.forEach(upload => {
+        // Create task in UI
+        const taskId = addTask(upload.file_name, upload.status);
+        activeTasks[taskId].uploadId = upload.id;
+
+        // Update stage based on current status
+        if (upload.status === 'processing') {
+            updateTaskStage(taskId, 'cleaning', 'Processing...', 50);
+        } else {
+            updateTaskStage(taskId, 'upload', 'Pending...', 20);
+        }
+
+        // Start polling for this upload
+        startStatusPolling(taskId, upload.id);
+    });
+}
+
 // Upload File
 async function uploadFile() {
     console.log('uploadFile() called');
@@ -343,7 +376,7 @@ async function uploadFile() {
 
 // Delete Dataset
 function deleteDataset(id, name) {
-    confirmAction(`Delete "${name}" and all its records?`, async function() {
+    confirmAction(`Delete "${name}" and all its records?`, async function () {
         const { ok, data } = await apiCall(`/management/api/data/${id}/delete/`, {
             method: 'POST'
         });

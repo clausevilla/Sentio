@@ -22,16 +22,16 @@ CATEGORY_MAP = {  # Define category mapping
 }
 
 
-def trigger_full_pipeline_in_background(data_upload_id: int):
+def trigger_full_pipeline_in_background(data_upload_id: int, dataset_type: str = 'train'):
     """
     Wrapper to run the pipeline in a separate thread.
     """
-    thread = threading.Thread(target=run_full_pipeline, args=(data_upload_id,))
+    thread = threading.Thread(target=run_full_pipeline, args=(data_upload_id, dataset_type))
     thread.daemon = True
     thread.start()
 
 
-def run_full_pipeline(data_upload_id: int):
+def run_full_pipeline(data_upload_id: int, dataset_type: str = 'train'):
     """
     Function used for interacting through the UI.
 
@@ -66,7 +66,7 @@ def run_full_pipeline(data_upload_id: int):
         # Save clean, preprocessed data to database
         df['text'] = df['text_preprocessed']
         df.reset_index(drop=True, inplace=True)
-        _save_dataset_records(df, upload)
+        _save_dataset_records(df, upload, dataset_type)
         _finalize_upload(upload, len(df))
 
         logger.info(f'Full pipeline finished successfully. Saved {len(df)} rows.')
@@ -200,7 +200,7 @@ def run_preprocessing_only(data_upload_id: int):
         return {'success': False, 'error': error}
 
 
-def _save_dataset_records(df: pd.DataFrame, upload: DataUpload):
+def _save_dataset_records(df: pd.DataFrame, upload: DataUpload, dataset_type: str = 'train'):
     """
     Handles the bulk creation of records.
     """
@@ -219,7 +219,7 @@ def _save_dataset_records(df: pd.DataFrame, upload: DataUpload):
                 depression=row['depression'],
                 suicidal=row['suicidal'],
                 stress=row['stress'],
-                dataset_type='train',
+                dataset_type=dataset_type,
             )
         )
 

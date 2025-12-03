@@ -252,7 +252,7 @@ def upload_csv_api(request):
         )
 
         if PIPELINE_AVAILABLE:
-            trigger_full_pipeline_in_background(upload.id)
+            trigger_full_pipeline_in_background(upload.id, dataset_type)
             return JsonResponse(
                 {
                     'success': True,

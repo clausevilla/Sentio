@@ -263,6 +263,16 @@
         uploadCsv: '{% url "ml_admin:upload_csv" %}'
     };
     const labelDistData = {{ overall_distribution_json|safe }};
+
+    // Pending uploads to resume polling
+    const pendingUploads = [
+        {% for item in uploads %}
+            {% if item.upload.status == 'processing' or item.upload.status == 'pending' %}
+            { id: {{ item.upload.id }}, file_name: '{{ item.upload.file_name }}', status: '{{ item.upload.status }}' },
+            {% endif %}
+        {% endfor %}
+    ];
+    
 </script>
 <script src="{% static 'ml_admin/js/data.js' %}"></script>
 {% endblock %}
