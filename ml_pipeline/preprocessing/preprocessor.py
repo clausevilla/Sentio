@@ -4,8 +4,8 @@ from typing import Dict, Tuple
 
 import nltk
 import pandas as pd
-import swifter as swifter
-from nltk.corpus import stopwords
+from nltk import pos_tag, word_tokenize
+from nltk.corpus import stopwords, wordnet
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
@@ -22,7 +22,6 @@ class DataPreprocessingPipeline:
 
     def __init__(self):
         self._download_nltk_resources()
-
         self.lemmatizer = WordNetLemmatizer()
         self.stop_words = set(stopwords.words('english'))
 
@@ -131,6 +130,8 @@ class DataPreprocessingPipeline:
         Returns:
             Tuple of (df_with_preprocessed_text, report_dict)
         """
+        import swifter as swifter
+
         logger.info('=== Starting Data Preprocessing Pipeline ===')
         logger.info(f'Processing {len(df):,} rows')
 
@@ -214,10 +215,26 @@ class DataPreprocessingPipeline:
         tokens = [word for word in tokens if not word.isdigit()]
 
         # 9. Lemmatize
-        tokens = [self.lemmatizer.lemmatize(word) for word in tokens]
+        tokens = word_tokenize(text)
+        tags = pos_tag(tokens)
+        lemmatized = [
+            self.lemmatizer.lemmatize(t, self.get_wordnet_pos(pos)) for t, pos in tags
+        ]
 
         # 10. Join tokens back into string
-        return ' '.join(tokens)
+        return ' '.join(lemmatized)
+
+    def get_wordnet_pos(treebank_tag):
+        if treebank_tag.startswith('J'):
+            return wordnet.ADJ
+        elif treebank_tag.startswith('V'):
+            return wordnet.VERB
+        elif treebank_tag.startswith('N'):
+            return wordnet.NOUN
+        elif treebank_tag.startswith('R'):
+            return wordnet.ADV
+        else:
+            return wordnet.NOUN  # safe fallback
 
     def _expand_contractions(self, text: str) -> str:
         """Expand contractions in text."""
