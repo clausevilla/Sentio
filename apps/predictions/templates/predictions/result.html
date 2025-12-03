@@ -23,7 +23,7 @@
         <div class="alert alert-warning">
             <h3>⚠️ Mental Health Indicator Detected</h3>
             <p>Your text shows patterns associated with {{ mental_state_label }}.
-                Please review the personalized recommendations below and
+                Please review the personalized recommendation below and
                 consider reaching out to a mental health professional if
                 needed.</p>
         </div>
@@ -37,9 +37,10 @@
                         <h2 class="card-title" id="mentalStateTitle">{{ mental_state_label }}</h2>
 
                         <div class="state-description">
-                            <p>{{ state_description }}</p>
                             <div class="recommendations">
-                                <p>blablabla (personalized recommendation what habits to change, help phone...)</p>
+                                {% for rec in recommendations %}
+                                    <p>{{ rec }}</p>
+                                {% endfor %}
                             </div>
                         </div>
                     </div>

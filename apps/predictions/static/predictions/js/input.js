@@ -1,4 +1,4 @@
-/* Author: Lian Shi */
+/* Author: Lian Shi, Claudia Sevilla */
 
 // predictions/input.js - Text analysis input page functionality
 
@@ -39,11 +39,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const examples = {
         depression: "I feel so empty inside. Nothing brings me joy anymore. I wake up each day wondering what's the point. I used to love painting but now I can't even pick up a brush. My friends invite me out but I just make excuses. I'm tired all the time but can't sleep properly. Everything feels gray and meaningless.",
 
-        anxiety: "I can't stop worrying about everything. My heart races constantly and I feel like something terrible is about to happen. I keep checking my phone, checking locks, checking everything multiple times. I feel sick to my stomach most days. I'm scared to leave the house sometimes because what if something goes wrong?",
-
         stress: "I have so much on my plate right now. Work deadlines are piling up, bills need to be paid, and I barely have time to breathe. I feel overwhelmed and like I'm drowning. My body feels tense all the time and I get headaches every day. I snap at people I care about because I'm so on edge.",
 
-        bipolar: "Some days I feel on top of the world - like I can do anything, my mind races with amazing ideas and I barely need sleep. Then suddenly everything crashes and I can barely get out of bed. The highs are incredible but the lows are devastating. I feel like I'm on an emotional roller coaster I can't control."
+        normal: "I have been feeling pretty good lately. I finished my tasks for the day and even had time to grab coffee with a friend. The weather was really nice! So I took a short walk and it really boosted my mood. Nothing overly extraordinary happened, but it felt like a genuinely pleasant day!",
     };
 
     // Character counter

@@ -187,12 +187,6 @@
     text-transform: capitalize;
 }
 
-.state-description {
-    color: var(--color-text-light);
-    font-size: var(--font-base);
-    line-height: 1.7;
-}
-
 .recommendations {
     background: var(--color-bg-cream);
     padding: var(--spacing-md);
@@ -200,6 +194,17 @@
     border-left: 4px solid var(--color-primary);
     margin-top: var(--spacing-lg);
     font-style: italic;
+    text-align: justify;
+}
+
+.recommendations p {
+    text-align: justify;
+    margin-bottom: var(--spacing-md);
+    line-height: 1.6;
+}
+
+.recommendations p:last-child {
+    margin-bottom: 0;
 }
 
 /* Indicators Grid */
@@ -436,7 +441,7 @@
     }
 
     .recommendations {
-        text-align: left;
+        text-align: justify;
     }
 }
 

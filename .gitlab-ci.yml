@@ -1,3 +1,5 @@
+# Author: Claudia Sevilla
+
 stages:
   - setup
   - test
