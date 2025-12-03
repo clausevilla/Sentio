@@ -53,8 +53,9 @@ def run_full_pipeline(data_upload_id: int):
         df, report = cleaner.clean_file(upload.file_path)
 
         # Run preprocessing pipeline, passing the cleaned data frame to the preprocessor
+        model_type = 'classical'  # !!! PLACEHOLDER until I connect this
         preprocessor = DataPreprocessingPipeline()
-        df, prep_report = preprocessor.preprocess_dataframe(df)
+        df, prep_report = preprocessor.preprocess_dataframe(df, model_type=model_type)
         report.update(prep_report)
 
         # Filter out preprocessed rows that have text shorter than 3 words
