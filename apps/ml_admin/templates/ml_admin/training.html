@@ -1,6 +1,8 @@
 <!--Author: Lian Shi-->
 <!-- Disclaimer: LLM has used to generate initial layout related to training, and fine tuning was done manually to different elements -->
 
+<!--TODO: THIS PAGE NEEDS TO BE FIXED TO REFLECT REAL DATABASE AND SERVICES !!!!!!!!!-->
+
 {% extends 'ml_admin/base_admin.html' %}
 {% load static %}
 {% block title %}Training{% endblock %}
@@ -30,7 +32,7 @@
 {% else %}
 <div class="alert warning">
     <i class="fas fa-exclamation-triangle"></i>
-    <span><strong>No test set!</strong> Use Split in Data page to create one.</span>
+    <span><strong>No test set!</strong> Upload or use Split in Data page to create one.</span>
 </div>
 {% endif %}
 
@@ -84,10 +86,12 @@
                                 <span class="model-name">
                                     {{ model.version_name }}
                                     {% if model.is_active %}<span class="badge success sm">Active</span>{% endif %}
+                                    {% if model.created_at%} - {{ model.created_at}}{% endif %}
                                 </span>
                                 <span class="model-meta">
-                                    {% if model.accuracy %}{{ model.accuracy|floatformat:1 }}% acc{% endif %}
-                                    {% if model.f1_score %} · F1: {{ model.f1_score|floatformat:2 }}{% endif %}
+                                    {% if model.accuracy %} Accuray: {{ model.accuracy|floatformat:1 }}{% endif %}
+                                    {% if model.f1_score %} | F1: {{ model.f1_score|floatformat:2 }}{% endif %}
+
                                 </span>
                             </div>
                         </div>

@@ -673,6 +673,168 @@
     color: var(--info);
 }
 
+/* ================================
+   Pipeline Selection
+   ================================ */
+
+.pipeline-section {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.pipeline-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+}
+
+.pipeline-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.pipeline-option {
+    position: relative;
+    background: white;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.pipeline-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pipeline-option:hover {
+    border-color: var(--gray-300);
+    background: var(--gray-50);
+}
+
+.pipeline-option.selected {
+    border-color: var(--primary);
+    background: rgba(74, 124, 89, 0.05);
+}
+
+.pipeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.375rem;
+}
+
+.pipeline-header i {
+    font-size: 1rem;
+    color: var(--gray-400);
+}
+
+.pipeline-option.selected .pipeline-header i {
+    color: var(--primary);
+}
+
+.pipeline-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--gray-700);
+}
+
+.pipeline-option.selected .pipeline-name {
+    color: var(--primary);
+}
+
+.pipeline-desc {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    margin-bottom: 0.5rem;
+}
+
+.pipeline-tags {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.pipeline-tags .tag {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+    background: var(--gray-100);
+    color: var(--gray-500);
+    border-radius: 3px;
+}
+
+.pipeline-option.selected .pipeline-tags .tag {
+    background: rgba(74, 124, 89, 0.15);
+    color: var(--primary);
+}
+
+/* Pipeline Badge (in dataset list) */
+.pipeline-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
+.pipeline-badge.full {
+    background: rgba(74, 124, 89, 0.1);
+    color: var(--primary);
+}
+
+.pipeline-badge.partial {
+    background: rgba(243, 156, 18, 0.1);
+    color: #D68910;
+}
+
+.pipeline-badge.raw {
+    background: rgba(142, 68, 173, 0.1);
+    color: #8E44AD;
+}
+
+.pipeline-badge i {
+    font-size: 0.6rem;
+}
+
+/* Task Pipeline Badge */
+.task-pipeline-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    font-weight: 500;
+    margin-left: 0.375rem;
+}
+
+.task-pipeline-badge.full {
+    background: rgba(74, 124, 89, 0.15);
+    color: var(--primary);
+}
+
+.task-pipeline-badge.partial {
+    background: rgba(243, 156, 18, 0.15);
+    color: #D68910;
+}
+
+.task-pipeline-badge.raw {
+    background: rgba(142, 68, 173, 0.15);
+    color: #8E44AD;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
     .stats-row {
@@ -699,6 +861,10 @@
 
     .dataset-split {
         display: none;
+    }
+
+    .pipeline-options {
+        grid-template-columns: 1fr;
     }
 }
 

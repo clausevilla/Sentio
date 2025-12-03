@@ -18,11 +18,34 @@ const DATASET_TYPE_LABELS = {
     'unlabeled': 'Unlabeled'
 };
 
+// TODO : Display names for pipeline types, to be matched with model later
+const PIPELINE_LABELS = {
+    'full': 'Full',
+    'partial': 'Partial',
+    'raw': 'Raw'
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     initDragAndDrop();
     initLabelDistChart();
     resumePendingUploads();
 });
+
+// ================================
+// Pipeline Selection
+// ================================
+// TODO : Update pipeline types to match model later
+function selectPipeline(element, value) {
+    // Update radio button
+    const radio = element.querySelector('input[type="radio"]');
+    if (radio) radio.checked = true;
+
+    // Update visual selection
+    document.querySelectorAll('.pipeline-option').forEach(opt => {
+        opt.classList.remove('selected');
+    });
+    element.classList.add('selected');
+}
 
 // Label Distribution Chart
 function initLabelDistChart() {
@@ -113,16 +136,19 @@ function hideTasksPanel() {
     }
 }
 
-function addTask(fileName, datasetType, uploadId = null) {
+//TODO: CHECK PIPELINE NAMES FROM MODEL LATER
+function addTask(fileName, datasetType, uploadId = null, pipelineType = 'full') {
     const taskId = ++taskIdCounter;
 
-    // Get display label for the dataset type
+    // Get display labels
     const displayLabel = DATASET_TYPE_LABELS[datasetType] || datasetType;
+    const pipelineLabel = PIPELINE_LABELS[pipelineType] || 'Full';
 
     activeTasks[taskId] = {
         id: taskId,
         fileName: fileName,
         datasetType: datasetType,
+        pipelineType: pipelineType,
         uploadId: uploadId,
         status: 'processing',
         stage: 'uploading'
@@ -141,6 +167,7 @@ function addTask(fileName, datasetType, uploadId = null) {
                 <div class="task-status processing">
                     <span class="task-status-text">Uploading...</span>
                     <span class="task-type-badge">${displayLabel}</span>
+                    <span class="task-pipeline-badge ${pipelineType}">${pipelineLabel}</span>
                 </div>
                 <div class="task-stages">
                     <div class="stage-item active" data-stage="upload">
@@ -333,16 +360,22 @@ async function uploadFile() {
     const fileName = selectedFile.name;
     const datasetType = document.getElementById('datasetType').value;
 
-    console.log('Uploading:', fileName, 'as', datasetType);
+    // TODO UPDATE LATER IF NEEDED
+    // Get selected pipeline
+    const pipelineInput = document.querySelector('input[name="pipeline"]:checked');
+    const pipelineType = pipelineInput ? pipelineInput.value : 'full';
+
+    console.log('Uploading:', fileName, 'as', datasetType, 'with pipeline:', pipelineType);
     console.log('Upload URL:', URLS.uploadCsv);
 
     // Create FormData with the file BEFORE clearing
     const formData = new FormData();
     formData.append('csv_file', fileToUpload);
     formData.append('dataset_type', datasetType);
+    formData.append('pipeline_type', pipelineType);
 
     // Now we can clear the UI
-    const taskId = addTask(fileName, datasetType);
+    const taskId = addTask(fileName, datasetType, null, pipelineType);
     clearFile();
 
     try {

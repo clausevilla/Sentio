@@ -49,6 +49,52 @@
         <h3><i class="fas fa-upload"></i> Upload Dataset</h3>
     </div>
     <div class="card-body">
+        <!-- TODO: Pipeline Selection -->
+        <!--PLEASE REMEMBER LATER IF FIX IS NEEDED FOR CHANING THE NAME OF DIFFERENT PIPELINE NAMES-->
+        <div class="pipeline-section">
+            <label class="pipeline-label">Preprocessing Pipeline</label>
+            <div class="pipeline-options">
+                <label class="pipeline-option selected" onclick="selectPipeline(this, 'full')">
+                    <input type="radio" name="pipeline" value="full" checked>
+                    <div class="pipeline-header">
+                        <i class="fas fa-broom"></i>
+                        <span class="pipeline-name">Full</span>
+                    </div>
+                    <span class="pipeline-desc">Complete preprocessing</span>
+                    <div class="pipeline-tags">
+                        <span class="tag">Logistic Regression</span>
+                        <span class="tag">Random Forest</span>
+                    </div>
+                </label>
+
+                <label class="pipeline-option" onclick="selectPipeline(this, 'partial')">
+                    <input type="radio" name="pipeline" value="partial">
+                    <div class="pipeline-header">
+                        <i class="fas fa-adjust"></i>
+                        <span class="pipeline-name">Partial</span>
+                    </div>
+                    <span class="pipeline-desc">Moderate preprocessing</span>
+                    <div class="pipeline-tags">
+                        <span class="tag">LSTM</span>
+                        <span class="tag">RNN</span>
+                    </div>
+                </label>
+
+                <label class="pipeline-option" onclick="selectPipeline(this, 'raw')">
+                    <input type="radio" name="pipeline" value="raw">
+                    <div class="pipeline-header">
+                        <i class="fas fa-feather"></i>
+                        <span class="pipeline-name">Raw</span>
+                    </div>
+                    <span class="pipeline-desc">Minimal preprocessing</span>
+                    <div class="pipeline-tags">
+                        <span class="tag">BERT</span>
+                        <span class="tag">Transformer</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
         <div class="upload-row">
             <div class="upload-file-section">
                 <div class="upload-zone-inline" id="uploadZone" onclick="document.getElementById('fileInput').click()">
@@ -143,6 +189,18 @@
                             <span><i class="fas fa-calendar"></i> {{ item.upload.uploaded_at|date:"M d, Y" }}</span>
                             <span><i class="fas fa-user"></i> {{ item.upload.uploaded_by.username|default:"—" }}</span>
                             <span><i class="fas fa-table"></i> {{ item.upload.row_count|default:0 }} rows</span>
+                            <!-- TODO: Pipeline Badge (CHECK NAME LATER TO MATCH) -->
+                            {% if item.upload.pipeline_type %}
+                            <span class="pipeline-badge {{ item.upload.pipeline_type }}">
+                                {% if item.upload.pipeline_type == 'raw' %}
+                                <i class="fas fa-feather"></i> Raw
+                                {% elif item.upload.pipeline_type == 'partial' %}
+                                <i class="fas fa-adjust"></i> Partial
+                                {% else %}
+                                <i class="fas fa-broom"></i> Full
+                                {% endif %}
+                            </span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

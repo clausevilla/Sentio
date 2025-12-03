@@ -243,12 +243,17 @@ def upload_csv_api(request):
             for chunk in csv_file.chunks():
                 f.write(chunk)
 
+        #TODO : please update here matching pipeline types in model later (each uploaded dataset have different preprocessing pipeline types)
+        # waiting to be implemented later after preprocessing pipeline types are defined in model
+        pipeline_type = request.POST.get('pipeline_type', 'full')
+
         upload = DataUpload.objects.create(
             uploaded_by=request.user,
             file_name=csv_file.name,
             file_path=file_path,
             is_validated=False,
             status='pending',
+            pipeline_type=pipeline_type,
         )
 
         if PIPELINE_AVAILABLE:

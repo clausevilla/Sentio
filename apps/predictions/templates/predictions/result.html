@@ -103,9 +103,9 @@
             <p>Create a free account to track your mental state over time, view
                 historical trends, and get personalized insights!</p>
             <div class="cta-buttons">
-                <a href="03_register.html" class="btn btn-primary">✨ Create Free
+                <a href="{% url 'accounts:register' %}" class="btn btn-primary">✨ Create Free
                     Account</a>
-                <a href="02_login.html" class="btn btn-secondary">Already have
+                <a href="{% url 'accounts:login' %}" class="btn btn-secondary">Already have
                     an account? Sign In</a>
             </div>
         </div>

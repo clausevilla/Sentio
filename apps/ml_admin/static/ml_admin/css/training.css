@@ -58,11 +58,13 @@
     color: var(--primary);
     background: white;
     border-bottom-color: var(--primary);
+    height:35pt;
 }
 
 .col-tab.static {
     cursor: default;
     flex: 1;
+    height: 35pt;
 }
 
 .col-tab .header-hint {
