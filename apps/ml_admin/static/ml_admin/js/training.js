@@ -344,3 +344,112 @@ async function startTraining(mode) {
         btn.innerHTML = originalText;
     }
 }
+
+// ================================
+// Job Details Modal
+// ================================
+
+function showJobDetails(jobId) {
+    // Get job data from embedded JSON
+    let jobsData = [];
+    try {
+        const dataEl = document.getElementById('jobsData');
+        if (dataEl) {
+            jobsData = JSON.parse(dataEl.textContent);
+        }
+    } catch (e) {
+        console.error('Failed to parse jobs data:', e);
+        return;
+    }
+
+    const job = jobsData.find(j => j.id === jobId);
+    if (!job) {
+        toast('Job not found', 'error');
+        return;
+    }
+
+    // Update modal title
+    document.getElementById('jobModalTitle').textContent = `Job #${job.id} Details`;
+
+    // Build modal content
+    let html = `
+        <div class="job-info-grid">
+            <div class="job-detail-section">
+                <div class="job-detail-label">Status</div>
+                <div class="job-detail-value">
+                    <span class="badge ${job.status.toLowerCase()}">${job.status}</span>
+                </div>
+            </div>
+            <div class="job-detail-section">
+                <div class="job-detail-label">Initiated By</div>
+                <div class="job-detail-value">${job.initiated_by}</div>
+            </div>
+            <div class="job-detail-section">
+                <div class="job-detail-label">Started</div>
+                <div class="job-detail-value">${job.started_at}</div>
+            </div>
+            <div class="job-detail-section">
+                <div class="job-detail-label">Completed</div>
+                <div class="job-detail-value">${job.completed_at || '—'}</div>
+            </div>
+            <div class="job-detail-section">
+                <div class="job-detail-label">Dataset</div>
+                <div class="job-detail-value">${job.dataset}</div>
+            </div>
+            <div class="job-detail-section">
+                <div class="job-detail-label">Records</div>
+                <div class="job-detail-value">${job.records ? formatNumber(job.records) : '—'}</div>
+            </div>
+        </div>
+    `;
+
+    // Show model info if completed
+    if (job.model) {
+        html += `
+            <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--gray-200);">
+            <div class="job-detail-section">
+                <div class="job-detail-label">Resulting Model</div>
+                <div class="job-detail-value">
+                    <span class="job-model-name"><i class="fas fa-cube"></i> ${job.model.name}</span>
+                </div>
+            </div>
+            <div class="job-detail-section" style="margin-top: 1rem;">
+                <div class="job-detail-label">Performance Metrics</div>
+                <div class="job-metrics-grid" style="margin-top: 0.5rem;">
+                    <div class="job-metric">
+                        <span class="job-metric-value">${job.model.accuracy ? job.model.accuracy.toFixed(1) + '%' : '—'}</span>
+                        <span class="job-metric-label">Accuracy</span>
+                    </div>
+                    <div class="job-metric">
+                        <span class="job-metric-value">${job.model.precision ? job.model.precision.toFixed(1) + '%' : '—'}</span>
+                        <span class="job-metric-label">Precision</span>
+                    </div>
+                    <div class="job-metric">
+                        <span class="job-metric-value">${job.model.recall ? job.model.recall.toFixed(1) + '%' : '—'}</span>
+                        <span class="job-metric-label">Recall</span>
+                    </div>
+                    <div class="job-metric">
+                        <span class="job-metric-value">${job.model.f1_score ? job.model.f1_score.toFixed(3) : '—'}</span>
+                        <span class="job-metric-label">F1 Score</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Show error if failed
+    if (job.status === 'FAILED' && job.error_message) {
+        html += `
+            <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--gray-200);">
+            <div class="job-error-box">
+                <div class="job-error-title">
+                    <i class="fas fa-exclamation-triangle"></i> Error Message
+                </div>
+                <div class="job-error-message">${job.error_message}</div>
+            </div>
+        `;
+    }
+
+    document.getElementById('jobModalBody').innerHTML = html;
+    openModal('jobDetailsModal');
+}

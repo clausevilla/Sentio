@@ -245,15 +245,16 @@
                     <th>Dataset</th>
                     <th>Records</th>
                     <th>Started</th>
+                    <th>Ended</th>
                     <th>Duration</th>
                     <th>Status</th>
-                    <th>Result</th>
-                    <th>Metrics</th>
+                    <th>Accuracy</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
                 {% for job in jobs %}
-                <tr class="{% if job.status == 'FAILED' %}row-failed{% endif %}">
+                <tr>
                     <td>
                         <strong>#{{ job.id }}</strong>
                         {% if job.initiated_by %}
@@ -272,6 +273,11 @@
                     </td>
                     <td>{{ job.started_at|date:"M d, H:i" }}</td>
                     <td>
+                        {% if job.completed_at %}
+                        {{ job.completed_at|date:"M d, H:i" }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
                         {% if job.completed_at and job.started_at %}
                             <span class="duration">{{ job.started_at|timesince:job.completed_at }}</span>
                         {% elif job.status == 'RUNNING' %}
@@ -288,57 +294,18 @@
                         </span>
                     </td>
                     <td>
-                        {% if job.resulting_model %}
-                        <span class="result-model">
-                            <i class="fas fa-cube"></i> {{ job.resulting_model.version_name }}
-                        </span>
+                        {% if job.resulting_model and job.resulting_model.accuracy %}
+                        <span class="accuracy-value">{{ job.resulting_model.accuracy|floatformat:1 }}%</span>
                         {% elif job.status == 'FAILED' %}
-                        <span class="result-failed" title="{{ job.error_message|default:'Unknown error' }}">
-                            <i class="fas fa-exclamation-circle"></i> Failed
-                        </span>
-                        {% elif job.status == 'RUNNING' %}
-                        <span class="result-running">Training...</span>
-                        {% elif job.status == 'PENDING' %}
-                        <span class="result-pending">Queued</span>
+                        <span class="text-danger">—</span>
                         {% else %}—{% endif %}
                     </td>
                     <td>
-                        {% if job.resulting_model %}
-                        <div class="metrics-cell">
-                            {% if job.resulting_model.accuracy %}
-                            <span class="metric-tag acc" title="Accuracy">
-                                <strong>{{ job.resulting_model.accuracy|floatformat:1 }}%</strong>
-                            </span>
-                            {% endif %}
-                            {% if job.resulting_model.f1_score %}
-                            <span class="metric-tag f1" title="F1 Score">
-                                F1: <strong>{{ job.resulting_model.f1_score|floatformat:2 }}</strong>
-                            </span>
-                            {% endif %}
-                            {% if job.resulting_model.precision %}
-                            <span class="metric-tag prec" title="Precision">
-                                P: <strong>{{ job.resulting_model.precision|floatformat:1 }}%</strong>
-                            </span>
-                            {% endif %}
-                            {% if job.resulting_model.recall %}
-                            <span class="metric-tag rec" title="Recall">
-                                R: <strong>{{ job.resulting_model.recall|floatformat:1 }}%</strong>
-                            </span>
-                            {% endif %}
-                        </div>
-                        {% else %}—{% endif %}
+                        <button class="btn-icon" onclick="showJobDetails({{ job.id }})" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </td>
                 </tr>
-                {% if job.status == 'FAILED' and job.error_message %}
-                <tr class="error-row">
-                    <td colspan="8">
-                        <div class="error-message-row">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            {{ job.error_message|truncatechars:150 }}
-                        </div>
-                    </td>
-                </tr>
-                {% endif %}
                 {% endfor %}
             </tbody>
         </table>
@@ -347,6 +314,44 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Job Details Modal -->
+<div class="modal" id="jobDetailsModal">
+    <div class="modal-content modal-md">
+        <div class="modal-header">
+            <h3><i class="fas fa-info-circle"></i> <span id="jobModalTitle">Job Details</span></h3>
+            <button class="modal-close" onclick="closeModal('jobDetailsModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="jobModalBody">
+            <!-- Content loaded by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Job Data for JS -->
+<script type="application/json" id="jobsData">
+[{% for job in jobs %}{
+    "id": {{ job.id }},
+    "status": "{{ job.status }}",
+    "started_at": "{{ job.started_at|date:'M d, Y H:i' }}",
+    "completed_at": "{{ job.completed_at|date:'M d, Y H:i'|default:'' }}",
+    "initiated_by": "{{ job.initiated_by.username|default:'-' }}",
+    "dataset": "{{ job.data_upload.file_name|default:'-' }}",
+    "records": {{ job.data_upload.row_count|default:'null' }},
+    "error_message": "{{ job.error_message|default:''|escapejs }}",
+    {% if job.resulting_model %}
+    "model": {
+        "name": "{{ job.resulting_model.version_name }}",
+        "accuracy": {{ job.resulting_model.accuracy|default:'null' }},
+        "precision": {{ job.resulting_model.precision|default:'null' }},
+        "recall": {{ job.resulting_model.recall|default:'null' }},
+        "f1_score": {{ job.resulting_model.f1_score|default:'null' }}
+    }
+    {% else %}
+    "model": null
+    {% endif %}
+}{% if not forloop.last %},{% endif %}{% endfor %}]
+</script>
 
 <!-- Test Set Modal -->
 <div class="modal" id="testSetModal">

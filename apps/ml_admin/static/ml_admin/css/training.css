@@ -530,39 +530,6 @@
 /* ================================
    Training History Table
 ================================ */
-.result-success {
-    color: var(--success);
-    font-weight: 500;
-}
-
-.result-failed {
-    color: var(--danger);
-    font-weight: 500;
-    cursor: help;
-}
-
-.result-model {
-    color: var(--primary);
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-}
-
-.result-model i {
-    font-size: 0.75rem;
-}
-
-.result-running {
-    color: var(--warning);
-    font-weight: 500;
-}
-
-.result-pending {
-    color: var(--gray-500);
-    font-style: italic;
-}
-
 .job-user {
     display: block;
     font-size: var(--font-xs);
@@ -599,65 +566,38 @@
     font-size: 0.625rem;
 }
 
-.metrics-cell {
-    display: flex;
-    gap: 0.375rem;
-    flex-wrap: wrap;
-}
-
-.metric-tag {
-    font-size: 10px;
-    color: var(--gray-600);
-    background: var(--gray-100);
-    padding: 0.1875rem 0.375rem;
-    border-radius: 3px;
-    white-space: nowrap;
-}
-
-.metric-tag strong {
+.accuracy-value {
     font-weight: 600;
-}
-
-.metric-tag.acc strong {
     color: var(--primary);
 }
 
-.metric-tag.f1 strong {
-    color: #2874A6;
-}
-
-.metric-tag.prec strong {
-    color: #8E44AD;
-}
-
-.metric-tag.rec strong {
-    color: #D68910;
-}
-
-.row-failed {
-    background: rgba(231, 76, 60, 0.03);
-}
-
-.error-row td {
-    padding: 0 !important;
-    border-top: none !important;
-}
-
-.error-message-row {
-    background: rgba(231, 76, 60, 0.08);
-    padding: 0.5rem 1rem;
-    font-size: var(--font-xs);
+.text-danger {
     color: var(--danger);
-    display: flex;
+}
+
+/* Icon Button */
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid var(--gray-200);
+    background: white;
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    color: var(--gray-500);
+    transition: all 0.15s;
 }
 
-.error-message-row i {
-    flex-shrink: 0;
+.btn-icon:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(74, 124, 89, 0.05);
 }
 
-/* Status badges with icons */
+/* Status badges */
 .badge.completed {
     background: rgba(39, 174, 96, 0.1);
     color: #27AE60;
@@ -676,6 +616,104 @@
 .badge.pending {
     background: rgba(149, 165, 166, 0.2);
     color: #7F8C8D;
+}
+
+/* ================================
+   Job Details Modal
+================================ */
+.modal-md {
+    max-width: 500px;
+}
+
+.job-detail-section {
+    margin-bottom: 1.25rem;
+}
+
+.job-detail-section:last-child {
+    margin-bottom: 0;
+}
+
+.job-detail-label {
+    font-size: var(--font-xs);
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.375rem;
+}
+
+.job-detail-value {
+    font-size: var(--font-sm);
+    color: var(--gray-800);
+}
+
+.job-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.job-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+}
+
+.job-metric {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.job-metric-value {
+    font-size: var(--font-lg);
+    font-weight: 700;
+    color: var(--primary);
+    display: block;
+}
+
+.job-metric-label {
+    font-size: var(--font-xs);
+    color: var(--gray-500);
+    margin-top: 0.125rem;
+}
+
+.job-error-box {
+    background: rgba(231, 76, 60, 0.08);
+    border: 1px solid rgba(231, 76, 60, 0.2);
+    border-radius: var(--radius);
+    padding: 0.875rem;
+}
+
+.job-error-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--font-sm);
+    font-weight: 600;
+    color: var(--danger);
+    margin-bottom: 0.5rem;
+}
+
+.job-error-message {
+    font-size: var(--font-sm);
+    color: var(--gray-700);
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.job-model-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: var(--primary);
+}
+
+.job-model-name i {
+    font-size: 0.875rem;
 }
 
 /* ================================
