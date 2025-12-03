@@ -5,8 +5,7 @@ from typing import Dict, Tuple
 import nltk
 import pandas as pd
 import swifter as swifter
-from nltk import pos_tag
-from nltk.corpus import stopwords, wordnet
+from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
@@ -21,10 +20,8 @@ class DataPreprocessingPipeline:
     Creates a new 'text_preprocessed' column with processed text.
     """
 
-    _nltk_downloaded = False  # Class-level flag to download only once
-
     def __init__(self):
-        self._ensure_nltk_resources()
+        self._download_nltk_resources()
 
         self.lemmatizer = WordNetLemmatizer()
         self.stop_words = set(stopwords.words('english'))
@@ -114,44 +111,15 @@ class DataPreprocessingPipeline:
             'avg_tokens_after': 0,
         }
 
-    @classmethod
-    def _ensure_nltk_resources(cls):
-        """Download NLTK resources once per process."""
-        if cls._nltk_downloaded:
-            return
-
-        resources = [
-            'punkt',
-            'punkt_tab',
-            'stopwords',
-            'wordnet',
-            'omw-1.4',
-            'averaged_perceptron_tagger',
-            'averaged_perceptron_tagger_eng',
-        ]
+    def _download_nltk_resources(self):
+        """Downloads required NLTK data if not already present."""
+        resources = ['punkt', 'stopwords', 'wordnet', 'omw-1.4']
         for resource in resources:
-            nltk.download(resource, quiet=True)
-
-        cls._nltk_downloaded = True
-
-    def _get_wordnet_pos(self, treebank_tag):
-        """
-        Map Penn Treebank POS tags to WordNet POS tags for lemmatization.
-
-        Args:
-            treebank_tag: POS tag from nltk.pos_tag (e.g., 'VBG', 'NN', 'JJ')
-
-        Returns:
-            WordNet POS constant (VERB, ADJ, ADV, or NOUN as default)
-        """
-        if treebank_tag.startswith('V'):
-            return wordnet.VERB
-        elif treebank_tag.startswith('J'):
-            return wordnet.ADJ
-        elif treebank_tag.startswith('R'):
-            return wordnet.ADV
-        else:
-            return wordnet.NOUN  # Default to noun
+            try:
+                nltk.data.find(f'tokenizers/{resource}')
+            except LookupError:
+                logger.info(f'Downloading NLTK resource: {resource}')
+                nltk.download(resource, quiet=True)
 
     def preprocess_dataframe(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict]:
         """
@@ -207,7 +175,7 @@ class DataPreprocessingPipeline:
         5. Remove extra whitespace
         6. Tokenize text
         7. Remove stopwords
-        8. POS tag and Lemmatize with correct word type
+        8. Lemmatize
         9. Remove numbers (may change if we decide they are meaningful for classification)
         """
         if pd.isna(text):
@@ -245,13 +213,8 @@ class DataPreprocessingPipeline:
         # 8. Remove numbers
         tokens = [word for word in tokens if not word.isdigit()]
 
-        # 9. POS tag and lemmatize with correct word type
-        if tokens:
-            tagged_tokens = pos_tag(tokens)
-            tokens = [
-                self.lemmatizer.lemmatize(word, self._get_wordnet_pos(tag))
-                for word, tag in tagged_tokens
-            ]
+        # 9. Lemmatize
+        tokens = [self.lemmatizer.lemmatize(word) for word in tokens]
 
         # 10. Join tokens back into string
         return ' '.join(tokens)
