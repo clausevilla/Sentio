@@ -881,7 +881,7 @@ def analytics_view(request):
 
             avg = PredictionResult.objects.aggregate(avg=Avg('confidence'))
             prediction_stats['avg_confidence'] = (
-                round(avg['avg'], 1) if avg['avg'] else None
+                round(avg['avg']*100, 1) if avg['avg'] else None
             )
 
         except Exception as e:
