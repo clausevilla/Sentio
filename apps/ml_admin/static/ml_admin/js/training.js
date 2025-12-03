@@ -1,24 +1,19 @@
-/* Author: Lian Shi*/
-/*Disclaimer: LLM has used to help with training page functions regarding dataset selection and distribution chart visualization */
-
-/**
- * ML Admin - Training Page
- */
+/* Author: Lian Shi */
+/* Disclaimer: LLM has used to help with implement training page functionalities to fit our database */
 
 // State
 let currentTab = 'train';
-let trainSelectedDatasets = {};
-let trainDatasetDistributions = {};
-let retrainSelectedDatasets = {};
-let retrainDatasetDistributions = {};
+let selectedDatasets = {};
+let datasetDistributions = {};
 let selectedModelId = null;
 let selectedModelName = null;
-let distributionChart = null;
+let distChart = null;
 let testSetChart = null;
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function() {
     initAlgorithmListeners();
-    initTestSetChart();
+    initTestSetModal();
+    updateSummary();
 });
 
 // ================================
@@ -29,238 +24,132 @@ function switchTab(tab) {
     currentTab = tab;
 
     // Update tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
+    document.querySelectorAll('.col-tab:not(.static)').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
     });
-    event.currentTarget.classList.add('active');
 
-    // Update tab content
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    document.getElementById(tab + 'Tab').classList.add('active');
+    // Toggle content
+    document.getElementById('trainContent').style.display = (tab === 'train') ? 'flex' : 'none';
+    document.getElementById('retrainContent').style.display = (tab === 'retrain') ? 'flex' : 'none';
 
-    // Update distribution title
-    const distTitle = document.getElementById('distTitle');
-    if (distTitle) {
-        distTitle.textContent = (tab === 'retrain')
-            ? 'New Data Distribution'
-            : 'Selected Data Distribution';
-    }
+    // Toggle summary
+    document.getElementById('trainSummary').style.display = (tab === 'train') ? 'flex' : 'none';
+    document.getElementById('retrainSummary').style.display = (tab === 'retrain') ? 'flex' : 'none';
 
-    // Update distribution chart for current tab
-    updateDistributionChart();
+    // Toggle buttons
+    document.getElementById('trainBtn').style.display = (tab === 'train') ? 'inline-flex' : 'none';
+    document.getElementById('retrainBtn').style.display = (tab === 'retrain') ? 'inline-flex' : 'none';
+
+    updateSummary();
 }
 
 // ================================
-// Test Set Chart (Modal)
+// Algorithm Selection
 // ================================
 
-function initTestSetChart() {
-    if (typeof testSetDistribution === 'undefined' || !testSetDistribution || testSetDistribution.length === 0) return;
-
-    const total = testSetDistribution.reduce((sum, d) => sum + d.count, 0);
-
-    const barsDiv = document.getElementById('testSetBars');
-    if (barsDiv) {
-        let html = '';
-        testSetDistribution.forEach((item, i) => {
-            const percent = ((item.count / total) * 100).toFixed(1);
-            html += `
-                <div class="dist-item">
-                    <span class="dist-label">${item.label}</span>
-                    <div class="dist-bar">
-                        <div class="dist-fill" style="width: ${percent}%; background: ${CHART_COLORS[i % CHART_COLORS.length]}"></div>
-                    </div>
-                    <span class="dist-count">${formatNumber(item.count)} (${percent}%)</span>
-                </div>
-            `;
-        });
-        barsDiv.innerHTML = html;
-    }
-
-    // Create chart when modal opens
-    const modal = document.getElementById('testSetModal');
-    if (modal) {
-        const observer = new MutationObserver(function (mutations) {
-            mutations.forEach(function (mutation) {
-                if (modal.classList.contains('open') && !testSetChart) {
-                    const ctx = document.getElementById('testSetChart');
-                    if (ctx) {
-                        testSetChart = new Chart(ctx, {
-                            type: 'doughnut',
-                            data: {
-                                labels: testSetDistribution.map(d => d.label),
-                                datasets: [{
-                                    data: testSetDistribution.map(d => d.count),
-                                    backgroundColor: CHART_COLORS.slice(0, testSetDistribution.length),
-                                    borderWidth: 0,
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: { legend: { display: false } },
-                                cutout: '60%',
-                            }
-                        });
-                    }
-                }
-            });
-        });
-        observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
-    }
-}
-
-// Algorithm selection listeners
 function initAlgorithmListeners() {
-    const radios = document.querySelectorAll('input[name="algorithm"]');
-    radios.forEach(radio => {
-        radio.addEventListener('change', updateTrainSummary);
+    document.querySelectorAll('input[name="algorithm"]').forEach(radio => {
+        radio.addEventListener('change', updateSummary);
     });
 }
 
+// ================================
+// Model Selection (Retrain)
+// ================================
 
-// Model Selection (Retrain tab)
-
-
-function selectModelToRetrain(element, modelId) {
+function selectModel(element, modelId) {
     // Update UI
     document.querySelectorAll('.model-option').forEach(opt => {
         opt.classList.remove('selected');
-        opt.querySelector('input').checked = false;
     });
-
     element.classList.add('selected');
     element.querySelector('input').checked = true;
 
     // Store selection
     selectedModelId = modelId;
-    const nameEl = element.querySelector('.model-option-name');
+    const nameEl = element.querySelector('.model-name');
     selectedModelName = nameEl ? nameEl.textContent.trim().split('\n')[0].trim() : 'Model #' + modelId;
 
-    updateRetrainSummary();
+    updateSummary();
 }
 
 // ================================
-// Dataset Selection
+// Dataset Selection (Shared)
 // ================================
 
-function toggleDataset(element, id, count, mode) {
+function toggleDataset(element, id, count) {
     const checkbox = element.querySelector('input[type="checkbox"]');
     checkbox.checked = !checkbox.checked;
     element.classList.toggle('selected', checkbox.checked);
 
-    // Get distribution data from element
-    const distData = element.dataset.distribution;
+    // Get distribution data
     let distribution = [];
     try {
-        distribution = JSON.parse(distData || '[]');
+        distribution = JSON.parse(element.dataset.distribution || '[]');
     } catch (e) {
         distribution = [];
     }
 
-    // Update appropriate state based on mode
-    const datasets = (mode === 'retrain') ? retrainSelectedDatasets : trainSelectedDatasets;
-    const distributions = (mode === 'retrain') ? retrainDatasetDistributions : trainDatasetDistributions;
-
     if (checkbox.checked) {
-        datasets[id] = count;
-        distributions[id] = distribution;
+        selectedDatasets[id] = count;
+        datasetDistributions[id] = distribution;
     } else {
-        delete datasets[id];
-        delete distributions[id];
+        delete selectedDatasets[id];
+        delete datasetDistributions[id];
     }
 
-    // Update UI
-    if (mode === 'retrain') {
-        updateRetrainSummary();
-    } else {
-        updateTrainSummary();
-    }
-    updateDistributionChart();
+    updateDistribution();
+    updateSummary();
 }
 
+// ================================
+// Summary Update
+// ================================
 
-// Update training summary
+function updateSummary() {
+    const datasetCount = Object.keys(selectedDatasets).length;
+    let totalRecords = 0;
+    Object.values(selectedDatasets).forEach(c => totalRecords += c);
 
-function updateTrainSummary() {
-    const count = Object.keys(trainSelectedDatasets).length;
-    const summary = document.getElementById('trainSummary');
-    const btn = document.getElementById('trainBtn');
-
-    if (count > 0) {
-        summary.style.display = 'block';
-        btn.disabled = false;
-
+    if (currentTab === 'train') {
+        // Train summary
         const algoRadio = document.querySelector('input[name="algorithm"]:checked');
         const algoName = algoRadio ? ALGORITHM_NAMES[algoRadio.value] : '-';
+
         document.getElementById('sumAlgo').textContent = algoName;
-        document.getElementById('sumDatasets').textContent = count;
+        document.getElementById('sumDatasets').textContent = datasetCount;
+        document.getElementById('sumRecords').textContent = formatNumber(totalRecords);
 
-        let total = 0;
-        Object.values(trainSelectedDatasets).forEach(c => total += c);
-        document.getElementById('sumRecords').textContent = formatNumber(total);
+        // Enable/disable button
+        document.getElementById('trainBtn').disabled = datasetCount === 0;
     } else {
-        summary.style.display = 'none';
-        btn.disabled = true;
+        // Retrain summary
+        document.getElementById('sumModel').textContent = selectedModelName || '-';
+        document.getElementById('sumRetrainDatasets').textContent = datasetCount;
+        document.getElementById('sumRetrainRecords').textContent = formatNumber(totalRecords);
+
+        // Enable/disable button (need both model and datasets)
+        document.getElementById('retrainBtn').disabled = !selectedModelId || datasetCount === 0;
     }
 }
 
-function updateRetrainSummary() {
-    const count = Object.keys(retrainSelectedDatasets).length;
-    const summary = document.getElementById('retrainSummary');
-    const btn = document.getElementById('retrainBtn');
+// ================================
+// Distribution Preview
+// ================================
 
-    const hasModel = selectedModelId !== null;
-    const hasData = count > 0;
+function updateDistribution() {
+    const distEmpty = document.getElementById('distEmpty');
+    const distContent = document.getElementById('distContent');
+    const distBars = document.getElementById('distBars');
 
-    // Show summary if anything is selected
-    if (hasModel || hasData) {
-        summary.style.display = 'block';
-        document.getElementById('sumModel').textContent = selectedModelName || '(select a model)';
-        document.getElementById('sumRetrainDatasets').textContent = count;
-
-        let total = 0;
-        Object.values(retrainSelectedDatasets).forEach(c => total += c);
-        document.getElementById('sumRetrainRecords').textContent = formatNumber(total);
-    } else {
-        summary.style.display = 'none';
-    }
-
-    // Enable button only when both model AND data selected
-    btn.disabled = !(hasModel && hasData);
-}
-
-
-// Distribution Chart
-
-
-function updateDistributionChart() {
-    const display = document.getElementById('distributionDisplay');
-    const chartWrap = document.getElementById('distributionChartWrap');
-    const barsDiv = document.getElementById('distributionBars');
-
-    // Get datasets based on current tab
-    const datasets = (currentTab === 'retrain') ? retrainSelectedDatasets : trainSelectedDatasets;
-    const distributions = (currentTab === 'retrain') ? retrainDatasetDistributions : trainDatasetDistributions;
-
-    const selectedIds = Object.keys(datasets);
+    const selectedIds = Object.keys(selectedDatasets);
 
     if (selectedIds.length === 0) {
-        display.style.display = 'block';
-        display.innerHTML = `
-            <div class="empty-state small">
-                <i class="fas fa-hand-pointer"></i>
-                <p>Select dataset(s) to see distribution</p>
-            </div>
-        `;
-        chartWrap.style.display = 'none';
-        barsDiv.style.display = 'none';
-
-        if (distributionChart) {
-            distributionChart.destroy();
-            distributionChart = null;
+        distEmpty.style.display = 'flex';
+        distContent.style.display = 'none';
+        if (distChart) {
+            distChart.destroy();
+            distChart = null;
         }
         return;
     }
@@ -268,7 +157,7 @@ function updateDistributionChart() {
     // Combine distributions
     const combined = {};
     selectedIds.forEach(id => {
-        const dist = distributions[id] || [];
+        const dist = datasetDistributions[id] || [];
         dist.forEach(item => {
             const label = item.label || 'Unknown';
             combined[label] = (combined[label] || 0) + item.count;
@@ -279,33 +168,25 @@ function updateDistributionChart() {
     const counts = labels.map(l => combined[l]);
     const total = counts.reduce((a, b) => a + b, 0);
 
-    if (labels.length === 0) {
-        display.style.display = 'block';
-        display.innerHTML = `
-            <div class="empty-state small">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>No distribution data available</p>
-            </div>
-        `;
-        chartWrap.style.display = 'none';
-        barsDiv.style.display = 'none';
+    if (labels.length === 0 || total === 0) {
+        distEmpty.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>No distribution data</span>';
+        distEmpty.style.display = 'flex';
+        distContent.style.display = 'none';
         return;
     }
 
-    // Show chart and bars
-    display.style.display = 'none';
-    chartWrap.style.display = 'block';
-    barsDiv.style.display = 'block';
+    // Show content
+    distEmpty.style.display = 'none';
+    distContent.style.display = 'flex';
 
-    // Update or create chart
-    const ctx = document.getElementById('selectedDistChart');
-
-    if (distributionChart) {
-        distributionChart.data.labels = labels;
-        distributionChart.data.datasets[0].data = counts;
-        distributionChart.update();
+    // Mini chart
+    const ctx = document.getElementById('distChart');
+    if (distChart) {
+        distChart.data.labels = labels;
+        distChart.data.datasets[0].data = counts;
+        distChart.update();
     } else {
-        distributionChart = new Chart(ctx, {
+        distChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 labels: labels,
@@ -317,68 +198,130 @@ function updateDistributionChart() {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                cutout: '60%',
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: true }
+                },
+                cutout: '55%',
             }
         });
     }
 
-    // Update bars
+    // Bars
     let barsHtml = '';
     labels.forEach((label, i) => {
-        const percent = ((counts[i] / total) * 100).toFixed(1);
+        const pct = ((counts[i] / total) * 100).toFixed(0);
         barsHtml += `
-            <div class="dist-item">
-                <span class="dist-label">${label}</span>
-                <div class="dist-bar">
-                    <div class="dist-fill" style="width: ${percent}%; background: ${CHART_COLORS[i % CHART_COLORS.length]}"></div>
+            <div class="dist-bar-row">
+                <span class="dist-bar-label">${label}</span>
+                <div class="dist-bar-track">
+                    <div class="dist-bar-fill" style="width: ${pct}%; background: ${CHART_COLORS[i % CHART_COLORS.length]}"></div>
                 </div>
-                <span class="dist-count">${formatNumber(counts[i])} (${percent}%)</span>
+                <span class="dist-bar-pct">${pct}%</span>
             </div>
         `;
     });
-    barsDiv.innerHTML = barsHtml;
+    distBars.innerHTML = barsHtml;
 }
 
+// ================================
+// Test Set Modal
+// ================================
 
+function initTestSetModal() {
+    if (typeof testSetDistribution === 'undefined' || !testSetDistribution || testSetDistribution.length === 0) return;
+
+    const total = testSetDistribution.reduce((sum, d) => sum + d.count, 0);
+
+    // Render bars
+    const barsDiv = document.getElementById('testSetBars');
+    if (barsDiv) {
+        let html = '';
+        testSetDistribution.forEach((item, i) => {
+            const pct = ((item.count / total) * 100).toFixed(1);
+            html += `
+                <div class="dist-bar-row">
+                    <span class="dist-bar-label">${item.label}</span>
+                    <div class="dist-bar-track">
+                        <div class="dist-bar-fill" style="width: ${pct}%; background: ${CHART_COLORS[i % CHART_COLORS.length]}"></div>
+                    </div>
+                    <span class="dist-bar-pct">${item.count} (${pct}%)</span>
+                </div>
+            `;
+        });
+        barsDiv.innerHTML = html;
+    }
+
+    // Create chart when modal opens
+    const modal = document.getElementById('testSetModal');
+    if (modal) {
+        const observer = new MutationObserver(function() {
+            if (modal.classList.contains('open') && !testSetChart) {
+                const ctx = document.getElementById('testSetChart');
+                if (ctx) {
+                    testSetChart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: testSetDistribution.map(d => d.label),
+                            datasets: [{
+                                data: testSetDistribution.map(d => d.count),
+                                backgroundColor: CHART_COLORS.slice(0, testSetDistribution.length),
+                                borderWidth: 0,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            cutout: '60%',
+                        }
+                    });
+                }
+            }
+        });
+        observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+    }
+}
+
+// ================================
 // Start Training
-
+// ================================
 
 async function startTraining(mode) {
-    let ids, algorithm, modelId, confirmMsg, btn;
+    const ids = Object.keys(selectedDatasets).map(Number);
+
+    if (ids.length === 0) {
+        toast('Select at least one dataset', 'error');
+        return;
+    }
+
+    let btn, confirmMsg, payload;
 
     if (mode === 'retrain') {
-        // Retrain mode
-        ids = Object.keys(retrainSelectedDatasets).map(Number);
-        modelId = selectedModelId;
-
-        if (!modelId) {
+        if (!selectedModelId) {
             toast('Select a model to retrain', 'error');
             return;
         }
-        if (ids.length === 0) {
-            toast('Select at least one dataset', 'error');
-            return;
-        }
-
-        confirmMsg = `Retrain ${selectedModelName} with ${ids.length} dataset(s)?`;
         btn = document.getElementById('retrainBtn');
+        confirmMsg = `Retrain ${selectedModelName} with ${ids.length} dataset(s)?`;
+        payload = {
+            upload_ids: ids,
+            mode: 'retrain',
+            base_model_id: selectedModelId
+        };
     } else {
-        // New training mode
-        ids = Object.keys(trainSelectedDatasets).map(Number);
-
-        if (ids.length === 0) {
-            toast('Select at least one dataset', 'error');
-            return;
-        }
-
         const algoRadio = document.querySelector('input[name="algorithm"]:checked');
-        algorithm = algoRadio ? algoRadio.value : 'logistic_regression';
+        const algorithm = algoRadio ? algoRadio.value : 'logistic_regression';
         const algoName = ALGORITHM_NAMES[algorithm];
 
-        confirmMsg = `Start training with ${algoName}?`;
         btn = document.getElementById('trainBtn');
+        confirmMsg = `Start training with ${algoName}?`;
+        payload = {
+            upload_ids: ids,
+            mode: 'new',
+            algorithm: algorithm
+        };
     }
 
     if (!confirm(confirmMsg)) return;
@@ -386,17 +329,6 @@ async function startTraining(mode) {
     btn.disabled = true;
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting...';
-
-    const payload = {
-        upload_ids: ids,
-        mode: mode,
-    };
-
-    if (mode === 'retrain') {
-        payload.base_model_id = modelId;
-    } else {
-        payload.algorithm = algorithm;
-    }
 
     const { ok, data } = await apiCall(URLS.startTraining, {
         method: 'POST',

@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function () {
     initComparisonChart();
 });
 
+
+
 // Deploy model
 async function deployModel(id, name) {
     if (!confirm(`Deploy "${name}" as the active model?`)) return;

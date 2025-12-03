@@ -264,28 +264,6 @@
     font-size: 0.7rem;
 }
 
-/* Label Chips */
-.dataset-labels {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    max-width: 200px;
-}
-
-.label-chip {
-    display: inline-block;
-    padding: 2px 8px;
-    background: var(--gray-100);
-    border-radius: 10px;
-    font-size: 0.7rem;
-    color: var(--gray-600);
-    white-space: nowrap;
-}
-
-.label-chip.more {
-    background: var(--gray-200);
-    color: var(--gray-500);
-}
 
 /* Dataset Status */
 .dataset-status {

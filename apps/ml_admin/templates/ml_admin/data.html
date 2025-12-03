@@ -159,15 +159,6 @@
                     </div>
                 </div>
 
-                <!-- Label Distribution -->
-                <div class="dataset-labels">
-                    {% for d in item.distribution|slice:":4" %}
-                    <span class="label-chip" title="{{ d.label }}: {{ d.count }}">{{ d.label|truncatechars:10 }}</span>
-                    {% endfor %}
-                    {% if item.distribution|length > 4 %}
-                    <span class="label-chip more">+{{ item.distribution|length|add:"-4" }}</span>
-                    {% endif %}
-                </div>
 
                 <!-- Status -->
                 <div class="dataset-status">
@@ -272,7 +263,7 @@
             {% endif %}
         {% endfor %}
     ];
-    
+
 </script>
 <script src="{% static 'ml_admin/js/data.js' %}"></script>
 {% endblock %}
