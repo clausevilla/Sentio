@@ -5,7 +5,8 @@ from typing import Dict, Tuple
 import nltk
 import pandas as pd
 import swifter as swifter
-from nltk.corpus import stopwords
+from nltk import pos_tag
+from nltk.corpus import stopwords, wordnet
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
@@ -20,7 +21,7 @@ class DataPreprocessingPipeline:
     Creates a new 'text_preprocessed' column with processed text.
     """
 
-    _nltk_downloaded = False
+    _nltk_downloaded = False  # Class-level flag to download only once
 
     def __init__(self):
         self._ensure_nltk_resources()
@@ -119,12 +120,38 @@ class DataPreprocessingPipeline:
         if cls._nltk_downloaded:
             return
 
-        # Just download - nltk handles "already exists" internally
-        resources = ['punkt', 'punkt_tab', 'stopwords', 'wordnet', 'omw-1.4']
+        resources = [
+            'punkt',
+            'punkt_tab',
+            'stopwords',
+            'wordnet',
+            'omw-1.4',
+            'averaged_perceptron_tagger',
+            'averaged_perceptron_tagger_eng',
+        ]
         for resource in resources:
             nltk.download(resource, quiet=True)
 
         cls._nltk_downloaded = True
+
+    def _get_wordnet_pos(self, treebank_tag):
+        """
+        Map Penn Treebank POS tags to WordNet POS tags for lemmatization.
+
+        Args:
+            treebank_tag: POS tag from nltk.pos_tag (e.g., 'VBG', 'NN', 'JJ')
+
+        Returns:
+            WordNet POS constant (VERB, ADJ, ADV, or NOUN as default)
+        """
+        if treebank_tag.startswith('V'):
+            return wordnet.VERB
+        elif treebank_tag.startswith('J'):
+            return wordnet.ADJ
+        elif treebank_tag.startswith('R'):
+            return wordnet.ADV
+        else:
+            return wordnet.NOUN  # Default to noun
 
     def preprocess_dataframe(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict]:
         """
@@ -180,7 +207,7 @@ class DataPreprocessingPipeline:
         5. Remove extra whitespace
         6. Tokenize text
         7. Remove stopwords
-        8. Lemmatize
+        8. POS tag and Lemmatize with correct word type
         9. Remove numbers (may change if we decide they are meaningful for classification)
         """
         if pd.isna(text):
@@ -218,8 +245,13 @@ class DataPreprocessingPipeline:
         # 8. Remove numbers
         tokens = [word for word in tokens if not word.isdigit()]
 
-        # 9. Lemmatize
-        tokens = [self.lemmatizer.lemmatize(word) for word in tokens]
+        # 9. POS tag and lemmatize with correct word type
+        if tokens:
+            tagged_tokens = pos_tag(tokens)
+            tokens = [
+                self.lemmatizer.lemmatize(word, self._get_wordnet_pos(tag))
+                for word, tag in tagged_tokens
+            ]
 
         # 10. Join tokens back into string
         return ' '.join(tokens)
