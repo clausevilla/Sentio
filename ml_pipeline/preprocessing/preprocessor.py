@@ -20,8 +20,10 @@ class DataPreprocessingPipeline:
     Creates a new 'text_preprocessed' column with processed text.
     """
 
+    _nltk_downloaded = False
+
     def __init__(self):
-        self._download_nltk_resources()
+        self._ensure_nltk_resources()
 
         self.lemmatizer = WordNetLemmatizer()
         self.stop_words = set(stopwords.words('english'))
@@ -111,16 +113,18 @@ class DataPreprocessingPipeline:
             'avg_tokens_after': 0,
         }
 
-    def _download_nltk_resources(self):
-        """Downloads required NLTK data if not already present."""
-        resources = ['punkt', 'punkt_tab', 'stopwords', 'wordnet', 'omw-1.4']
+    @classmethod
+    def _ensure_nltk_resources(cls):
+        """Download NLTK resources once per process."""
+        if cls._nltk_downloaded:
+            return
 
+        # Just download - nltk handles "already exists" internally
+        resources = ['punkt', 'punkt_tab', 'stopwords', 'wordnet', 'omw-1.4']
         for resource in resources:
-            try:
-                nltk.data.find(f'tokenizers/{resource}')
-            except LookupError:
-                logger.info(f'Downloading NLTK resource: {resource}')
-                nltk.download(resource, quiet=True)
+            nltk.download(resource, quiet=True)
+
+        cls._nltk_downloaded = True
 
     def preprocess_dataframe(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict]:
         """
