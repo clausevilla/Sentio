@@ -1,13 +1,12 @@
-/* Author: Lian Shi*/
-/* Disclaimer: LLM has used to generate initial layout, and fine tuning was done
-manually to different elements */
+<!-- Author: Lian Shi-->
 
 {% extends 'ml_admin/base_admin.html' %}
 {% load static %}
 {% block title %}Dashboard{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 {% block page_css %}
-<link rel="stylesheet" href="{% static 'ml_admin/css/dashboard.css' %}">{% endblock %}
+<link rel="stylesheet" href="{% static 'ml_admin/css/dashboard.css' %}">
+{% endblock %}
 
 {% block content %}
 <!-- Stats Row -->
@@ -54,27 +53,19 @@ manually to different elements */
                 <div class="model-name">{{ active_model.version_name }}</div>
                 <div class="model-metrics">
                     <div class="metric">
-                        <span class="metric-val">{% if active_model.accuracy
-                            %}{{ active_model.accuracy|floatformat:1 }}%{% else
-                            %}—{% endif %}</span>
+                        <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</span>
                         <span class="metric-lbl">Accuracy</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-val">{% if active_model.f1_score
-                            %}{{ active_model.f1_score|floatformat:3 }}{% else
-                            %}—{% endif %}</span>
+                        <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|floatformat:3 }}{% else %}—{% endif %}</span>
                         <span class="metric-lbl">F1</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-val">{% if active_model.precision
-                            %}{{ active_model.precision|floatformat:3 }}{% else
-                            %}—{% endif %}</span>
+                        <span class="metric-val">{% if active_model.precision %}{{ active_model.precision|floatformat:3 }}{% else %}—{% endif %}</span>
                         <span class="metric-lbl">Precision</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-val">{% if active_model.recall %}{{
-                            active_model.recall|floatformat:3 }}{% else %}—{%
-                            endif %}</span>
+                        <span class="metric-val">{% if active_model.recall %}{{ active_model.recall|floatformat:3 }}{% else %}—{% endif %}</span>
                         <span class="metric-lbl">Recall</span>
                     </div>
                 </div>
@@ -100,14 +91,10 @@ manually to different elements */
         </div>
         <div class="card-body">
             <div class="job-stats">
-                <div class="job-stat pending"><span>{{ jobs.pending }}</span>
-                    Pending</div>
-                <div class="job-stat running"><span>{{ jobs.running }}</span>
-                    Running</div>
-                <div class="job-stat completed"><span>{{ jobs.completed
-                        }}</span> Done</div>
-                <div class="job-stat failed"><span>{{ jobs.failed }}</span>
-                    Failed</div>
+                <div class="job-stat pending"><span>{{ jobs.pending }}</span> Pending</div>
+                <div class="job-stat running"><span>{{ jobs.running }}</span> Running</div>
+                <div class="job-stat completed"><span>{{ jobs.completed }}</span> Done</div>
+                <div class="job-stat failed"><span>{{ jobs.failed }}</span> Failed</div>
             </div>
             {% if recent_jobs %}
             <ul class="recent-list">
@@ -116,26 +103,21 @@ manually to different elements */
                     <div class="recent-item-left">
                         <span class="status-dot {{ job.status|lower }}"></span>
                         <div class="recent-item-info">
-                            <span class="recent-item-title">Job #{{ job.id
-                                }}</span>
+                            <span class="recent-item-title">Job #{{ job.id }}</span>
                             {% if job.data_upload %}
-                            <span class="recent-item-subtitle">{{
-                                job.data_upload.file_name }}</span>
+                            <span class="recent-item-subtitle">{{ job.data_upload.file_name }}</span>
                             {% endif %}
                         </div>
                     </div>
                     <div class="recent-item-right">
-                        <span class="badge {{ job.status|lower }}">{{ job.status
-                            }}</span>
-                        <span class="recent-item-date">{{
-                            job.started_at|date:"M d, H:i" }}</span>
+                        <span class="badge {{ job.status|lower }}">{{ job.status }}</span>
+                        <span class="recent-item-date">{{ job.started_at|date:"M d, H:i" }}</span>
                     </div>
                 </li>
                 {% endfor %}
             </ul>
             {% else %}
-            <p class="text-muted text-center" style="padding: 1rem;">No training
-                jobs yet</p>
+            <p class="text-muted text-center" style="padding: 1rem;">No training jobs yet</p>
             {% endif %}
         </div>
     </div>
@@ -158,25 +140,17 @@ manually to different elements */
                             <i class="fas fa-file-csv"></i>
                         </div>
                         <div class="recent-item-info">
-                            <span class="recent-item-title">{{ upload.file_name
-                                }}</span>
-                            <span class="recent-item-subtitle">{{
-                                upload.row_count|default:0 }} records</span>
+                            <span class="recent-item-title">{{ upload.file_name }}</span>
+                            <span class="recent-item-subtitle">{{ upload.row_count|default:0 }} records</span>
                         </div>
                     </div>
                     <div class="recent-item-right">
                         {% if upload.is_validated %}
                         <span class="badge success">Ready</span>
-                        {% elif upload.status == 'processing' %}
-                        <span class="badge running"><i class="fas fa-spinner fa-spin"></i>
-                            Processing</span>
-                        {% elif upload.status == 'failed' %}
-                        <span class="badge failed">Failed</span>
                         {% else %}
                         <span class="badge pending">Pending</span>
                         {% endif %}
-                        <span class="recent-item-date">{{
-                            upload.uploaded_at|date:"M d, Y" }}</span>
+                        <span class="recent-item-date">{{ upload.uploaded_at|date:"M d, Y" }}</span>
                     </div>
                 </li>
                 {% endfor %}
@@ -234,7 +208,7 @@ manually to different elements */
 {% block scripts %}
 {% if models_for_comparison %}
 <script>
-    const modelsCompareData = {{ models_for_comparison| safe }};
+    const modelsCompareData = {{ models_for_comparison|safe }};
 </script>
 <script src="{% static 'ml_admin/js/dashboard.js' %}"></script>
 {% endif %}

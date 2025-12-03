@@ -1,3 +1,6 @@
+<!--Author: Lian Shi-->
+
+
 {% extends 'ml_admin/base_admin.html' %}
 {% load static %}
 {% block title %}Users{% endblock %}
@@ -96,7 +99,7 @@
                 {% endfor %}
             </tbody>
         </table>
-        
+
         {% if page_obj.has_other_pages %}
         <div class="pagination">
             {% if page_obj.has_previous %}
@@ -104,9 +107,9 @@
                 <i class="fas fa-chevron-left"></i>
             </a>
             {% endif %}
-            
+
             <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            
+
             {% if page_obj.has_next %}
             <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="page-btn">
                 <i class="fas fa-chevron-right"></i>
