@@ -113,10 +113,17 @@ class DataPreprocessingPipeline:
 
     def _download_nltk_resources(self):
         """Downloads required NLTK data if not already present."""
-        resources = ['punkt', 'stopwords', 'wordnet', 'omw-1.4']
-        for resource in resources:
+        resources = {
+            'punkt': 'tokenizers/punkt',
+            'punkt_tab': 'tokenizers/punkt_tab',
+            'stopwords': 'corpora/stopwords',
+            'wordnet': 'corpora/wordnet',
+            'omw-1.4': 'corpora/omw-1.4',
+        }
+
+        for resource, path in resources.items():
             try:
-                nltk.data.find(f'tokenizers/{resource}')
+                nltk.data.find(path)
             except LookupError:
                 logger.info(f'Downloading NLTK resource: {resource}')
                 nltk.download(resource, quiet=True)
