@@ -213,10 +213,11 @@ document.getElementById('deleteDataForm')?.addEventListener('submit', async func
 
         if (response.ok) {
             closeDeleteDataModal();
-            showMessage('All your data has been deleted. Redirecting to consent page...', 'success');
-            // Redirect to consent page since consent was revoked
+            showMessage('All your data has been deleted. Redirecting...', 'success');
+            // Redirect to consent page for normal users since consent was revoked, but admin don't need to go to consent page
+
             setTimeout(() => {
-                window.location.href = '/accounts/consent/';
+                window.location.href = data.redirect_url || '/accounts/consent/';
             }, 2000);
         } else {
             if (data.error === 'incorrect_password') {

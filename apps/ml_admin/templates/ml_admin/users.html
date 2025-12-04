@@ -1,0 +1,142 @@
+<!--Author: Lian Shi-->
+
+
+{% extends 'ml_admin/base_admin.html' %}
+{% load static %}
+{% block title %}Users{% endblock %}
+{% block page_title %}Users{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'ml_admin/css/users.css' %}">{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="stats-row small">
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-value">{{ counts.total }}</div>
+        <div class="stat-label">Total Users</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fas fa-user-check"></i></div>
+        <div class="stat-value">{{ counts.active }}</div>
+        <div class="stat-label">Active</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon purple"><i class="fas fa-user-shield"></i></div>
+        <div class="stat-value">{{ counts.staff }}</div>
+        <div class="stat-label">Staff</div>
+    </div>
+</div>
+
+<!-- Filter -->
+<div class="filter-bar">
+    <select class="form-select" onchange="location.href='?status=' + this.value">
+        <option value="" {% if not status_filter %}selected{% endif %}>All Users</option>
+        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
+        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive Only</option>
+        <option value="staff" {% if status_filter == 'staff' %}selected{% endif %}>Staff Only</option>
+    </select>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+    <div class="card-body no-pad">
+        {% if page_obj %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Joined</th>
+                    <th>Last Login</th>
+                    <th>Predictions</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in page_obj %}
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar-sm">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <strong>{{ user.username }}</strong>
+                                {% if user.is_superuser %}
+                                <span class="badge info">Admin</span>
+                                {% elif user.is_staff %}
+                                <span class="badge info">Staff</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if user.email %}
+                        {{ user.email }}
+                        {% else %}
+                        <span class="text-muted">No email</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                    <td>
+                        {% if user.last_login %}
+                        {{ user.last_login|date:"M d, Y H:i" }}
+                        {% else %}
+                        <span class="text-muted">Never</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="prediction-count" data-user-id="{{ user.id }}">0</span>
+                    </td>
+                    <td>
+                        {% if user.is_active %}
+                        <span class="badge success">Active</span>
+                        {% else %}
+                        <span class="badge danger">Inactive</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="page-btn">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+
+            <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="page-btn">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-users"></i>
+            <h4>No Users Found</h4>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Populate prediction counts
+    const userStats = {{ user_stats|safe }};
+    document.querySelectorAll('.prediction-count').forEach(el => {
+        const userId = el.dataset.userId;
+        if (userStats[userId]) {
+            el.textContent = userStats[userId];
+            el.style.fontWeight = '600';
+        }
+    });
+</script>
+{% endblock %}

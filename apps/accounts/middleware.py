@@ -21,7 +21,7 @@ class ConsentMiddleware:
         '/static/',
         '/media/',
         '/admin/',
-        '/ml-admin/',
+        '/management/',
     ]
 
     # Exact paths that are exempt

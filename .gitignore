@@ -43,5 +43,8 @@ venv/
 # Database
 *.sqlite3
 
-# Pickle
+# Project specific
+sentio_results/
+ml-models/
+.pt
 #*.pkl
