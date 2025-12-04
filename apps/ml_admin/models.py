@@ -1,5 +1,6 @@
 # Author: Marcus Berggren, Claudia Sevilla Eslava, Julia McCall
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -145,3 +146,122 @@ class TrainingJob(models.Model):
     )
     error_message = models.TextField(null=True, blank=True)
     initiated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    data_uploads = models.ManyToManyField(DataUpload, related_name='training_jobs')
+
+
+class Parameter(models.Model):
+    """
+    Union of all model parameters. Each model uses relevant fields, others remain null.
+    """
+
+    SOLVER_CHOICES = [
+        ('lbfgs', 'lbfgs'),
+        ('liblinear', 'liblinear'),
+        ('newton-cg', 'newton-cg'),
+        ('newton-cholesky', 'newton-cholesky'),
+        ('sag', 'sag'),
+        ('saga', 'saga'),
+    ]
+
+    RF_MAX_FEATURES_CHOICES = [
+        ('sqrt', 'sqrt'),
+        ('log2', 'log2'),
+        ('None', 'None'),
+    ]
+
+    model_version = models.OneToOneField(
+        'ModelVersion', on_delete=models.CASCADE, related_name='parameter'
+    )
+
+    # Logistic Regression
+    max_iter = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    regularization_strength = models.FloatField(
+        null=True, blank=True, validators=[MinValueValidator(0.0)]
+    )
+    solver = models.CharField(
+        max_length=20, choices=SOLVER_CHOICES, null=True, blank=True
+    )
+
+    # Random Forest
+    n_estimators = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+
+    max_depth = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    min_samples_split = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(2)]
+    )
+    min_samples_leaf = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    rf_max_features = models.CharField(
+        max_length=20, choices=RF_MAX_FEATURES_CHOICES, null=True, blank=True
+    )
+    n_jobs = models.IntegerField(null=True, blank=True)
+
+    # TF-IDF (shared by traditional ML models)
+    ngram_range_min = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    ngram_range_max = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    min_df = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    max_df = models.FloatField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+    )
+    tfidf_max_features = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+
+    # LSTM
+    embed_dim = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    hidden_dim = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+
+    # Transformer
+    d_model = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    n_head = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    dim_feedforward = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+
+    # Shared (neural networks)
+    num_layers = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    dropout = models.FloatField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+    )
+    max_seq_length = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    vocab_size = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    learning_rate = models.FloatField(
+        null=True, blank=True, validators=[MinValueValidator(0.0)]
+    )
+    batch_size = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    epochs = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
