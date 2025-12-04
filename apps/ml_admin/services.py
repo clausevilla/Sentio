@@ -498,3 +498,60 @@ def activate_model(model_version_id: int) -> ModelVersion:
     model.is_active = True
     model.save()
     return model
+
+
+def _load_model_metadata(model_file_path: str) -> Dict[str, Any]:
+    """
+    Extract metadata from a model file.
+
+    Returns dict with model_type and metrics (if available).
+    """
+    metadata = {'model_type': None, 'metrics': {}}
+
+    if model_file_path.endswith('.pt'):
+        storage = StorageHandler(model_dir=settings.MODEL_DIR)
+        checkpoint = storage.load_neural_model(model_file_path)
+        metadata['model_type'] = checkpoint.get('model_type')
+        metadata['metrics'] = checkpoint.get('metrics') or {}
+
+    return metadata
+
+
+def register_model(
+    model_file_path: str, version_name: str = None, set_active: bool = False
+) -> ModelVersion:
+    """
+    Register a trained model into the database.
+
+    Reads model_type and metrics directly from the model file.
+    """
+    metadata = _load_model_metadata(model_file_path)
+    model_type = metadata['model_type']
+    metrics = metadata['metrics']
+
+    if model_type is None:
+        raise ValueError(f'Could not determine model_type from {model_file_path}')
+
+    if version_name is None:
+        existing_count = ModelVersion.objects.filter(model_type=model_type).count()
+        version_name = f'{model_type}_v{existing_count + 1}'
+
+    if set_active:
+        ModelVersion.objects.update(is_active=False)
+
+    model_version = ModelVersion.objects.create(
+        model_type=model_type,
+        version_name=version_name,
+        model_file_path=model_file_path,
+        accuracy=metrics.get('accuracy'),
+        precision=metrics.get('precision'),
+        recall=metrics.get('recall'),
+        f1_score=metrics.get('f1_score'),
+        roc_plot_base64=metrics.get('roc_plot_base64'),
+        confusion_matrix_base64=metrics.get('confusion_matrix_base64'),
+        is_active=set_active,
+    )
+
+    logger.info(f'Registered model: {version_name}')
+
+    return model_version

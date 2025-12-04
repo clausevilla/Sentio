@@ -356,6 +356,7 @@ class ModelTrainer:
             config=use_config,
             filename=f'{model_name}_{job_id}.pt',
             model_type=model_name,
+            metrics=metrics,
         )
 
         logger.info(
