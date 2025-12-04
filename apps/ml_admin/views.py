@@ -243,7 +243,7 @@ def upload_csv_api(request):
             for chunk in csv_file.chunks():
                 f.write(chunk)
 
-        #TODO : please update here matching pipeline types in model later (each uploaded dataset have different preprocessing pipeline types)
+        # TODO : please update here matching pipeline types in model later (each uploaded dataset have different preprocessing pipeline types)
         # waiting to be implemented later after preprocessing pipeline types are defined in model
         pipeline_type = request.POST.get('pipeline_type', 'full')
 
@@ -479,13 +479,37 @@ def update_upload_split_api(request, upload_id):
 
 @staff_member_required
 def get_dataset_records_api(request, upload_id):
+    """API to get records with sorting and filtering"""
     upload = get_object_or_404(DataUpload, id=upload_id)
     page = int(request.GET.get('page', 1))
-    per_page = 20
+    per_page = int(request.GET.get('per_page', 20))
+    sort_by = request.GET.get('sort_by', 'id')
+    sort_dir = request.GET.get('sort_dir', 'asc')
+    label_filter = request.GET.get('label', None)
 
-    records = DatasetRecord.objects.filter(data_upload=upload).order_by('id')
+    # Clamp per_page
+    per_page = max(10, min(per_page, 100))
+
+    # Validate sort column
+    allowed_sort_columns = ['id', 'text', 'label']
+    if sort_by not in allowed_sort_columns:
+        sort_by = 'id'
+
+    # Build order_by
+    order_by = f'-{sort_by}' if sort_dir == 'desc' else sort_by
+
+    # Base queryset
+    records = DatasetRecord.objects.filter(data_upload=upload)
+
+    # Apply label filter
+    if label_filter and label_filter != 'all':
+        records = records.filter(label__iexact=label_filter)
+
+    # Order and count
+    records = records.order_by(order_by)
     total = records.count()
 
+    # Paginate
     start = (page - 1) * per_page
     end = start + per_page
     records_page = records[start:end]
@@ -494,12 +518,16 @@ def get_dataset_records_api(request, upload_id):
         {
             'success': True,
             'records': [
-                {'id': r.id, 'text': r.text[:200], 'label': r.label}
+                {'id': r.id, 'text': r.text, 'label': r.label}  # Full text now
                 for r in records_page
             ],
             'total': total,
             'page': page,
-            'pages': (total + per_page - 1) // per_page,
+            'pages': max(1, (total + per_page - 1) // per_page),
+            'per_page': per_page,
+            'sort_by': sort_by,
+            'sort_dir': sort_dir,
+            'label': label_filter,
         }
     )
 
@@ -881,7 +909,7 @@ def analytics_view(request):
 
             avg = PredictionResult.objects.aggregate(avg=Avg('confidence'))
             prediction_stats['avg_confidence'] = (
-                round(avg['avg']*100, 1) if avg['avg'] else None
+                round(avg['avg'] * 100, 1) if avg['avg'] else None
             )
 
         except Exception as e:

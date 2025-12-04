@@ -91,6 +91,11 @@
     text-transform: uppercase;
 }
 
+.empty-state .btn {
+    margin-top: 2rem;
+}
+
+
 /* Job Stats - styled boxes */
 .job-stats {
     display: grid;

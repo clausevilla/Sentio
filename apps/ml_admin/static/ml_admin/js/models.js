@@ -233,7 +233,13 @@ function clearCompareSelection() {
 
 // Deploy model
 async function deployModel(id, name) {
-    if (!confirm(`Deploy "${name}" as the active model?`)) return;
+    const confirmed = await showConfirm({
+        title: 'Deploy Model',
+        message: `Deploy <strong>${name}</strong> as the active model?`,
+        type: 'info',
+        confirmText: 'Deploy'
+    });
+    if (!confirmed) return;
 
     const { ok, data } = await apiCall(`/management/api/models/${id}/activate/`, {
         method: 'POST'
@@ -249,7 +255,14 @@ async function deployModel(id, name) {
 
 // Delete model
 async function deleteModel(id, name) {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+        const confirmed = await showConfirm({
+        title: 'Delete Model',
+        message: `Delete <strong>${name}</strong>? This cannot be undone.`,
+        type: 'danger',
+        confirmText: 'Delete',
+        danger: true
+    });
+    if (!confirmed) return;
 
     const { ok, data } = await apiCall(`/management/api/models/${id}/delete/`, {
         method: 'POST'

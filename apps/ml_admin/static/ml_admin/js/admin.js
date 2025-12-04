@@ -247,3 +247,53 @@ function createBarChart(canvasId, labels, data, options = {}) {
         options: { ...CHART_DEFAULTS.bar, ...options }
     });
 }
+
+
+// ================================
+// Custom Confirm Modal
+// ================================
+
+function showConfirm({ title, message, type = 'warning', confirmText = 'Confirm', cancelText = 'Cancel', danger = false }) {
+    return new Promise((resolve) => {
+        // Remove existing
+        const existing = document.getElementById('customConfirmModal');
+        if (existing) existing.remove();
+
+        const icons = {
+            warning: 'fa-exclamation-triangle',
+            danger: 'fa-trash',
+            info: 'fa-info-circle',
+            success: 'fa-check-circle'
+        };
+
+        const modal = document.createElement('div');
+        modal.id = 'customConfirmModal';
+        modal.className = 'confirm-modal';
+        modal.innerHTML = `
+            <div class="confirm-box">
+                <div class="confirm-header ${type}">
+                    <i class="fas ${icons[type] || icons.warning}"></i>
+                    <h4>${title}</h4>
+                </div>
+                <div class="confirm-body">${message}</div>
+                <div class="confirm-footer">
+                    <button class="btn btn-cancel">${cancelText}</button>
+                    <button class="btn btn-confirm ${danger ? 'danger' : ''}">${confirmText}</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        requestAnimationFrame(() => modal.classList.add('open'));
+
+        const closeIt = (result) => {
+            modal.classList.remove('open');
+            setTimeout(() => modal.remove(), 200);
+            resolve(result);
+        };
+
+        modal.querySelector('.btn-cancel').onclick = () => closeIt(false);
+        modal.querySelector('.btn-confirm').onclick = () => closeIt(true);
+        modal.onclick = (e) => { if (e.target === modal) closeIt(false); };
+    });
+}

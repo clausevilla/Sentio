@@ -109,6 +109,20 @@
     background: rgba(59, 130, 246, 0.12);
 }
 
+.empty-state .btn {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    margin-top: 2rem;
+}
+
+.empty-state .btn i {
+    font-size: 2rem;
+}
+
 /* Column widths */
 .col-checkbox { width: 50px; text-align: center; }
 .col-name { min-width: 200px; }

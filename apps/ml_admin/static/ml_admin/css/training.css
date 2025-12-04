@@ -146,7 +146,7 @@
 }
 
 .algo-card .algo-desc {
-    font-size: 10px;
+    font-size: 13px;
     color: var(--gray-500);
     line-height: 1.3;
 }
@@ -156,13 +156,20 @@
 }
 
 .algo-option input:checked + .algo-card {
-    border-color: var(--primary);
-    background: rgba(74, 124, 89, 0.06);
+    border: 1.5pt solid var(--primary);
+    background: rgba(74, 124, 89, 0.069);
+    color: var(--primary);
+
 }
 
 .algo-option input:checked + .algo-card i {
     color: var(--primary);
 }
+
+.algo-option input:checked + .algo-card algo-desc {
+    color: var(--primary);
+}
+
 
 /* ================================
    Model List - Full Height Scroll
@@ -194,9 +201,8 @@
 }
 
 .model-option.selected {
-    border-color: var(--primary);
+    border:1.5pt solid var(--primary);
     background: rgba(74, 124, 89, 0.06);
-    border-left: 3px solid var(--primary);
 }
 
 .model-option input {
@@ -236,7 +242,7 @@
 }
 
 /* ================================
-   Dataset List - Fixed Height Scroll
+   Dataset List
 ================================ */
 .dataset-list {
     display: flex;
@@ -268,7 +274,7 @@
 .dataset-option.selected {
     border-color: var(--primary);
     background: rgba(74, 124, 89, 0.06);
-    border-left: 3px solid var(--primary);
+    border: 1.5pt solid var(--primary);
 }
 
 .dataset-option input[type="checkbox"] {
@@ -324,7 +330,8 @@
     border: 1px solid var(--gray-200);
     border-radius: var(--radius);
     padding: 0.625rem;
-    min-height: 90px;
+    height: 90px;
+    overflow: hidden;
 }
 
 .dist-empty {
@@ -337,6 +344,7 @@
     color: var(--gray-400);
     font-size: var(--font-xs);
     height: 100%;
+    box-sizing: border-box;
 }
 
 .dist-empty i {
@@ -352,7 +360,7 @@
 
 .dist-chart-wrap {
     width: 65px;
-    height: 65px;
+    height: 80px;
     flex-shrink: 0;
 }
 
@@ -420,13 +428,14 @@
 
 .summary-items {
     display: flex;
-    gap: 2.5rem;
+    gap: 3rem;
 }
 
 .summary-item {
     display: flex;
     flex-direction: column;
-    gap: 0.125rem;
+    gap: 0.25rem;
+    min-width: 180pt;
 }
 
 .sum-label {
@@ -443,7 +452,7 @@
 }
 
 .summary-action .btn {
-    min-width: 160px;
+    min-width: 200px;
 }
 
 /* ================================

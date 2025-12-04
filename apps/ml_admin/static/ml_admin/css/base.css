@@ -260,6 +260,83 @@ body {
 .text-center { text-align: center; }
 .hint { font-size: 0.85rem; color: var(--gray-400); font-weight: 400; }
 
+/* Custom Confirm Modal */
+.confirm-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+}
+.confirm-modal.open {
+    opacity: 1;
+    visibility: visible;
+}
+.confirm-box {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    max-width: 380px;
+    width: 90%;
+    transform: scale(0.9);
+    transition: transform 0.2s;
+}
+.confirm-modal.open .confirm-box {
+    transform: scale(1);
+}
+.confirm-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.confirm-header i { font-size: 1.1rem; }
+.confirm-header.warning i { color: #F39C12; }
+.confirm-header.danger i { color: #E74C3C; }
+.confirm-header.info i { color: #3498DB; }
+.confirm-header h4 { margin: 0; font-size: 0.95rem; }
+.confirm-body {
+    padding: 1rem 1.25rem;
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+.confirm-footer {
+    padding: 0.875rem 1.25rem;
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+.confirm-footer .btn {
+    padding: 0.4rem 1rem;
+    font-size: 0.8rem;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.btn-cancel {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-300);
+    color: var(--gray-700);
+}
+.btn-cancel:hover { background: var(--gray-200); }
+.btn-confirm {
+    background: var(--primary);
+    border: 1px solid var(--primary);
+    color: white;
+}
+.btn-confirm:hover { opacity: 0.9; }
+.btn-confirm.danger {
+    background: #E74C3C;
+    border-color: #E74C3C;
+}
+
 /* Responsive - Base */
 @media (max-width: 1024px) {
     .grid-2 { grid-template-columns: 1fr; }
