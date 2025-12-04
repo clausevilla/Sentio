@@ -30,7 +30,7 @@
     <div class="stat-card">
         <div class="stat-icon purple"><i class="fas fa-bullseye"></i></div>
         <div class="stat-info">
-            <div class="stat-value">{% if active_model and active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</div>
+            <div class="stat-value">{% if active_model and active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}{% else %}—{% endif %}</div>
             <div class="stat-label">Active Accuracy</div>
         </div>
     </div>
@@ -48,7 +48,7 @@
 <div class="alert success" style="margin-bottom: 1.5rem;">
     <i class="fas fa-check-circle"></i>
     <span><strong>Active Model:</strong> {{ active_model.version_name }} ({{ active_model.get_model_type_display }})
-    {% if active_model.accuracy %}· Accuracy: {{ active_model.accuracy|floatformat:1 }}%{% endif %}
+    {% if active_model.accuracy %}· Accuracy: {{ active_model.accuracy|floatformat:1 }}{% endif %}
     {% if active_model.f1_score %}· F1: {{ active_model.f1_score|floatformat:3 }}{% endif %}</span>
 </div>
 {% else %}
@@ -143,7 +143,7 @@
                         <td class="col-metric">
                             {% if item.model.accuracy %}
                             <span class="metric-value-cell {% if item.model.accuracy >= 80 %}good{% elif item.model.accuracy >= 60 %}okay{% else %}low{% endif %}">
-                                {{ item.model.accuracy|floatformat:1 }}%
+                                {{ item.model.accuracy|floatformat:1 }}
                             </span>
                             {% else %}
                             <span class="metric-empty">—</span>
@@ -365,7 +365,7 @@
                 <h4><i class="fas fa-bullseye"></i> Performance Metrics</h4>
                 <div class="metrics-grid-modal">
                     <div class="metric-box-modal ${model.accuracy !== null && model.accuracy >= 80 ? 'good' : ''}">
-                        <span class="metric-value">${model.accuracy !== null ? model.accuracy.toFixed(1) + '%' : '—'}</span>
+                        <span class="metric-value">${model.accuracy !== null ? model.accuracy.toFixed(1) : '—'}</span>
                         <span class="metric-label">Accuracy</span>
                     </div>
                     <div class="metric-box-modal">
