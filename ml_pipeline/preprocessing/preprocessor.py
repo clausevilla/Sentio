@@ -163,9 +163,11 @@ class DataPreprocessingPipeline:
         logger.info(f'Processing {len(df):,} rows')
 
         # Perform specific set of preprocessing steps depending on model type
-        if model_type == 'classical':
+        if model_type == 'traditional':
             # For classic ML models, all preprocessing steps included
-            df['processed_text'] = df['text'].swifter.apply(self._preprocess_classical)
+            df['processed_text'] = df['text'].swifter.apply(
+                self._preprocess_traditional
+            )
         elif model_type == 'rnn':
             # For RNN, less preprocessing
             df['processed_text'] = df['text'].swifter.apply(self._preprocess_rnn)
@@ -176,13 +178,13 @@ class DataPreprocessingPipeline:
             )
         else:
             raise ValueError(
-                "Invalid model type. Must be 'classical', 'rnn', or 'transformer'"
+                "Invalid model type. Must be 'traditional', 'rnn', or 'transformer'"
             )
 
         return df
 
-    # Preprocessing branch for classical ML (logistic regression)
-    def _preprocess_classical(self, text):
+    # Preprocessing branch for traditional ML (logistic regression)
+    def _preprocess_traditional(self, text):
         text = self._expand_contractions(str(text).lower())
         text = re.sub(r'[^a-z\s]', ' ', text)
         tokens = word_tokenize(text)
