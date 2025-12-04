@@ -1,9 +1,11 @@
 # Author: Karl Byland
 
 import joblib
+import pandas as pd
 
 from apps.ml_admin.models import ModelVersion
 from apps.predictions.models import PredictionResult, TextSubmission
+from ml_pipeline.data_cleaning.cleaner import DataCleaningPipeline
 
 # Loads the model
 MODEL_PATH = 'ml_pipeline/toy_models/LRmodel.pkl'  # Path to model used to predict
@@ -23,9 +25,17 @@ def analyze_text(analyzed_text):
     return (label, confidence, model_version)
 
 
+def clean_user_input(text):
+    data = {'text': [text]}
+    df = pd.DataFrame(data)
+    pipeline = DataCleaningPipeline()
+    df = pipeline.fix_encoding(df)
+    return df['text']
+
+
 def get_prediction_result(user, user_text):
     prediction, confidence, model_version = analyze_text(user_text)
-
+    user_text = clean_user_input(user_text)
     if user:
         save_prediction_to_database(
             user, user_text, prediction, confidence, model_version

@@ -104,6 +104,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 return false;
             }
 
+            if(textInput.value.trim().split(" ").length < 3) {
+                e.preventDefault();
+                showAlert('Please enter at least 3 words of text to analyze.');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+                return false;
+            }
+
             // Disable submit button to prevent double submission
             if (analyzeBtn) {
                 analyzeBtn.disabled = true;
