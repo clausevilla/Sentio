@@ -1,0 +1,85 @@
+/* Author: Lian Shi*/
+/*Disclaimer: LLM has used to generate initial style, and fine tuning was done manually to different elements */
+
+
+/* ========================================
+   ML Admin - Models Page
+   ======================================== */
+
+/* Models Grid */
+.models-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Model Card */
+.model-card { transition: all 0.2s; }
+
+.model-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.model-card.active { border: 2px solid var(--primary); }
+
+.model-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.model-date { font-size: 0.85rem; color: var(--gray-400); }
+
+/* Metrics Grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.metric-box {
+    background: var(--gray-50);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.metric-value { display: block; font-size: 1.1rem; font-weight: 700; color: var(--gray-800); }
+.metric-label { font-size: 0.7rem; color: var(--gray-500); text-transform: uppercase; }
+
+/* Model Info */
+.model-info {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    margin-bottom: 1rem;
+}
+
+.model-info i { margin-right: 4px; }
+
+/* Model Actions */
+.model-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+.deployed-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+@media (max-width: 1024px) {
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .models-grid { grid-template-columns: 1fr; }
+}

@@ -1,3 +1,5 @@
+# Author: Julia McCall
+
 import logging
 import os
 from typing import Dict, Tuple

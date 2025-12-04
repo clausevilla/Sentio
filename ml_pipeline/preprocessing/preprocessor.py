@@ -1,11 +1,13 @@
+# Author: Julia McCall
+
 import logging
 import re
 from typing import Dict, Tuple
 
 import nltk
 import pandas as pd
-import swifter as swifter
-from nltk.corpus import stopwords
+from nltk import pos_tag, word_tokenize
+from nltk.corpus import stopwords, wordnet
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
@@ -22,9 +24,31 @@ class DataPreprocessingPipeline:
 
     def __init__(self):
         self._download_nltk_resources()
-
         self.lemmatizer = WordNetLemmatizer()
         self.stop_words = set(stopwords.words('english'))
+
+        # Stopwords to keep to preserve mental health context
+        self.keep_words = {
+            'no',
+            'not',
+            'nor',
+            'never',
+            'always',
+            "n't",
+            'either',
+            'neither',
+            'i',
+            'me',
+            'my',
+            'myself',
+            'we',
+            'us',
+            'our',
+            'ourselves',
+        }
+
+        # Remove the 'keep_words' from the standard stopword set
+        self.refined_stop_words = self.stop_words - self.keep_words
 
         # Dictionary for mapping the most common contractions
         self.contractions = {
@@ -121,7 +145,9 @@ class DataPreprocessingPipeline:
                 logger.info(f'Downloading NLTK resource: {resource}')
                 nltk.download(resource, quiet=True)
 
-    def preprocess_dataframe(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict]:
+    def preprocess_dataframe(
+        self, df: pd.DataFrame, model_type: str
+    ) -> Tuple[pd.DataFrame, Dict]:
         """
         Preprocesses text in a DataFrame.
 
@@ -131,41 +157,61 @@ class DataPreprocessingPipeline:
         Returns:
             Tuple of (df_with_preprocessed_text, report_dict)
         """
+        import swifter as swifter
+
         logger.info('=== Starting Data Preprocessing Pipeline ===')
         logger.info(f'Processing {len(df):,} rows')
 
-        try:
-            # Calculate average tokens before preprocessing
-            df['_temp_tokens'] = df['text'].apply(lambda x: len(str(x).split()))
-            self.report['avg_tokens_before'] = df['_temp_tokens'].mean()
-            df = df.drop(columns=['_temp_tokens'])
-
-            # Apply preprocessing
-            df['text_preprocessed'] = df['text'].swifter.apply(
-                self._preprocess_single_text
+        # Perform specific set of preprocessing steps depending on model type
+        if model_type == 'traditional':
+            # For classic ML models, all preprocessing steps included
+            df['processed_text'] = df['text'].swifter.apply(
+                self._preprocess_traditional
+            )
+        elif model_type == 'rnn':
+            # For RNN, less preprocessing
+            df['processed_text'] = df['text'].swifter.apply(self._preprocess_rnn)
+        elif model_type == 'transformer':
+            # For transformer, just basic cleanup steps
+            df['processed_text'] = df['text'].swifter.apply(
+                self._preprocess_transformer
+            )
+        else:
+            raise ValueError(
+                "Invalid model type. Must be 'traditional', 'rnn', or 'transformer'"
             )
 
-            # Calculate average tokens after preprocessing
-            df['_temp_tokens'] = df['text_preprocessed'].apply(lambda x: len(x.split()))
-            self.report['avg_tokens_after'] = df['_temp_tokens'].mean()
-            df = df.drop(columns=['_temp_tokens'])
+        return df
 
-            self.report['rows_processed'] = len(df)
+    # Preprocessing branch for traditional ML (logistic regression)
+    def _preprocess_traditional(self, text):
+        text = self._expand_contractions(str(text).lower())
+        text = re.sub(r'[^a-z\s]', ' ', text)
+        tokens = word_tokenize(text)
+        tokens = [w for w in tokens if w not in self.refined_stop_words]
+        tokens = [self.lemmatizer.lemmatize(w) for w in tokens]
+        return ' '.join(tokens)
 
-            logger.info('=== Preprocessing complete ===')
-            logger.info(
-                f'   Avg tokens: {self.report["avg_tokens_before"]:.1f} → {self.report["avg_tokens_after"]:.1f}'
-            )
+    # Preprocessing branch for RNN (LSTM)
+    def _preprocess_rnn(self, text):
+        # No stopword removal and no lemmatization
+        text = self._expand_contractions(str(text).lower())
+        text = re.sub(r'([?.!,])', r' \1 ', text)
+        text = re.sub(r'[^a-z\s?.!,]', ' ', text)
+        text = re.sub(r'\s+', ' ', text).strip()
+        return text
 
-            return df, self.report
-
-        except Exception as e:
-            logger.error(f'Error in preprocessing: {str(e)}', exc_info=True)
-            raise
+    # Preprocessing branch for transformer
+    def _preprocess_transformer(self, text):
+        # Very minimal preprocessing to preserve context
+        text = str(text)
+        text = re.sub(r'\s+', ' ', text).strip()
+        return text
 
     def _preprocess_single_text(self, text: str) -> str:
         """
-        Preprocesses a single text string.
+        Used in unit testing.
+        Performs all preprocessing steps on a single text string.
 
         Steps:
         1. Remove URLs, mentions, hashtag symbols
@@ -208,16 +254,35 @@ class DataPreprocessingPipeline:
         tokens = word_tokenize(text)
 
         # 7. Remove stopwords
-        tokens = [word for word in tokens if word not in self.stop_words]
+        tokens = [word for word in tokens if word not in self.refined_stop_words]
 
         # 8. Remove numbers
         tokens = [word for word in tokens if not word.isdigit()]
 
         # 9. Lemmatize
-        tokens = [self.lemmatizer.lemmatize(word) for word in tokens]
+        tokens = word_tokenize(text)
+        tags = pos_tag(tokens)
+        lemmatized = [
+            self.lemmatizer.lemmatize(t, self.get_wordnet_pos(pos)) for t, pos in tags
+        ]
 
         # 10. Join tokens back into string
-        return ' '.join(tokens)
+        return ' '.join(lemmatized)
+
+    def get_wordnet_pos(treebank_tag):
+        """
+        Helper function for getting the grammatical type of the token.
+        """
+        if treebank_tag.startswith('J'):
+            return wordnet.ADJ
+        elif treebank_tag.startswith('V'):
+            return wordnet.VERB
+        elif treebank_tag.startswith('N'):
+            return wordnet.NOUN
+        elif treebank_tag.startswith('R'):
+            return wordnet.ADV
+        else:
+            return wordnet.NOUN
 
     def _expand_contractions(self, text: str) -> str:
         """Expand contractions in text."""

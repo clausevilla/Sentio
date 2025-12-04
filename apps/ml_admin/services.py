@@ -1,3 +1,5 @@
+# Authors: Julia McCall, Claudia Sevilla Eslava
+
 import csv
 import logging
 import threading
@@ -21,17 +23,37 @@ CATEGORY_MAP = {  # Define category mapping
     'stress': 5,
 }
 
+ALGO_TO_PREPROCESSING_TYPE = {
+    # Classical Algorithms share the same preprocessing
+    'logistic_regression': 'classical',
+    'random_forest': 'classical',
+    # Deep Learning models have specific needs
+    'rnn': 'rnn',
+    'transformer': 'transformer',
+}
 
-def trigger_full_pipeline_in_background(data_upload_id: int):
+
+def trigger_full_pipeline_in_background(
+    data_upload_id: int,
+    dataset_type: str = 'unlabeled',  # !!! PLACEHOLDER
+    algorithm_key: str = 'logistic_regression',  # !!! PLACEHOLDER
+):
     """
     Wrapper to run the pipeline in a separate thread.
     """
-    thread = threading.Thread(target=run_full_pipeline, args=(data_upload_id,))
+    thread = threading.Thread(
+        target=run_full_pipeline, args=(data_upload_id, dataset_type, algorithm_key)
+    )
     thread.daemon = True
     thread.start()
 
 
-def run_full_pipeline(data_upload_id: int):
+def run_full_pipeline(
+    data_upload_id: int,
+    dataset_type: str = 'train',
+    algorithm_key: str = 'logistic_regression',
+):
+    # !!! PLACEHOLDERS here
     """
     Function used for interacting through the UI.
 
@@ -46,15 +68,24 @@ def run_full_pipeline(data_upload_id: int):
 
         upload.status = 'processing'
         upload.save()
-        logger.info(f'Started pipeline for {upload.file_name}')
+        logger.info(f'Started pipeline for {upload.file_name} with {algorithm_key}')
 
         # Run cleaning pipeline
         cleaner = DataCleaningPipeline()
         df, report = cleaner.clean_file(upload.file_path)
 
+        # Determine the correct preprocessing branch to run based on the algorithm key
+        model_type = ALGO_TO_PREPROCESSING_TYPE.get(
+            algorithm_key, 'traditional'
+        )  # Fallback
+
+        logger.info(
+            f"Algorithm '{algorithm_key}' selected. Branching to '{model_type}' preprocessing."
+        )
+
         # Run preprocessing pipeline, passing the cleaned data frame to the preprocessor
         preprocessor = DataPreprocessingPipeline()
-        df, prep_report = preprocessor.preprocess_dataframe(df)
+        df, prep_report = preprocessor.preprocess_dataframe(df, model_type=model_type)
         report.update(prep_report)
 
         # Filter out preprocessed rows that have text shorter than 3 words
@@ -66,7 +97,7 @@ def run_full_pipeline(data_upload_id: int):
         # Save clean, preprocessed data to database
         df['text'] = df['text_preprocessed']
         df.reset_index(drop=True, inplace=True)
-        _save_dataset_records(df, upload)
+        _save_dataset_records(df, upload, dataset_type)
         _finalize_upload(upload, len(df))
 
         logger.info(f'Full pipeline finished successfully. Saved {len(df)} rows.')
@@ -82,7 +113,8 @@ def run_full_pipeline(data_upload_id: int):
             upload = DataUpload.objects.get(id=data_upload_id)
             upload.status = 'failed'
             upload.save()
-        except:
+        except Exception as e:
+            logger.exception(f'Failed to update upload status: {e}')
             pass
         error = f'Pipeline failed: {str(e)}'
         logger.exception(error)
@@ -121,7 +153,8 @@ def run_cleaning_only(data_upload_id: int):
             upload = DataUpload.objects.get(id=data_upload_id)
             upload.status = 'failed'
             upload.save()
-        except:
+        except Exception as e:
+            logger.exception(f'Failed to update upload status: {e}')
             pass
         error = f'Cleaning pipeline failed: {str(e)}'
         logger.exception(error)
@@ -190,14 +223,17 @@ def run_preprocessing_only(data_upload_id: int):
             upload = DataUpload.objects.get(id=data_upload_id)
             upload.status = 'failed'
             upload.save()
-        except:
+        except Exception as e:
+            logger.exception(f'Failed to update upload status: {e}')
             pass
         error = f'Preprocessing pipeline failed: {str(e)}'
         logger.exception(error)
         return {'success': False, 'error': error}
 
 
-def _save_dataset_records(df: pd.DataFrame, upload: DataUpload):
+def _save_dataset_records(
+    df: pd.DataFrame, upload: DataUpload, dataset_type: str = 'train'
+):
     """
     Handles the bulk creation of records.
     """
@@ -216,7 +252,7 @@ def _save_dataset_records(df: pd.DataFrame, upload: DataUpload):
                 depression=row['depression'],
                 suicidal=row['suicidal'],
                 stress=row['stress'],
-                dataset_type='train',
+                dataset_type=dataset_type,
             )
         )
 

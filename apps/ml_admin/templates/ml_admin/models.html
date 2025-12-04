@@ -1,0 +1,187 @@
+<!-- Author: Lian Shi-->
+<!-- Disclaimer: LLM has used to generate initial layout, and fine tuning was done manually to different elements -->
+
+{% extends 'ml_admin/base_admin.html' %}
+{% load static %}
+{% block title %}Models{% endblock %}
+{% block page_title %}Model Versions{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'ml_admin/css/models.css' %}">{% endblock %}
+
+{% block content %}
+{% if active_model %}
+<div class="alert success">
+    <i class="fas fa-check-circle"></i>
+    <span><strong>Active:</strong> {{ active_model.version_name }}
+    {% if active_model.accuracy %}• {{ active_model.accuracy|floatformat:1 }}% accuracy{% endif %}</span>
+</div>
+{% else %}
+<div class="alert warning">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span><strong>No active model!</strong> Deploy a model to enable predictions.</span>
+</div>
+{% endif %}
+
+<!-- Models Grid -->
+<div class="models-grid">
+    {% for item in models %}
+    <div class="card model-card {% if item.model.is_active %}active{% endif %}">
+        <div class="card-header">
+            <div class="model-title">
+                <span>{{ item.model.version_name }}</span>
+                {% if item.model.is_active %}
+                <span class="badge success">Active</span>
+                {% endif %}
+            </div>
+            <span class="model-date">{{ item.model.created_at|date:"M d, Y" }}</span>
+        </div>
+        <div class="card-body">
+            <!-- Metrics Grid -->
+            <div class="metrics-grid">
+                <div class="metric-box">
+                    <span class="metric-value">{% if item.model.accuracy %}{{ item.model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</span>
+                    <span class="metric-label">Accuracy</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-value">{% if item.model.precision %}{{ item.model.precision|floatformat:3 }}{% else %}—{% endif %}</span>
+                    <span class="metric-label">Precision</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-value">{% if item.model.recall %}{{ item.model.recall|floatformat:3 }}{% else %}—{% endif %}</span>
+                    <span class="metric-label">Recall</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-value">{% if item.model.f1_score %}{{ item.model.f1_score|floatformat:3 }}{% else %}—{% endif %}</span>
+                    <span class="metric-label">F1 Score</span>
+                </div>
+            </div>
+
+            <!-- Training Info -->
+            {% if item.job %}
+            <div class="model-info">
+                <span><i class="fas fa-database"></i> {{ item.job.data_upload.file_name|default:"-"|truncatechars:20 }}</span>
+                <span><i class="fas fa-user"></i> {{ item.model.created_by.username|default:"-" }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="model-actions">
+                <button class="btn btn-sm btn-secondary" onclick="showModelDetail({{ item.model.id }})">
+                    <i class="fas fa-eye"></i> Details
+                </button>
+                {% if not item.model.is_active %}
+                <button class="btn btn-sm btn-primary" onclick="deployModel({{ item.model.id }}, '{{ item.model.version_name }}')">
+                    <i class="fas fa-rocket"></i> Deploy
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteModel({{ item.model.id }}, '{{ item.model.version_name }}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+                {% else %}
+                <span class="deployed-badge"><i class="fas fa-check"></i> Deployed</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state full">
+        <i class="fas fa-cube"></i>
+        <h4>No Models Yet</h4>
+        <p>Train your first model to see it here</p>
+        <a href="{% url 'ml_admin:training' %}" class="btn btn-primary">
+            <i class="fas fa-flask"></i> Go to Training
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Model Comparison Chart -->
+{% if models|length > 1 %}
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-line"></i> Model Comparison</h3>
+    </div>
+    <div class="card-body">
+        <div class="chart-wrap"><canvas id="compareChart"></canvas></div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Model Detail Modal -->
+<div class="modal" id="modelModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-cube"></i> <span id="modalModelName">Model Details</span></h3>
+            <button class="modal-close" onclick="closeModal('modelModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="modalContent"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // TODO: Model data for JS TEMPRORARILY NOW, TO BE REPLACED WITH ACTUAL DATA
+    const modelsData = [
+        {% for item in models %}
+        {
+            id: {{ item.model.id }},
+            name: '{{ item.model.version_name|escapejs }}',
+            accuracy: {{ item.model.accuracy|default:0 }},
+            precision: {{ item.model.precision|default:0 }},
+            recall: {{ item.model.recall|default:0 }},
+            f1: {{ item.model.f1_score|default:0 }},
+            created_at: '{{ item.model.created_at|date:"M d, Y H:i" }}',
+            created_by: '{{ item.model.created_by.username|default:"-"|escapejs }}',
+            file_path: '{{ item.model.model_file_path|default:"-"|escapejs }}',
+            is_active: {{ item.model.is_active|yesno:"true,false" }},
+            job_dataset: '{% if item.job %}{{ item.job.data_upload.file_name|default:"-"|escapejs }}{% else %}-{% endif %}',
+        },
+        {% endfor %}
+    ];
+
+    // Create lookup by ID
+    const modelsById = {};
+    modelsData.forEach(m => modelsById[m.id] = m);
+
+    // Show model detail in modal
+    function showModelDetail(id) {
+        const model = modelsById[id];
+        if (!model) return;
+
+        document.getElementById('modalModelName').textContent = model.name;
+        document.getElementById('modalContent').innerHTML = `
+            <div class="detail-section">
+                <h4>Performance Metrics</h4>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <span class="metric-value">${model.accuracy ? model.accuracy.toFixed(1) + '%' : '—'}</span>
+                        <span class="metric-label">Accuracy</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-value">${model.precision ? model.precision.toFixed(3) : '—'}</span>
+                        <span class="metric-label">Precision</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-value">${model.recall ? model.recall.toFixed(3) : '—'}</span>
+                        <span class="metric-label">Recall</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-value">${model.f1 ? model.f1.toFixed(3) : '—'}</span>
+                        <span class="metric-label">F1 Score</span>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-section">
+                <h4>Information</h4>
+                <div class="detail-rows">
+                    <div class="detail-row"><span>Created:</span><strong>${model.created_at}</strong></div>
+                    <div class="detail-row"><span>Created By:</span><strong>${model.created_by}</strong></div>
+                    <div class="detail-row"><span>Dataset:</span><strong>${model.job_dataset}</strong></div>
+                    <div class="detail-row"><span>File:</span><strong class="code">${model.file_path}</strong></div>
+                </div>
+            </div>
+        `;
+        openModal('modelModal');
+    }
+</script>
+<script src="{% static 'ml_admin/js/models.js' %}"></script>
+{% endblock %}
