@@ -1,8 +1,9 @@
-<!--Author: Lian Shi-->
+<!--Author: Lian Shi, Marcus Berggren-->
 <!-- Disclaimer: LLM has used to generate initial layout related to training, and fine tuning was done manually to different elements -->
 
 {% extends 'ml_admin/base_admin.html' %}
 {% load static %}
+{% load filters %}
 {% block title %}Training{% endblock %}
 {% block page_title %}Training Center{% endblock %}
 {% block page_css %}<link rel="stylesheet" href="{% static 'ml_admin/css/training.css' %}">{% endblock %}
@@ -87,8 +88,8 @@
                                     {% if model.created_at%} - {{ model.created_at}}{% endif %}
                                 </span>
                                 <span class="model-meta">
-                                    {% if model.accuracy %} Accuray: {{ model.accuracy|floatformat:1 }}{% endif %}
-                                    {% if model.f1_score %} | F1: {{ model.f1_score|floatformat:2 }}{% endif %}
+                                    {% if model.accuracy %} Accuray: {{ model.accuracy|percentage }}{% endif %}
+                                    {% if model.f1_score %} | F1: {{ model.f1_score|percentage }}{% endif %}
 
                                 </span>
                             </div>
@@ -212,19 +213,19 @@
             <div class="baseline-name">{{ active_model.version_name }}</div>
             <div class="baseline-metrics">
                 <div class="metric">
-                    <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</span>
+                    <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|percentage }}{% else %}—{% endif %}</span>
                     <span class="metric-lbl">Accuracy</span>
                 </div>
                 <div class="metric">
-                    <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|floatformat:3 }}{% else %}—{% endif %}</span>
+                    <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|percentage }}{% else %}—{% endif %}</span>
                     <span class="metric-lbl">F1</span>
                 </div>
                 <div class="metric">
-                    <span class="metric-val">{% if active_model.precision %}{{ active_model.precision|floatformat:1 }}%{% else %}—{% endif %}</span>
+                    <span class="metric-val">{% if active_model.precision %}{{ active_model.precision|percentage }}{% else %}—{% endif %}</span>
                     <span class="metric-lbl">Precision</span>
                 </div>
                 <div class="metric">
-                    <span class="metric-val">{% if active_model.recall %}{{ active_model.recall|floatformat:1 }}%{% else %}—{% endif %}</span>
+                    <span class="metric-val">{% if active_model.recall %}{{ active_model.recall|percentage }}{% else %}—{% endif %}</span>
                     <span class="metric-lbl">Recall</span>
                 </div>
             </div>
@@ -293,7 +294,7 @@
                     </td>
                     <td>
                         {% if job.resulting_model and job.resulting_model.accuracy %}
-                        <span class="accuracy-value">{{ job.resulting_model.accuracy|floatformat:1 }}%</span>
+                        <span class="accuracy-value">{{ job.resulting_model.accuracy|percentage }}</span>
                         {% elif job.status == 'FAILED' %}
                         <span class="text-danger">—</span>
                         {% else %}—{% endif %}

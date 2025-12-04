@@ -417,19 +417,19 @@ function showJobDetails(jobId) {
                 <div class="job-detail-label">Performance Metrics</div>
                 <div class="job-metrics-grid" style="margin-top: 0.5rem;">
                     <div class="job-metric">
-                        <span class="job-metric-value">${job.model.accuracy ? job.model.accuracy.toFixed(1) + '%' : '—'}</span>
+                        <span class="job-metric-value">${job.model.accuracy ? (job.model.accuracy * 100).toFixed(1) + '%' : '—'}</span>
                         <span class="job-metric-label">Accuracy</span>
                     </div>
                     <div class="job-metric">
-                        <span class="job-metric-value">${job.model.precision ? job.model.precision.toFixed(1) + '%' : '—'}</span>
+                        <span class="job-metric-value">${job.model.precision ? (job.model.precision * 100).toFixed(1) + '%' : '—'}</span>
                         <span class="job-metric-label">Precision</span>
                     </div>
                     <div class="job-metric">
-                        <span class="job-metric-value">${job.model.recall ? job.model.recall.toFixed(1) + '%' : '—'}</span>
+                        <span class="job-metric-value">${job.model.recall ? (job.model.recall * 100).toFixed(1) + '%' : '—'}</span>
                         <span class="job-metric-label">Recall</span>
                     </div>
                     <div class="job-metric">
-                        <span class="job-metric-value">${job.model.f1_score ? job.model.f1_score.toFixed(3) : '—'}</span>
+                        <span class="job-metric-value">${job.model.f1_score ? (job.model.f1_score * 100).toFixed(1) + '%' : '—'}</span>
                         <span class="job-metric-label">F1 Score</span>
                     </div>
                 </div>

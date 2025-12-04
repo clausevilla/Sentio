@@ -1,7 +1,8 @@
-<!-- Author: Lian Shi-->
+<!-- Author: Lian Shi, Marcus Berggren-->
 
 {% extends 'ml_admin/base_admin.html' %}
 {% load static %}
+{% load filters %}
 {% block title %}Dashboard{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 {% block page_css %}
@@ -53,19 +54,19 @@
                 <div class="model-name">{{ active_model.version_name }}</div>
                 <div class="model-metrics">
                     <div class="metric">
-                        <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</span>
+                        <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|percentage }}{% else %}—{% endif %}</span>
                         <span class="metric-lbl">Accuracy</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|floatformat:3 }}{% else %}—{% endif %}</span>
+                        <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|percentage }}{% else %}—{% endif %}</span>
                         <span class="metric-lbl">F1</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-val">{% if active_model.precision %}{{ active_model.precision|floatformat:3 }}{% else %}—{% endif %}</span>
+                        <span class="metric-val">{% if active_model.precision %}{{ active_model.precision|percentage }}{% else %}—{% endif %}</span>
                         <span class="metric-lbl">Precision</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-val">{% if active_model.recall %}{{ active_model.recall|floatformat:3 }}{% else %}—{% endif %}</span>
+                        <span class="metric-val">{% if active_model.recall %}{{ active_model.recall|percentage}}{% else %}—{% endif %}</span>
                         <span class="metric-lbl">Recall</span>
                     </div>
                 </div>
