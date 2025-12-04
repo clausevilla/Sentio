@@ -25,6 +25,7 @@ class StorageHandler:
         self,
         model_dir: str = './ml-models',
         gcs_bucket: Optional[str] = None,
+        use_gcs: bool = False,
     ):
         """
         Args:
@@ -35,6 +36,7 @@ class StorageHandler:
         self.model_dir.mkdir(parents=True, exist_ok=True)
 
         self.gcs_bucket = gcs_bucket
+        self.use_gcs = use_gcs
         self.gcs_client = None
 
         if gcs_bucket:
@@ -60,7 +62,6 @@ class StorageHandler:
         pipeline,
         filename: str,
         compress: int = 3,
-        to_gcs: bool = False,
     ) -> str:
         """
         Save sklearn pipeline using joblib with compression.
@@ -69,7 +70,6 @@ class StorageHandler:
             pipeline: Trained sklearn pipeline
             filename: Name for the saved file (should end with .joblib)
             compress: Compression level 0-9 (default 3, good balance)
-            to_gcs: If True, upload to GCS instead of local
 
         Returns:
             Path to saved model
@@ -79,7 +79,7 @@ class StorageHandler:
             if not filename.endswith('.joblib'):
                 filename += '.joblib'
 
-        if to_gcs and self.gcs_client:
+        if self.use_gcs and self.gcs_client:
             return self._save_sklearn_to_gcs(pipeline, filename, compress)
 
         local_path = self.model_dir / filename
@@ -140,7 +140,7 @@ class StorageHandler:
         config: Dict[str, Any],
         filename: str,
         model_type: str,
-        to_gcs: bool = False,
+        metrics: Dict[str, Any] = None,
     ) -> str:
         """
         Save PyTorch model with tokenizer and label encoder.
@@ -157,9 +157,10 @@ class StorageHandler:
             'label_encoder': label_encoder,
             'config': config,
             'model_type': model_type,
+            'metrics': metrics,
         }
 
-        if to_gcs and self.gcs_client:
+        if self.use_gcs and self.gcs_client:
             return self._save_neural_to_gcs(save_dict, filename)
 
         local_path = self.model_dir / filename

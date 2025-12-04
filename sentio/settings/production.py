@@ -9,4 +9,4 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 DATABASES = {}
 
 GCS_BUCKET = os.environ.get('GCS_BUCKET', 'sentio-ml-models')  # Google Cloud Storage
-MODEL_DIR = '/tmp/models'
+USE_GCS = True
