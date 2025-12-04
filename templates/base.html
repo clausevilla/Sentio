@@ -112,6 +112,12 @@
                             <i class="fas fa-user-cog"></i>
                             <span>Profile</span>
                         </a>
+                        {% if user.is_staff%}
+                        <a href="{% url 'ml_admin:dashboard' %}" class="dropdown-item">
+                            <i class="fas fa-user"></i>
+                            <span>Sentio Admin Page</span>
+                        </a>
+                        {% endif %}
                         <div class="dropdown-divider"></div>
                         <a href="{% url 'accounts:logout' %}" class="dropdown-item logout-item">
                             <i class="fas fa-sign-out-alt"></i>

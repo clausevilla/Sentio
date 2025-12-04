@@ -82,6 +82,9 @@ def login_view(request):
 
             if user is not None:
                 login(request, user)
+                if user.is_staff:
+                    messages.success(request, f'Welcome back, {username}!')
+                    return redirect('/')
 
                 # Check if user has consented
                 try:
@@ -318,12 +321,19 @@ def delete_all_data_api(request):
                 revoked_at=timezone.now(),
             )
 
+        # Determine redirect URL based on user type
+        if request.user.is_staff:
+            redirect_url = '/'
+        else:
+            redirect_url = '/accounts/consent/'
+
         return JsonResponse(
             {
                 'success': True,
                 'message': f'Successfully deleted {deleted_count} analyses. Your consent has been revoked.',
                 'deleted_count': deleted_count,
                 'consent_revoked': True,
+                'redirect_url': redirect_url,
             }
         )
 
@@ -441,13 +451,6 @@ def history_view(request):
             'count': 0,
             'percentage': 0,
         },
-        'anxiety': {
-            'label': 'Anxiety',
-            'icon': '😰',
-            'class': 'anxiety',
-            'count': 0,
-            'percentage': 0,
-        },
         'stress': {
             'label': 'Stress',
             'icon': '😫',
@@ -459,13 +462,6 @@ def history_view(request):
             'label': 'Suicidal',
             'icon': '🆘',
             'class': 'suicidal',
-            'count': 0,
-            'percentage': 0,
-        },
-        'bipolar': {
-            'label': 'Bipolar',
-            'icon': '🔄',
-            'class': 'bipolar',
             'count': 0,
             'percentage': 0,
         },
