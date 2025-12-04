@@ -72,8 +72,9 @@ def dashboard_view(request):
     active_model = ModelVersion.objects.filter(is_active=True).first()
     active_model_job = None
     if active_model:
-        active_model_job = TrainingJob.objects.filter(resulting_model=active_model).first()
-
+        active_model_job = TrainingJob.objects.filter(
+            resulting_model=active_model
+        ).first()
 
     stats = {
         'models': ModelVersion.objects.count(),
