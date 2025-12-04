@@ -37,7 +37,23 @@ def get_prediction_result(user, user_text):
 
 
 def save_prediction_to_database(user, user_text, prediction, confidence, model_version):
-    if user:
+    template_texts = [
+        (
+            'I feel so empty inside. Nothing brings me joy anymore.'
+            " I wake up each day wondering what's the point."
+            " I used to love painting but now I can't even pick up a brush."
+            ' My friends invite me out but I just make excuses.'
+            " I'm tired all the time but can't sleep properly. Everything feels gray and meaningless."
+        ),
+        (
+            'I have so much on my plate right now.'
+            ' Work deadlines are piling up, bills need to be paid, and I barely have time to breathe.'
+            " I feel overwhelmed and like I'm drowning."
+            ' My body feels tense all the time and I get headaches every day.'
+            " I snap at people I care about because I'm so on edge."
+        ),
+    ]
+    if user_text not in template_texts:
         submission = TextSubmission.objects.create(user=user, text_content=user_text)
         # Save to database
         PredictionResult.objects.create(
