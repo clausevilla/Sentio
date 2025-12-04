@@ -70,6 +70,10 @@ ML_ALGORITHMS = {
 @staff_member_required
 def dashboard_view(request):
     active_model = ModelVersion.objects.filter(is_active=True).first()
+    active_model_job = None
+    if active_model:
+        active_model_job = TrainingJob.objects.filter(resulting_model=active_model).first()
+
 
     stats = {
         'models': ModelVersion.objects.count(),
@@ -132,6 +136,7 @@ def dashboard_view(request):
         'ml_admin/dashboard.html',
         {
             'active_model': active_model,
+            'active_model_job': active_model_job,
             'stats': stats,
             'jobs': jobs,
             'recent_jobs': recent_jobs,

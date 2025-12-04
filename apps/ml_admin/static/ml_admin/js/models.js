@@ -1,5 +1,5 @@
 /* Author: Lian Shi*/
-
+/* Disclaimer: LLM has been used to helo set up modelc comparison modal js */
 
 
 /*--TODO : MODIFY TO REFELCT UPDATED DATABASE and methods IF NEEDED*/
@@ -51,10 +51,7 @@ function updateCompareButton() {
     const countEl = document.getElementById('compareCount');
 
     if (countEl) countEl.textContent = selectedModels.length;
-
-    if (btn) {
-        btn.disabled = selectedModels.length < 2;
-    }
+    if (btn) btn.disabled = selectedModels.length < 2;
 }
 
 function openCompareModal() {
@@ -65,7 +62,6 @@ function openCompareModal() {
 
     // Get selected model data
     const models = selectedModels.map(id => modelsById[id]).filter(m => m);
-
     if (models.length < 2) {
         toast('Could not load model data', 'error');
         return;
@@ -74,7 +70,6 @@ function openCompareModal() {
     // Build comparison content
     const content = buildCompareContent(models);
     document.getElementById('compareContent').innerHTML = content;
-
     openModal('compareModal');
 }
 
@@ -94,30 +89,43 @@ function buildCompareContent(models) {
         bestValues[metric.key] = values.length > 0 ? Math.max(...values) : null;
     });
 
-    // Count wins per model
-    const wins = {};
-    models.forEach(m => wins[m.id] = 0);
+    // Count leading metrics per model
+    const leadingCount = {};
+    models.forEach(m => leadingCount[m.id] = 0);
 
     metrics.forEach(metric => {
         models.forEach(m => {
             if (m[metric.key] !== null && m[metric.key] === bestValues[metric.key]) {
-                wins[m.id]++;
+                leadingCount[m.id]++;
             }
         });
     });
 
-    // Find overall winner
-    const maxWins = Math.max(...Object.values(wins));
-    const winners = models.filter(m => wins[m.id] === maxWins);
-
-    // Build header with model badges
-    let headerHtml = '<div class="compare-header">';
+    // Build header with model cards showing leading indicator
+    let headerHtml = '<div class="compare-models-header">';
     models.forEach((model, i) => {
+        const leading = leadingCount[model.id];
+        const isTopPerformer = leading === Math.max(...Object.values(leadingCount)) && leading > 0;
+
         headerHtml += `
-            <div class="compare-model-badge ${model.is_active ? 'active' : ''}">
-                <span class="model-color" style="background: ${COMPARE_COLORS[i]}"></span>
-                <span class="model-label">${model.name}</span>
-                ${model.is_active ? '<span class="active-tag">Active</span>' : ''}
+            <div class="compare-model-card ${model.is_active ? 'active' : ''} ${isTopPerformer ? 'top-performer' : ''}">
+                <div class="model-card-color" style="background: ${COMPARE_COLORS[i]}"></div>
+                <div class="model-card-content">
+                    <div class="model-card-name">${model.name}</div>
+                    <div class="model-card-meta">
+                        <span class="model-card-type">${model.model_type_display}</span>
+                        ${model.is_active ? '<span class="model-card-active">Deployed</span>' : ''}
+                    </div>
+                </div>
+                <div class="model-card-indicator">
+                    ${leading > 0 ? `
+                        <span class="leading-badge ${isTopPerformer ? 'top' : ''}">
+                            ${isTopPerformer ? '<i class="fas fa-crown"></i>' : ''}
+                            ${leading}/${metrics.length}
+                        </span>
+                        <span class="leading-label">leading</span>
+                    ` : '<span class="leading-label">—</span>'}
+                </div>
             </div>
         `;
     });
@@ -125,34 +133,39 @@ function buildCompareContent(models) {
 
     // Build metrics comparison table
     let tableHtml = `
-        <table class="compare-table">
-            <thead>
-                <tr>
-                    <th>Metric</th>
-                    ${models.map((m, i) => `<th style="border-bottom: 3px solid ${COMPARE_COLORS[i]}">${m.name}</th>`).join('')}
-                </tr>
-            </thead>
-            <tbody>
+        <div class="compare-metrics-section">
+            <h4><i class="fas fa-bullseye"></i> Performance Metrics</h4>
+            <table class="compare-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        ${models.map((m, i) => `
+                            <th>
+                                <span class="th-color" style="background: ${COMPARE_COLORS[i]}"></span>
+                                ${m.name}
+                            </th>
+                        `).join('')}
+                    </tr>
+                </thead>
+                <tbody>
     `;
 
     metrics.forEach(metric => {
-        tableHtml += `<tr><td><i class="fas ${metric.icon}"></i> ${metric.label}</td>`;
+        tableHtml += `<tr><td class="metric-name"><i class="fas ${metric.icon}"></i> ${metric.label}</td>`;
 
         models.forEach((model, i) => {
             const value = model[metric.key];
             const isBest = value !== null && value === bestValues[metric.key];
-            const barWidth = metric.isPercent
-                ? (value || 0)
-                : (value !== null ? (value * 100) : 0);
+            const barWidth = metric.isPercent ? (value || 0) : (value !== null ? (value * 100) : 0);
 
             tableHtml += `
                 <td>
-                    <div class="compare-value">
-                        <span class="compare-value-num ${isBest ? 'best' : ''}">${metric.format(value)}</span>
+                    <div class="compare-cell ${isBest ? 'best' : ''}">
+                        <span class="compare-value">${metric.format(value)}</span>
                         <div class="compare-bar">
                             <div class="compare-bar-fill" style="width: ${barWidth}%; background: ${COMPARE_COLORS[i]}"></div>
                         </div>
-                        ${isBest && value !== null ? '<span class="winner-badge"><i class="fas fa-trophy"></i> Best</span>' : ''}
+                        ${isBest && value !== null ? '<i class="fas fa-check-circle best-icon"></i>' : ''}
                     </div>
                 </td>
             `;
@@ -161,58 +174,70 @@ function buildCompareContent(models) {
         tableHtml += '</tr>';
     });
 
-    tableHtml += '</tbody></table>';
+    tableHtml += '</tbody></table></div>';
 
     // Build info comparison
     let infoHtml = `
         <div class="compare-info-section">
-            <h4><i class="fas fa-info-circle"></i> Model Information</h4>
+            <h4><i class="fas fa-info-circle"></i> Model Details</h4>
             <table class="compare-info-table">
                 <thead>
                     <tr>
-                        <th>Info</th>
-                        ${models.map(m => `<th>${m.name}</th>`).join('')}
+                        <th></th>
+                        ${models.map((m, i) => `
+                            <th>
+                                <span class="th-color" style="background: ${COMPARE_COLORS[i]}"></span>
+                                ${m.name}
+                            </th>
+                        `).join('')}
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Created</td>
+                        <td class="info-label">Type</td>
+                        ${models.map(m => `<td><span class="type-badge type-${m.model_type}">${m.model_type_display}</span></td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="info-label">Created</td>
                         ${models.map(m => `<td>${m.created_at}</td>`).join('')}
                     </tr>
                     <tr>
-                        <td>Created By</td>
+                        <td class="info-label">Created By</td>
                         ${models.map(m => `<td>${m.created_by}</td>`).join('')}
                     </tr>
                     <tr>
-                        <td>Dataset</td>
+                        <td class="info-label">Dataset</td>
                         ${models.map(m => `<td>${m.job_dataset}</td>`).join('')}
                     </tr>
                     <tr>
-                        <td>Status</td>
+                        <td class="info-label">Status</td>
                         ${models.map(m => `<td>${m.is_active ? '<span class="badge success">Active</span>' : '<span class="badge secondary">Inactive</span>'}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="info-label">Actions</td>
+                        ${models.map(m => `
+                            <td>
+                                <div class="compare-actions">
+                                    ${m.is_active ? `
+                                        <span class="deployed-tag"><i class="fas fa-check-circle"></i> Deployed</span>
+                                    ` : `
+                                        <button class="btn btn-primary btn-sm" onclick="deployModel(${m.id}, '${m.name}'); closeModal('compareModal');">
+                                            <i class="fas fa-rocket"></i> Deploy
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteModel(${m.id}, '${m.name}'); closeModal('compareModal');">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    `}
+                                </div>
+                            </td>
+                        `).join('')}
                     </tr>
                 </tbody>
             </table>
         </div>
     `;
 
-    // Build summary
-    let summaryHtml = '<div class="compare-summary">';
-    models.forEach((model, i) => {
-        const isWinner = wins[model.id] === maxWins && maxWins > 0;
-        summaryHtml += `
-            <div class="summary-item">
-                <div class="summary-label" style="color: ${COMPARE_COLORS[i]}">${model.name}</div>
-                <div class="summary-value ${isWinner ? 'winner' : ''}">
-                    ${wins[model.id]} / ${metrics.length} wins
-                    ${isWinner ? ' 🏆' : ''}
-                </div>
-            </div>
-        `;
-    });
-    summaryHtml += '</div>';
-
-    return headerHtml + tableHtml + infoHtml + summaryHtml;
+    return headerHtml + tableHtml + infoHtml;
 }
 
 // Clear all selections
@@ -255,7 +280,7 @@ async function deployModel(id, name) {
 
 // Delete model
 async function deleteModel(id, name) {
-        const confirmed = await showConfirm({
+    const confirmed = await showConfirm({
         title: 'Delete Model',
         message: `Delete <strong>${name}</strong>? This cannot be undone.`,
         type: 'danger',
