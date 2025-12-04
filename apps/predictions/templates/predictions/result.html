@@ -21,7 +21,7 @@
         <!-- Alert Box (if needed) -->
         {% if mental_state_label != 'normal' and confidence >= 70 %}
         <div class="alert alert-warning">
-            <h3>⚠️ Mental Health Indicator Detected</h3>
+            <h3><i class="fas fa-exclamation-triangle"></i>Mental Health Indicator Detected</h3>
             <p>Your text shows patterns associated with {{ mental_state_label }}.
                 Please review the personalized recommendation below and
                 consider reaching out to a mental health professional if
@@ -72,7 +72,7 @@
                     <div class="indicator-bar anxiety-bar" style="width: {{ anxiety_level }}%;"></div>
                 </div>
                 <div class="indicator-value">{{ anxiety_level }}%</div>
-                <p class="indicator-desc">Measures worry, fear, and anxious language patterns</p>
+                <p class="indicator-desc">Measures anxious language patterns based on ellipses, sentence endings, and word density.</p>
             </div>
 
             <div class="indicator-card">
@@ -84,7 +84,7 @@
                     <div class="indicator-bar negativity-bar" style="width: {{ negativity_level }}%;"></div>
                 </div>
                 <div class="indicator-value">{{ negativity_level }}%</div>
-                <p class="indicator-desc">Detects sad, angry, or pessimistic emotional content</p>
+                <p class="indicator-desc">Detects sad, angry, or pessimistic emotional content based on key negative words and expressions in your text.</p>
             </div>
 
             <div class="indicator-card">
@@ -96,7 +96,7 @@
                     <div class="indicator-bar intensity-bar" style="width: {{ emotional_intensity }}%;"></div>
                 </div>
                 <div class="indicator-value">{{ emotional_intensity }}%</div>
-                <p class="indicator-desc">Overall emotional expression strength in the text</p>
+                <p class="indicator-desc">Measures the overall emotional strength based on punctuation frequency (!/?) and capitalization.</p>
             </div>
         </div>
 
