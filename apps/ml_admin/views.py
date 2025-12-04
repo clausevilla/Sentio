@@ -639,28 +639,39 @@ def training_view(request):
 @staff_member_required
 @require_http_methods(['POST'])
 def start_training_api(request):
+    """Start a new training job with configurable parameters"""
     try:
         data = json.loads(request.body)
         upload_ids = data.get('upload_ids', [])
-        mode = data.get('mode', 'new')
+        mode = data.get('mode', 'new')  # 'new' or 'retrain'
         algorithm = data.get('algorithm', 'logistic_regression')
-        base_model_id = data.get('base_model_id')
+        base_model_id = data.get('base_model_id')  # For retrain mode
+        params = data.get('params', {})  # Training parameters
 
         if not upload_ids:
             return JsonResponse(
                 {'success': False, 'error': 'No datasets selected'}, status=400
             )
 
+        # Validate mode
         if mode not in ['new', 'retrain']:
             return JsonResponse(
                 {'success': False, 'error': 'Invalid training mode'}, status=400
             )
 
-        if mode == 'new' and algorithm not in ML_ALGORITHMS:
+        # Validate algorithm
+        valid_algorithms = [
+            'logistic_regression',
+            'random_forest',
+            'lstm',
+            'transformer',
+        ]
+        if algorithm not in valid_algorithms:
             return JsonResponse(
                 {'success': False, 'error': 'Invalid algorithm'}, status=400
             )
 
+        # For retrain, validate base model and get its algorithm
         base_model = None
         if mode == 'retrain':
             if not base_model_id:
@@ -673,39 +684,79 @@ def start_training_api(request):
                 )
             try:
                 base_model = ModelVersion.objects.get(id=base_model_id)
+                # Use the base model's algorithm for retrain
+                algorithm = base_model.model_type
             except ModelVersion.DoesNotExist:
                 return JsonResponse(
                     {'success': False, 'error': 'Base model not found'}, status=400
                 )
 
+        # Validate uploads
         uploads = DataUpload.objects.filter(id__in=upload_ids, is_validated=True)
         if uploads.count() != len(upload_ids):
             return JsonResponse(
                 {'success': False, 'error': 'Invalid datasets'}, status=400
             )
 
+        # Check if training already running
         if TrainingJob.objects.filter(status='RUNNING').exists():
             return JsonResponse(
                 {'success': False, 'error': 'Training already running'}, status=400
             )
 
+        # Create training job with model_type
         job = TrainingJob.objects.create(
-            data_upload=uploads.first(),
+            model_type=algorithm,
             status='PENDING',
             initiated_by=request.user,
         )
 
+        # Process params - convert string booleans to actual booleans
+        processed_params = {}
+        for key, value in params.items():
+            if value == 'true':
+                processed_params[key] = True
+            elif value == 'false':
+                processed_params[key] = False
+            elif value == '' or value is None:
+                processed_params[key] = None
+            else:
+                processed_params[key] = value
+
+        # Create training configuration using helper function
+        from .models import create_training_config
+
+        config = create_training_config(
+            training_job=job,
+            algorithm=algorithm,
+            custom_params=processed_params,
+            base_model=base_model,
+        )
+
+        # TODO: Trigger actual training
+        # from ml_pipeline.training import train_model
+        # train_model.delay(job.id, upload_ids)
+
+        algo_names = {
+            'logistic_regression': 'Logistic Regression',
+            'random_forest': 'Random Forest',
+            'lstm': 'LSTM',
+            'transformer': 'Transformer',
+        }
+
         if mode == 'retrain':
-            message = f'Started retraining based on {base_model.version_name}'
+            message = f'Started retraining {algo_names.get(algorithm, algorithm)} based on {base_model.version_name}'
         else:
-            message = f'Started {ML_ALGORITHMS[algorithm]["name"]} training'
+            message = f'Started {algo_names.get(algorithm, algorithm)} training'
 
         return JsonResponse(
             {
                 'success': True,
                 'message': message,
                 'job_id': job.id,
+                'config_id': config.id,
                 'mode': mode,
+                'algorithm': algorithm,
             }
         )
 

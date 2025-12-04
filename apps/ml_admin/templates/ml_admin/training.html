@@ -68,11 +68,18 @@
                                 <i class="fas {{ algo.icon }}"></i>
                                 <span class="algo-name">{{ algo.name }}</span>
                                 <span class="algo-desc">{{ algo.description }}</span>
+                                <!-- config button - shows when selected -->
+                                <button type="button" class="algo-config-btn"
+                                        onclick="event.preventDefault(); event.stopPropagation(); openParamsModal('{{ key }}')"
+                                        title="Configure parameters">
+                                    <i class="fas fa-cog"></i>
+                                </button>
                             </div>
                         </label>
                         {% endfor %}
                     </div>
                 </div>
+
 
                 <!-- Retrain Content -->
                 <div class="col-body" id="retrainContent" style="display: none;">
@@ -80,20 +87,26 @@
                     {% if all_models %}
                     <div class="model-list">
                         {% for model in all_models %}
-                        <div class="model-option" onclick="selectModel(this, {{ model.id }})">
+                        <div class="model-option" onclick="selectModel(this, {{ model.id }}, '{{ model.model_type }}', '{{ model.version_name|escapejs }}')">
                             <input type="radio" name="base_model" value="{{ model.id }}">
                             <div class="model-info">
                                 <span class="model-name">
                                     {{ model.version_name }}
                                     {% if model.is_active %}<span class="badge success sm">Active</span>{% endif %}
-                                    {% if model.created_at%} - {{ model.created_at}}{% endif %}
                                 </span>
                                 <span class="model-meta">
-                                    {% if model.accuracy %} Accuray: {{ model.accuracy|floatformat:1 }}{% endif %}
-                                    {% if model.f1_score %} | F1: {{ model.f1_score|floatformat:2 }}{% endif %}
-
+                                    <span class="model-type-tag">{{ model.get_model_type_display }}</span>
+                                    {% if model.accuracy %} · Accuracy: {{ model.accuracy|floatformat:1 }}%{% endif %}
+                                    {% if model.f1_score %} · F1: {{ model.f1_score|floatformat:2 }}{% endif %}
+                                    · {{ model.created_at|date:"M d" }}
                                 </span>
                             </div>
+                            <!-- Icon config button - shows when selected -->
+                            <button type="button" class="algo-config-btn"
+                                    onclick="event.stopPropagation(); openParamsModal('{{ model.model_type }}')"
+                                    title="Configure parameters">
+                                <i class="fas fa-cog"></i>
+                            </button>
                         </div>
                         {% endfor %}
                     </div>
@@ -116,7 +129,7 @@
                     <!-- Dataset List -->
                     <div class="dataset-list">
                         {% for item in uploads %}
-                        <div class="dataset-option" onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }})" data-distribution='{{ item.distribution_json|safe }}'>
+                        <div class="dataset-option" onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }}, event)" data-distribution='{{ item.distribution_json|safe }}'>
                             <input type="checkbox" data-id="{{ item.upload.id }}" data-count="{{ item.count }}">
                             <div class="dataset-info">
                                 <span class="dataset-name">{{ item.upload.file_name }}</span>
@@ -246,10 +259,10 @@
             <thead>
                 <tr>
                     <th>Job</th>
+                    <th>Algorithm</th>
                     <th>Dataset</th>
                     <th>Records</th>
                     <th>Started</th>
-                    <th>Ended</th>
                     <th>Duration</th>
                     <th>Status</th>
                     <th>Accuracy</th>
@@ -266,6 +279,9 @@
                         {% endif %}
                     </td>
                     <td>
+                        <span class="model-type-tag">{{ job.get_model_type_display|default:"-" }}</span>
+                    </td>
+                    <td>
                         <span class="dataset-cell" title="{{ job.data_upload.file_name }}">
                             {{ job.data_upload.file_name|default:"-"|truncatechars:20 }}
                         </span>
@@ -276,11 +292,6 @@
                         {% else %}—{% endif %}
                     </td>
                     <td>{{ job.started_at|date:"M d, H:i" }}</td>
-                    <td>
-                        {% if job.completed_at %}
-                        {{ job.completed_at|date:"M d, H:i" }}
-                        {% else %}—{% endif %}
-                    </td>
                     <td>
                         {% if job.completed_at and job.started_at %}
                             <span class="duration">{{ job.started_at|timesince:job.completed_at }}</span>
@@ -332,11 +343,39 @@
     </div>
 </div>
 
+<!-- Parameters Configuration Modal -->
+<div class="modal" id="paramsModal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3 id="paramsModalTitle"><i class="fas fa-sliders-h"></i> Algorithm Parameters</h3>
+            <button class="modal-close" onclick="closeParamsModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="params-info">
+                <i class="fas fa-info-circle"></i>
+                Adjust parameters to fine-tune model training. Hover over <i class="fas fa-question-circle"></i> for hints.
+            </div>
+            <div id="paramsGrid" class="params-grid">
+                <!-- Dynamically filled by JS -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="resetParamsToDefaults()">
+                <i class="fas fa-undo"></i> Reset to Defaults
+            </button>
+            <button class="btn btn-primary" onclick="closeParamsModal()">
+                <i class="fas fa-check"></i> Done
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Job Data for JS -->
 <script type="application/json" id="jobsData">
 [{% for job in jobs %}{
     "id": {{ job.id }},
     "status": "{{ job.status }}",
+    "model_type": "{{ job.model_type|default:'' }}",
     "started_at": "{{ job.started_at|date:'M d, Y H:i' }}",
     "completed_at": "{{ job.completed_at|date:'M d, Y H:i'|default:'' }}",
     "initiated_by": "{{ job.initiated_by.username|default:'-' }}",
