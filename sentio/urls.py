@@ -32,5 +32,7 @@ urlpatterns = [
         include(('apps.predictions.urls', 'predictions'), namespace='predictions'),
     ),
     path('admin/', admin.site.urls),
-    path('management/', include(('apps.ml_admin.urls', 'ml_admin'), namespace='ml_admin')),
+    path(
+        'management/', include(('apps.ml_admin.urls', 'ml_admin'), namespace='ml_admin')
+    ),
 ]
