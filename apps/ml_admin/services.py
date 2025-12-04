@@ -3,7 +3,7 @@ import csv
 import logging
 import threading
 from datetime import datetime
-from typing import Any, Dict, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import pandas as pd
 from django.conf import settings
@@ -90,16 +90,10 @@ def run_full_pipeline(data_upload_id: int, dataset_type: str = 'train'):
             upload = DataUpload.objects.get(id=data_upload_id)
             upload.status = 'failed'
             upload.save()
-        except Exception as e:
-            logger.exception('Cleaning pipeline failed')
-            try:
-                upload = DataUpload.objects.get(id=data_upload_id)
-                upload.status = 'failed'
-                upload.save()
-            except DataUpload.DoesNotExist:
-                logger.warning(
-                    'DataUpload %s not found during error handling', data_upload_id
-                )
+        except DataUpload.DoesNotExist:
+            logger.warning(
+                'DataUpload %s not found during error handling', data_upload_id
+            )
         return {'success': False, 'error': str(e)}
 
 
@@ -307,7 +301,9 @@ def import_csv_dataset(file_path, data_upload, dataset_type='train', batch_size=
             DatasetRecord.objects.bulk_create(batch, ignore_conflicts=True)
 
 
-def get_training_data(dataset_type: Literal['train', 'increment']) -> Tuple:
+def get_training_data(
+    dataset_type: Literal['train', 'increment'], upload_ids: List[int] = None
+) -> Tuple:
     """
     Use one method for acquiring different types of data
     """
@@ -318,6 +314,9 @@ def get_training_data(dataset_type: Literal['train', 'increment']) -> Tuple:
     # Test records are always static but train data depens on full train or incremental
     test_records = DatasetRecord.objects.filter(dataset_type='test')
     train_records = DatasetRecord.objects.filter(dataset_type=dataset_type)
+
+    if upload_ids:
+        train_records = train_records.filter(data_upload_id__in=upload_ids)
 
     # In case performance gain needed with a larger dataset, could switch to Pandas
     X_train = [r.text for r in train_records]
@@ -333,6 +332,7 @@ def _run_training(
     model_name: str,
     config: Dict,
     is_incremental: bool,
+    upload_ids: List[int],
 ):
     """
     Background training task
@@ -352,21 +352,27 @@ def _run_training(
         trainer = ModelTrainer(storage)
 
         if is_incremental:
-            X_train, y_train, X_test, y_test = get_training_data('increment')
+            X_train, y_train, X_test, y_test = get_training_data(
+                'increment', upload_ids
+            )
         else:
-            X_train, y_train, X_test, y_test = get_training_data('train')
+            X_train, y_train, X_test, y_test = get_training_data('train', upload_ids)
+
+        if not X_train:
+            raise ValueError('No training data found')
+        if not X_test:
+            raise ValueError('No test data found. Split your dataset first.')
 
         result = trainer.train(
             model_name=model_name,
             data=(X_train, y_train, X_test, y_test),
             config=config,
-            job_id=job.job_id,
+            job_id=str(job_id),
         )
 
         model_version = ModelVersion.objects.create(
             model_type=model_name,
             version_name=version_name,
-            created_at=datetime.now(),
             model_file_path=result['model_path'],
             accuracy=result['metrics']['accuracy'],
             precision=result['metrics']['precision'],
@@ -378,13 +384,13 @@ def _run_training(
             created_by_id=job.initiated_by_id,
         )
 
-        job.status = 'completed'
+        job.status = 'COMPLETED'
         job.completed_at = datetime.now()
         job.resulting_model = model_version
         job.save()
 
     except Exception as e:
-        job.status = 'failed'
+        job.status = 'FAILED'
         job.completed_at = datetime.now()
         job.error_message = str(e)
         job.save()
@@ -394,23 +400,23 @@ def train_full(
     model_name: str,
     config: Optional[Dict[str, Any]] = None,
     initiated_by: Optional[int] = None,
+    upload_ids: List[int] = None,
 ) -> Dict[str, Any]:
     """
     Start full training in background thread.
     """
-
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    job_id = f'{model_name}_{timestamp}'
-
     job = TrainingJob.objects.create(
-        job_id=job_id,
-        status='running',
+        model_type=model_name,
+        status='RUNNING',
         initiated_by_id=initiated_by,
     )
 
+    if upload_ids:
+        job.data_uploads.set(upload_ids)
+
     thread = threading.Thread(
         target=_run_training,
-        args=(job.id, model_name, config or {}, False),
+        args=(job.id, model_name, config or {}, False, upload_ids),
         daemon=True,
     )
     thread.start()
@@ -423,14 +429,11 @@ def train_incremental(
     base_model_path: str,
     config: Optional[Dict[str, Any]] = None,
     initiated_by: Optional[int] = None,
+    upload_ids: List[int] = None,
 ) -> Dict[str, Any]:
     """
     Start incremental training in background thread.
     """
-
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    job_id = f'{model_name}_incremental_{timestamp}'
-
     incremental_config = {
         'training_mode': 'incremental',
         'base_model_path': base_model_path,
@@ -439,14 +442,17 @@ def train_incremental(
     }
 
     job = TrainingJob.objects.create(
-        job_id=job_id,
-        status='running',
+        model_type=model_name,
+        status='RUNNING',
         initiated_by_id=initiated_by,
     )
 
+    if upload_ids:
+        job.data_uploads.set(upload_ids)
+
     thread = threading.Thread(
         target=_run_training,
-        args=(job.id, model_name, incremental_config, True),
+        args=(job.id, model_name, incremental_config, True, upload_ids),
         daemon=True,
     )
     thread.start()
@@ -469,12 +475,12 @@ def get_job_status(job_id: int) -> Dict[str, Any]:
         'completed_at': job.completed_at,
     }
 
-    if job.status == 'completed' and job.resulting_model:
+    if job.status == 'COMPLETED' and job.resulting_model:
         result['model'] = {
             'id': job.resulting_model.id,
             'accuracy': job.resulting_model.accuracy,
         }
-    elif job.status == 'failed':
+    elif job.status == 'FAILED':
         result['error'] = job.error_message
 
     return result

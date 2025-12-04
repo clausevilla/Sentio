@@ -10,7 +10,7 @@ let selectedModelName = null;
 let distChart = null;
 let testSetChart = null;
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initAlgorithmListeners();
     initTestSetModal();
     updateSummary();
@@ -200,8 +200,8 @@ function updateDistribution() {
                 responsive: true,
                 maintainAspectRatio: true,
                 plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: true }
+                    legend: {display: false},
+                    tooltip: {enabled: true}
                 },
                 cutout: '55%',
             }
@@ -256,7 +256,7 @@ function initTestSetModal() {
     // Create chart when modal opens
     const modal = document.getElementById('testSetModal');
     if (modal) {
-        const observer = new MutationObserver(function() {
+        const observer = new MutationObserver(function () {
             if (modal.classList.contains('open') && !testSetChart) {
                 const ctx = document.getElementById('testSetChart');
                 if (ctx) {
@@ -273,14 +273,14 @@ function initTestSetModal() {
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
+                            plugins: {legend: {display: false}},
                             cutout: '60%',
                         }
                     });
                 }
             }
         });
-        observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+        observer.observe(modal, {attributes: true, attributeFilter: ['class']});
     }
 }
 
@@ -330,7 +330,7 @@ async function startTraining(mode) {
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting...';
 
-    const { ok, data } = await apiCall(URLS.startTraining, {
+    const {ok, data} = await apiCall(URLS.startTraining, {
         method: 'POST',
         body: JSON.stringify(payload)
     });
@@ -393,8 +393,8 @@ function showJobDetails(jobId) {
                 <div class="job-detail-value">${job.completed_at || '—'}</div>
             </div>
             <div class="job-detail-section">
-                <div class="job-detail-label">Dataset</div>
-                <div class="job-detail-value">${job.dataset}</div>
+                <div class="job-detail-label">Datasets</div>
+                <div class="job-detail-value">${job.datasets}</div>
             </div>
             <div class="job-detail-section">
                 <div class="job-detail-label">Records</div>

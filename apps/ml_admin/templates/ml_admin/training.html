@@ -1,8 +1,6 @@
 <!--Author: Lian Shi-->
 <!-- Disclaimer: LLM has used to generate initial layout related to training, and fine tuning was done manually to different elements -->
 
-<!--TODO: THIS PAGE NEEDS TO BE FIXED TO REFLECT REAL DATABASE AND SERVICES !!!!!!!!!-->
-
 {% extends 'ml_admin/base_admin.html' %}
 {% load static %}
 {% block title %}Training{% endblock %}
@@ -246,8 +244,7 @@
             <thead>
                 <tr>
                     <th>Job</th>
-                    <th>Dataset</th>
-                    <th>Records</th>
+                    <th>Datasets</th>
                     <th>Started</th>
                     <th>Ended</th>
                     <th>Duration</th>
@@ -266,14 +263,11 @@
                         {% endif %}
                     </td>
                     <td>
-                        <span class="dataset-cell" title="{{ job.data_upload.file_name }}">
-                            {{ job.data_upload.file_name|default:"-"|truncatechars:20 }}
-                        </span>
-                    </td>
-                    <td>
-                        {% if job.data_upload.row_count %}
-                        <span class="records-count">{{ job.data_upload.row_count }}</span>
-                        {% else %}—{% endif %}
+                        {% for upload in job.data_uploads.all %}
+                            {{ upload.file_name|truncatechars:20 }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            —
+                        {% endfor %}
                     </td>
                     <td>{{ job.started_at|date:"M d, H:i" }}</td>
                     <td>
@@ -327,7 +321,6 @@
             <button class="modal-close" onclick="closeModal('jobDetailsModal')">&times;</button>
         </div>
         <div class="modal-body" id="jobModalBody">
-            <!-- Content loaded by JS -->
         </div>
     </div>
 </div>
@@ -340,8 +333,7 @@
     "started_at": "{{ job.started_at|date:'M d, Y H:i' }}",
     "completed_at": "{{ job.completed_at|date:'M d, Y H:i'|default:'' }}",
     "initiated_by": "{{ job.initiated_by.username|default:'-' }}",
-    "dataset": "{{ job.data_upload.file_name|default:'-' }}",
-    "records": {{ job.data_upload.row_count|default:'null' }},
+    "datasets": "{% for u in job.data_uploads.all %}{{ u.file_name }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}",
     "error_message": "{{ job.error_message|default:''|escapejs }}",
     {% if job.resulting_model %}
     "model": {

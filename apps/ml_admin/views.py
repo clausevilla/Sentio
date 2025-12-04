@@ -1,4 +1,4 @@
-# Author: Lian Shi
+# Author: Lian Shi, Marcus Berggren
 # Disclaimer: LLM has been used to help with initial structure of views.py, with manual tuning and adjustments made throughout.
 
 """
@@ -651,37 +651,28 @@ def start_training_api(request):
                 {'success': False, 'error': 'No datasets selected'}, status=400
             )
 
-        if mode not in ['new', 'retrain']:
-            return JsonResponse(
-                {'success': False, 'error': 'Invalid training mode'}, status=400
-            )
-
-        if mode == 'new' and algorithm not in ML_ALGORITHMS:
-            return JsonResponse(
-                {'success': False, 'error': 'Invalid algorithm'}, status=400
-            )
-
-        base_model = None
-        if mode == 'retrain':
-            if not base_model_id:
-                return JsonResponse(
-                    {
-                        'success': False,
-                        'error': 'No base model selected for retraining',
-                    },
-                    status=400,
-                )
-            try:
-                base_model = ModelVersion.objects.get(id=base_model_id)
-            except ModelVersion.DoesNotExist:
-                return JsonResponse(
-                    {'success': False, 'error': 'Base model not found'}, status=400
-                )
-
         uploads = DataUpload.objects.filter(id__in=upload_ids, is_validated=True)
         if uploads.count() != len(upload_ids):
             return JsonResponse(
                 {'success': False, 'error': 'Invalid datasets'}, status=400
+            )
+
+        # Check for test data
+        test_count = DatasetRecord.objects.filter(dataset_type='test').count()
+        if test_count == 0:
+            return JsonResponse(
+                {'success': False, 'error': 'No test data available. Please split your dataset into train/test before training, or upload a new dataset.'},
+                status=400
+            )
+
+        # Check for training data in selected uploads
+        train_count = DatasetRecord.objects.filter(
+            dataset_type='train', data_upload_id__in=upload_ids
+        ).count()
+        if train_count == 0:
+            return JsonResponse(
+                {'success': False, 'error': 'No training data in selected datasets.'},
+                status=400
             )
 
         if TrainingJob.objects.filter(status='RUNNING').exists():
@@ -689,26 +680,44 @@ def start_training_api(request):
                 {'success': False, 'error': 'Training already running'}, status=400
             )
 
-        job = TrainingJob.objects.create(
-            data_upload=uploads.first(),
-            status='PENDING',
-            initiated_by=request.user,
-        )
+        from apps.ml_admin.services import train_full, train_incremental
 
         if mode == 'retrain':
+            if not base_model_id:
+                return JsonResponse(
+                    {'success': False, 'error': 'No base model selected'}, status=400
+                )
+            base_model = ModelVersion.objects.get(id=base_model_id)
+            result = train_incremental(
+                model_name=base_model.model_type,
+                base_model_path=base_model.model_file_path,
+                config={},
+                initiated_by=request.user.id,
+                upload_ids=upload_ids,
+            )
             message = f'Started retraining based on {base_model.version_name}'
         else:
+            result = train_full(
+                model_name=algorithm,
+                config={},
+                initiated_by=request.user.id,
+                upload_ids=upload_ids,
+            )
             message = f'Started {ML_ALGORITHMS[algorithm]["name"]} training'
 
         return JsonResponse(
             {
                 'success': True,
                 'message': message,
-                'job_id': job.id,
+                'job_id': result['job_id'],
                 'mode': mode,
             }
         )
 
+    except ModelVersion.DoesNotExist:
+        return JsonResponse(
+            {'success': False, 'error': 'Base model not found'}, status=400
+        )
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
     except Exception as e:
@@ -731,12 +740,13 @@ def models_view(request):
 
         training_records = 0
         training_labels = []
-        if job and job.data_upload:
+        if job and job.data_uploads.exists():
+            # Sum records from all associated uploads
             training_records = DatasetRecord.objects.filter(
-                data_upload=job.data_upload, dataset_type='train'
+                data_upload__in=job.data_uploads.all(), dataset_type='train'
             ).count()
             training_labels = list(
-                DatasetRecord.objects.filter(data_upload=job.data_upload)
+                DatasetRecord.objects.filter(data_upload__in=job.data_uploads.all())
                 .values('label')
                 .annotate(count=Count('id'))
                 .order_by('-count')[:4]
