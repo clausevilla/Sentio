@@ -6,6 +6,7 @@ import pandas as pd
 from apps.ml_admin.models import ModelVersion
 from apps.predictions.models import PredictionResult, TextSubmission
 from ml_pipeline.data_cleaning.cleaner import DataCleaningPipeline
+from ml_pipeline.preprocessing.preprocessor import DataPreprocessingPipeline
 
 # Loads the model
 MODEL_PATH = 'ml_pipeline/toy_models/LRmodel.pkl'  # Path to model used to predict
@@ -30,12 +31,21 @@ def clean_user_input(text):
     df = pd.DataFrame(data)
     pipeline = DataCleaningPipeline()
     df = pipeline.fix_encoding(df)
+    return df
+
+
+def preprocess_user_input(df, version_name):
+    pipeline = DataPreprocessingPipeline()
+    pipeline.preprocess_dataframe(df, version_name)
     return df['text']
 
 
 def get_prediction_result(user, user_text):
     prediction, confidence, model_version = analyze_text(user_text)
-    user_text = clean_user_input(user_text)
+    df = clean_user_input(user_text)
+    user_text = preprocess_user_input(df, model_version.version_name)
+    print(user_text)
+
     if user:
         save_prediction_to_database(
             user, user_text, prediction, confidence, model_version
