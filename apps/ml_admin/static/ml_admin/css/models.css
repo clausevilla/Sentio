@@ -148,6 +148,8 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    background: var(--gray-200);
+    color: var(--gray-600);
 }
 
 .type-badge.type-logistic_regression {
