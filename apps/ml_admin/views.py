@@ -49,14 +49,14 @@ ML_ALGORITHMS = {
         'description': 'Ensemble of decision trees',
         'icon': 'fa-tree',
     },
-    'rnn': {
+    'lstm': {
         'name': 'RNN/LSTM',
         'description': 'Recurrent neural network',
         'icon': 'fa-network-wired',
     },
     'transformer': {
         'name': 'Custom Transformer',
-        'description': 'Custom architecture',
+        'description': 'Encoder-only transformer',
         'icon': 'fa-microchip',
     },
 }
@@ -661,8 +661,11 @@ def start_training_api(request):
         test_count = DatasetRecord.objects.filter(dataset_type='test').count()
         if test_count == 0:
             return JsonResponse(
-                {'success': False, 'error': 'No test data available. Please split your dataset into train/test before training, or upload a new dataset.'},
-                status=400
+                {
+                    'success': False,
+                    'error': 'No test data available. Please split your dataset into train/test before training, or upload a new dataset.',
+                },
+                status=400,
             )
 
         # Check for training data in selected uploads
@@ -672,7 +675,7 @@ def start_training_api(request):
         if train_count == 0:
             return JsonResponse(
                 {'success': False, 'error': 'No training data in selected datasets.'},
-                status=400
+                status=400,
             )
 
         if TrainingJob.objects.filter(status='RUNNING').exists():
