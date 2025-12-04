@@ -96,7 +96,7 @@
                                 </span>
                                 <span class="model-meta">
                                     <span class="model-type-tag">{{ model.get_model_type_display }}</span>
-                                    {% if model.accuracy %} · Accuracy: {{ model.accuracy|floatformat:1 }}%{% endif %}
+                                    {% if model.accuracy %} · Accuracy: {{ model.accuracy|floatformat:1 }}{% endif %}
                                     {% if model.f1_score %} · F1: {{ model.f1_score|floatformat:2 }}{% endif %}
                                     · {{ model.created_at|date:"M d" }}
                                 </span>
@@ -227,7 +227,7 @@
             <div class="baseline-name">{{ active_model.version_name }}</div>
             <div class="baseline-metrics">
                 <div class="metric">
-                    <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</span>
+                    <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}{% else %}—{% endif %}</span>
                     <span class="metric-lbl">Accuracy</span>
                 </div>
                 <div class="metric">
@@ -271,7 +271,7 @@
             </thead>
             <tbody>
                 {% for job in jobs %}
-                <tr>
+                <tr data-job-id="{{ job.id }}">
                     <td>
                         <strong>#{{ job.id }}</strong>
                         {% if job.initiated_by %}
