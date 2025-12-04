@@ -1,7 +1,7 @@
 stages:
-  - setup
+  - lint
+  - build
   - test
-  # - train   To be implemented when model training is ready
 
 variables:
   PYTHON_VERSION: "3.11"
@@ -9,46 +9,47 @@ variables:
 
 image: python:${PYTHON_VERSION}-slim
 
-# Cache pip packages between jobs
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
     - .cache/pip
 
 before_script:
-  - echo "Installing dependencies..."
   - python -m pip install --upgrade pip
+  - pip install torch==2.8.0+cpu --index-url https://download.pytorch.org/whl/cpu --no-cache-dir
   - pip install -r requirements.txt --no-cache-dir
 
-setup:
-  stage: setup
+lint:
+  stage: lint
+  before_script:
+    - pip install ruff
   script:
-    - python manage.py check    # Scan project for config / model issues
+    - ruff check .
+    - ruff format --check .
+  tags:
+    - docker
+
+build:
+  stage: build
+  script:
+    - python manage.py check
     - python manage.py migrate
   tags:
     - docker
 
-test:
+unit-tests:
   stage: test
   script:
-    - echo "Running data pipeline and authentication tests..."
-    - python manage.py test apps.ml_admin.tests --verbosity=2
-    - python manage.py test apps.accounts.tests --verbosity=2
+    - python -m pytest -m "not integration" --cov=ml_pipeline --cov=apps --cov-report=term-missing
   tags:
     - docker
 
-# train:
-#   stage: train
-#   script:
-#     - echo "Training ML model with processed data..."
-#     - python manage.py import_dataset data/stressor-data-combined.csv --dataset_type train --subset 5000
-#     - python ml_models/bert/run_model.py --use-database --subset 5000  # Run model for training
-#
-#     # TODO: 'Import_dataset'command should call each pipeline
-
-#   tags:
-#     - docker
-#   artifacts:
-#     paths:
-#       - ml_models/bert/trained_model/  # Save trained model artifact
-#     expire_in: 1 week
+integration-tests:
+  stage: test
+  script:
+    - python -m pytest -m "integration" || test $? -eq 5
+  tags:
+    - docker
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
