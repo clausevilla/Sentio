@@ -1,0 +1,387 @@
+<!--Author: Lian Shi-->
+<!-- Disclaimer: LLM has used to generate initial layout related to training, and fine tuning was done manually to different elements -->
+
+<!--TODO: THIS PAGE NEEDS TO BE FIXED TO REFLECT REAL DATABASE AND SERVICES !!!!!!!!!-->
+
+{% extends 'ml_admin/base_admin.html' %}
+{% load static %}
+{% block title %}Training{% endblock %}
+{% block page_title %}Training Center{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'ml_admin/css/training.css' %}">{% endblock %}
+
+{% block content %}
+{% if running_count > 0 %}
+<div class="alert info">
+    <i class="fas fa-spinner fa-spin"></i>
+    <span><strong>{{ running_count }}</strong> training job(s) currently running</span>
+</div>
+{% endif %}
+
+<!-- Test Set Info Banner -->
+{% if test_set_info.total > 0 %}
+<div class="test-set-banner">
+    <div class="test-set-icon"><i class="fas fa-flask"></i></div>
+    <div class="test-set-info">
+        <strong>Fixed Test Set</strong>
+        <span>{{ test_set_info.total }} records · Used for all evaluations</span>
+    </div>
+    <button class="btn btn-sm btn-secondary" onclick="openModal('testSetModal')">
+        <i class="fas fa-eye"></i> View
+    </button>
+</div>
+{% else %}
+<div class="alert warning">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span><strong>No test set!</strong> Upload or use Split in Data page to create one.</span>
+</div>
+{% endif %}
+
+<!-- Training Setup Card -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <h3><i class="fas fa-play-circle"></i> Training Job</h3>
+    </div>
+
+    <div class="card-body">
+        {% if uploads %}
+        <!-- Two Column Layout -->
+        <div class="training-columns">
+            <!-- LEFT: Train/Retrain Selection -->
+            <div class="training-col">
+                <div class="col-header">
+                    <button class="col-tab active" data-tab="train" onclick="switchTab('train')">
+                        <i class="fas fa-plus-circle"></i> Train New
+                    </button>
+                    <button class="col-tab" data-tab="retrain" onclick="switchTab('retrain')">
+                        <i class="fas fa-sync-alt"></i> Retrain
+                    </button>
+                </div>
+
+                <!-- Train New Content -->
+                <div class="col-body" id="trainContent">
+                    <label class="body-label">Select Algorithm</label>
+                    <div class="algo-grid">
+                        {% for key, algo in algorithms.items %}
+                        <label class="algo-option">
+                            <input type="radio" name="algorithm" value="{{ key }}" {% if forloop.first %}checked{% endif %}>
+                            <div class="algo-card">
+                                <i class="fas {{ algo.icon }}"></i>
+                                <span class="algo-name">{{ algo.name }}</span>
+                                <span class="algo-desc">{{ algo.description }}</span>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Retrain Content -->
+                <div class="col-body" id="retrainContent" style="display: none;">
+                    <label class="body-label">Select Base Model</label>
+                    {% if all_models %}
+                    <div class="model-list">
+                        {% for model in all_models %}
+                        <div class="model-option" onclick="selectModel(this, {{ model.id }})">
+                            <input type="radio" name="base_model" value="{{ model.id }}">
+                            <div class="model-info">
+                                <span class="model-name">
+                                    {{ model.version_name }}
+                                    {% if model.is_active %}<span class="badge success sm">Active</span>{% endif %}
+                                    {% if model.created_at%} - {{ model.created_at}}{% endif %}
+                                </span>
+                                <span class="model-meta">
+                                    {% if model.accuracy %} Accuray: {{ model.accuracy|floatformat:1 }}{% endif %}
+                                    {% if model.f1_score %} | F1: {{ model.f1_score|floatformat:2 }}{% endif %}
+
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-msg">No models available</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- RIGHT: Dataset Selection -->
+            <div class="training-col">
+                <div class="col-header">
+                    <div class="col-tab active static">
+                        <i class="fas fa-database"></i> Select Training Data
+                        <span class="header-hint">({{ training_totals.records }} total)</span>
+                    </div>
+                </div>
+
+                <div class="col-body col-body-split">
+                    <!-- Dataset List -->
+                    <div class="dataset-list">
+                        {% for item in uploads %}
+                        <div class="dataset-option" onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }})" data-distribution='{{ item.distribution_json|safe }}'>
+                            <input type="checkbox" data-id="{{ item.upload.id }}" data-count="{{ item.count }}">
+                            <div class="dataset-info">
+                                <span class="dataset-name">{{ item.upload.file_name }}</span>
+                                <span class="dataset-meta">
+                                    {{ item.upload.uploaded_at|date:"M d" }} · {{ item.count }} training
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Distribution Preview - Bottom Aligned -->
+                    <div class="dist-preview">
+                        <label class="dist-label">Distribution Preview</label>
+                        <div class="dist-body">
+                            <div id="distEmpty" class="dist-empty">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Select datasets above</span>
+                            </div>
+                            <div id="distContent" class="dist-content" style="display: none;">
+                                <div class="dist-chart-wrap">
+                                    <canvas id="distChart"></canvas>
+                                </div>
+                                <div id="distBars" class="dist-bars"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Summary Bar -->
+        <div class="training-footer">
+            <div class="summary-info">
+                <!-- Train Summary -->
+                <div id="trainSummary" class="summary-items">
+                    <div class="summary-item">
+                        <span class="sum-label">Algorithm</span>
+                        <span class="sum-value" id="sumAlgo">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="sum-label">Datasets</span>
+                        <span class="sum-value" id="sumDatasets">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="sum-label">Records</span>
+                        <span class="sum-value" id="sumRecords">0</span>
+                    </div>
+                </div>
+                <!-- Retrain Summary -->
+                <div id="retrainSummary" class="summary-items" style="display: none;">
+                    <div class="summary-item">
+                        <span class="sum-label">Base Model</span>
+                        <span class="sum-value" id="sumModel">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="sum-label">Datasets</span>
+                        <span class="sum-value" id="sumRetrainDatasets">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="sum-label">Records</span>
+                        <span class="sum-value" id="sumRetrainRecords">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="summary-action">
+                <button class="btn btn-primary" id="trainBtn" onclick="startTraining('new')" disabled>
+                    <i class="fas fa-play"></i> Start Training
+                </button>
+                <button class="btn btn-primary" id="retrainBtn" onclick="startTraining('retrain')" style="display: none;" disabled>
+                    <i class="fas fa-sync-alt"></i> Start Retraining
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-database"></i>
+            <h4>No Training Data</h4>
+            <p>Upload and validate datasets first</p>
+            <a href="{% url 'ml_admin:data' %}" class="btn btn-primary">Go to Data</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Current Baseline -->
+{% if active_model %}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-bar"></i> Current Baseline</h3>
+        <span class="badge success"><i class="fas fa-check"></i> Active</span>
+    </div>
+    <div class="card-body">
+        <div class="baseline-row">
+            <div class="baseline-name">{{ active_model.version_name }}</div>
+            <div class="baseline-metrics">
+                <div class="metric">
+                    <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</span>
+                    <span class="metric-lbl">Accuracy</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|floatformat:3 }}{% else %}—{% endif %}</span>
+                    <span class="metric-lbl">F1</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-val">{% if active_model.precision %}{{ active_model.precision|floatformat:1 }}%{% else %}—{% endif %}</span>
+                    <span class="metric-lbl">Precision</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-val">{% if active_model.recall %}{{ active_model.recall|floatformat:1 }}%{% else %}—{% endif %}</span>
+                    <span class="metric-lbl">Recall</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Training History -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-history"></i> Training History</h3>
+    </div>
+    <div class="card-body no-pad">
+        {% if jobs %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Job</th>
+                    <th>Dataset</th>
+                    <th>Records</th>
+                    <th>Started</th>
+                    <th>Ended</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                    <th>Accuracy</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td>
+                        <strong>#{{ job.id }}</strong>
+                        {% if job.initiated_by %}
+                        <span class="job-user">{{ job.initiated_by.username }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="dataset-cell" title="{{ job.data_upload.file_name }}">
+                            {{ job.data_upload.file_name|default:"-"|truncatechars:20 }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if job.data_upload.row_count %}
+                        <span class="records-count">{{ job.data_upload.row_count }}</span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>{{ job.started_at|date:"M d, H:i" }}</td>
+                    <td>
+                        {% if job.completed_at %}
+                        {{ job.completed_at|date:"M d, H:i" }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if job.completed_at and job.started_at %}
+                            <span class="duration">{{ job.started_at|timesince:job.completed_at }}</span>
+                        {% elif job.status == 'RUNNING' %}
+                            <span class="duration running"><i class="fas fa-clock"></i> {{ job.started_at|timesince }}</span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {{ job.status|lower }}">
+                            {% if job.status == 'RUNNING' %}<i class="fas fa-spinner fa-spin"></i>{% endif %}
+                            {% if job.status == 'COMPLETED' %}<i class="fas fa-check"></i>{% endif %}
+                            {% if job.status == 'FAILED' %}<i class="fas fa-times"></i>{% endif %}
+                            {% if job.status == 'PENDING' %}<i class="fas fa-clock"></i>{% endif %}
+                            {{ job.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if job.resulting_model and job.resulting_model.accuracy %}
+                        <span class="accuracy-value">{{ job.resulting_model.accuracy|floatformat:1 }}%</span>
+                        {% elif job.status == 'FAILED' %}
+                        <span class="text-danger">—</span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <button class="btn-icon" onclick="showJobDetails({{ job.id }})" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state small"><p>No training jobs yet</p></div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Job Details Modal -->
+<div class="modal" id="jobDetailsModal">
+    <div class="modal-content modal-md">
+        <div class="modal-header">
+            <h3><i class="fas fa-info-circle"></i> <span id="jobModalTitle">Job Details</span></h3>
+            <button class="modal-close" onclick="closeModal('jobDetailsModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="jobModalBody">
+            <!-- Content loaded by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Job Data for JS -->
+<script type="application/json" id="jobsData">
+[{% for job in jobs %}{
+    "id": {{ job.id }},
+    "status": "{{ job.status }}",
+    "started_at": "{{ job.started_at|date:'M d, Y H:i' }}",
+    "completed_at": "{{ job.completed_at|date:'M d, Y H:i'|default:'' }}",
+    "initiated_by": "{{ job.initiated_by.username|default:'-' }}",
+    "dataset": "{{ job.data_upload.file_name|default:'-' }}",
+    "records": {{ job.data_upload.row_count|default:'null' }},
+    "error_message": "{{ job.error_message|default:''|escapejs }}",
+    {% if job.resulting_model %}
+    "model": {
+        "name": "{{ job.resulting_model.version_name }}",
+        "accuracy": {{ job.resulting_model.accuracy|default:'null' }},
+        "precision": {{ job.resulting_model.precision|default:'null' }},
+        "recall": {{ job.resulting_model.recall|default:'null' }},
+        "f1_score": {{ job.resulting_model.f1_score|default:'null' }}
+    }
+    {% else %}
+    "model": null
+    {% endif %}
+}{% if not forloop.last %},{% endif %}{% endfor %}]
+</script>
+
+<!-- Test Set Modal -->
+<div class="modal" id="testSetModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-flask"></i> Test Set Distribution</h3>
+            <button class="modal-close" onclick="closeModal('testSetModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="text-center"><strong>{{ test_set_info.total }}</strong> records</p>
+            <div class="chart-wrap" style="height: 180px; margin: 1rem 0;">
+                <canvas id="testSetChart"></canvas>
+            </div>
+            <div id="testSetBars"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const ALGORITHM_NAMES = {
+        {% for key, algo in algorithms.items %}'{{ key }}': '{{ algo.name }}',{% endfor %}
+    };
+    const URLS = { startTraining: '{% url "ml_admin:start_training" %}' };
+    const testSetDistribution = {{ test_set_json|safe }};
+</script>
+<script src="{% static 'ml_admin/js/training.js' %}"></script>
+{% endblock %}
