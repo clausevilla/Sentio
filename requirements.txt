@@ -3,3 +3,9 @@ pandas
 Django==5.2.7
 swifter==1.4.0
 scikit-learn==1.7.2
+matplotlib==3.10.7
+pytest==9.0.1
+pytest-cov==7.0.0
+pytest-django==4.11.1
+torch
+numpy

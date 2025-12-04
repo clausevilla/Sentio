@@ -1,4 +1,4 @@
-# Author: Marcus Berggren, Lian Shi
+# Author: Marcus Berggren, Lian Shi, Julia McCall
 
 """
 Django settings for sentio project.
@@ -28,6 +28,9 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
+
+GCS_BUCKET = None  # Google Cloud Storage
+MODEL_DIR = './ml-models'
 
 INSTALLED_APPS = [
     'apps.accounts',
@@ -80,6 +83,15 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        },
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
 
@@ -101,7 +113,30 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# For development
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+# For production (after running collectstatic)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Authentication Settings
+LOGIN_URL = 'accounts:login'
+LOGIN_REDIRECT_URL = 'predictions:input'
+LOGOUT_REDIRECT_URL = 'accounts:login'
+
+# Session settings
+SESSION_COOKIE_AGE = 24000  # 6 hours in seconds
+SESSION_SAVE_EVERY_REQUEST = False
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Session persists after browser close
+
+# Media files for saving trained models
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
