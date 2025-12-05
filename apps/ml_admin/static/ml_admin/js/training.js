@@ -528,7 +528,7 @@ const ALGORITHM_PARAMS = {
             { key: 'max_seq_length', label: 'Max Sequence Length', type: 'select', default: 512, options: [128, 256, 512, 1024], hint: 'Maximum input text length' },
             { key: 'vocab_size', label: 'Vocabulary Size', type: 'select', default: 30000, options: [10000, 20000, 30000, 50000], hint: 'Maximum vocabulary size' },
             // Learning rate - custom number input (user can type or use arrows)
-            { key: 'learning_rate', label: 'Learning Rate', type: 'number', default: 0.0001, min: 0.000001, max: 1, step: 0.00001, hint: 'Optimizer learning rate (e.g., 0.0001)' },
+            { key: 'learning_rate', label: 'Learning Rate', type: 'number', default: 0.00001, min: 0.000001, max: 1, step: 0.00001, hint: 'Optimizer learning rate (e.g., 0.0001)' },
             { key: 'batch_size', label: 'Batch Size', type: 'select', default: 32, options: [8, 16, 32, 64, 128], hint: 'Training batch size' },
             { key: 'epochs', label: 'Epochs', type: 'select', default: 10, options: [5, 10, 20, 50], hint: 'Training epochs' },
             { key: 'patience', label: 'Early Stop Patience', type: 'select', default: 5, options: [2, 3, 5, 10], hint: 'Epochs to wait before early stopping' },
@@ -548,7 +548,7 @@ const ALGORITHM_PARAMS = {
             { key: 'max_seq_length', label: 'Max Sequence Length', type: 'select', default: 512, options: [128, 256, 512, 1024], hint: 'Maximum input length' },
             { key: 'vocab_size', label: 'Vocabulary Size', type: 'select', default: 30000, options: [10000, 20000, 30000, 50000], hint: 'Maximum vocabulary size' },
             // Learning rate - custom number input (user can type or use arrows)
-            { key: 'learning_rate', label: 'Learning Rate', type: 'number', default: 0.0001, min: 0.000001, max: 1, step: 0.00001, hint: 'Optimizer learning rate (e.g., 0.0001)' },
+            { key: 'learning_rate', label: 'Learning Rate', type: 'number', default: 0.00001, min: 0.000001, max: 1, step: 0.00001, hint: 'Optimizer learning rate (e.g., 0.0001)' },
             { key: 'batch_size', label: 'Batch Size', type: 'select', default: 32, options: [8, 16, 32, 64, 128], hint: 'Training batch size' },
             { key: 'epochs', label: 'Epochs', type: 'select', default: 10, options: [5, 10, 20, 50], hint: 'Training epochs' },
             { key: 'patience', label: 'Early Stop Patience', type: 'select', default: 5, options: [2, 3, 5, 10], hint: 'Epochs to wait before early stopping' },

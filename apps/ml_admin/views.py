@@ -1029,9 +1029,11 @@ def analytics_view(request):
         },
     )
 
+
 # ============================================
 # APIs FOR TRANING JOB/DATASET UPLOAD STATUS CHECK
 # ============================================
+
 
 @staff_member_required
 @require_http_methods(['GET'])
@@ -1040,21 +1042,27 @@ def get_jobs_status_api(request):
     from datetime import timedelta
 
     cutoff = timezone.now() - timedelta(hours=24)
-    jobs = TrainingJob.objects.filter(started_at__gte=cutoff).order_by('-started_at')[:20]
+    jobs = TrainingJob.objects.filter(started_at__gte=cutoff).order_by('-started_at')[
+        :20
+    ]
 
-    return JsonResponse({
-        'success': True,
-        'jobs': [
-            {
-                'id': job.id,
-                'status': job.status,
-                'model_type': getattr(job, 'model_type', None),
-                'started_at': job.started_at.isoformat(),
-                'completed_at': job.completed_at.isoformat() if job.completed_at else None,
-            }
-            for job in jobs
-        ]
-    })
+    return JsonResponse(
+        {
+            'success': True,
+            'jobs': [
+                {
+                    'id': job.id,
+                    'status': job.status,
+                    'model_type': getattr(job, 'model_type', None),
+                    'started_at': job.started_at.isoformat(),
+                    'completed_at': job.completed_at.isoformat()
+                    if job.completed_at
+                    else None,
+                }
+                for job in jobs
+            ],
+        }
+    )
 
 
 @staff_member_required
@@ -1064,17 +1072,21 @@ def get_uploads_status_api(request):
     from datetime import timedelta
 
     cutoff = timezone.now() - timedelta(hours=24)
-    uploads = DataUpload.objects.filter(uploaded_at__gte=cutoff).order_by('-uploaded_at')[:20]
+    uploads = DataUpload.objects.filter(uploaded_at__gte=cutoff).order_by(
+        '-uploaded_at'
+    )[:20]
 
-    return JsonResponse({
-        'success': True,
-        'uploads': [
-            {
-                'id': upload.id,
-                'status': upload.status,
-                'file_name': upload.file_name,
-                'row_count': upload.row_count,
-            }
-            for upload in uploads
-        ]
-    })
+    return JsonResponse(
+        {
+            'success': True,
+            'uploads': [
+                {
+                    'id': upload.id,
+                    'status': upload.status,
+                    'file_name': upload.file_name,
+                    'row_count': upload.row_count,
+                }
+                for upload in uploads
+            ],
+        }
+    )

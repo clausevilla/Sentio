@@ -480,14 +480,12 @@
     border-color: var(--gray-400);
 }
 
-/* Number input - show spinners for increment/decrement */
-input[type="number"].param-input {
-    -moz-appearance: textfield;
-}
 
 input[type="number"].param-input::-webkit-outer-spin-button,
 input[type="number"].param-input::-webkit-inner-spin-button {
+    -webkit-appearance: inner-spin-button;
     opacity: 1;
+    height: auto;
     cursor: pointer;
 }
 
