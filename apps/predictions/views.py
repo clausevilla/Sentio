@@ -27,7 +27,16 @@ def result_view(request):
     # Get logged-in user or None
     user = request.user if request.user.is_authenticated else None
     # Saves the submission and prediction to the databast if the user is logged in
-    prediction, confidence_percentage, recommendations, anxiety_level, negativity_level, emotional_intensity, word_count, char_count = get_prediction_result(user, user_text)
+    (
+        prediction,
+        confidence_percentage,
+        recommendations,
+        anxiety_level,
+        negativity_level,
+        emotional_intensity,
+        word_count,
+        char_count,
+    ) = get_prediction_result(user, user_text)
     return render(
         request,
         'predictions/result.html',
