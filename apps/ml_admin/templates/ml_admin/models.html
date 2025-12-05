@@ -30,7 +30,7 @@
     <div class="stat-card">
         <div class="stat-icon purple"><i class="fas fa-bullseye"></i></div>
         <div class="stat-info">
-            <div class="stat-value">{% if active_model and active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</div>
+            <div class="stat-value">{% if active_model and active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}{% else %}—{% endif %}</div>
             <div class="stat-label">Active Accuracy</div>
         </div>
     </div>
@@ -47,9 +47,9 @@
 {% if active_model %}
 <div class="alert success" style="margin-bottom: 1.5rem;">
     <i class="fas fa-check-circle"></i>
-    <span><strong>Active Model:</strong> {{ active_model.version_name }}
-    {% if active_model.accuracy %}• {{ active_model.accuracy|floatformat:1 }}% accuracy{% endif %}
-    {% if active_model.f1_score %}• F1: {{ active_model.f1_score|floatformat:3 }}{% endif %}</span>
+    <span><strong>Active Model:</strong> {{ active_model.version_name }} ({{ active_model.get_model_type_display }})
+    {% if active_model.accuracy %}· Accuracy: {{ active_model.accuracy|floatformat:1 }}{% endif %}
+    {% if active_model.f1_score %}· F1: {{ active_model.f1_score|floatformat:3 }}{% endif %}</span>
 </div>
 {% else %}
 <div class="alert warning" style="margin-bottom: 1.5rem;">
@@ -82,6 +82,7 @@
                             </span>
                         </th>
                         <th class="col-name">Model</th>
+                        <th class="col-type">Type</th>
                         <th class="col-status">Status</th>
                         <th class="col-metric">Accuracy</th>
                         <th class="col-metric">Precision</th>
@@ -107,13 +108,26 @@
                         <td class="col-name">
                             <div class="model-name-cell">
                                 <div class="model-icon {% if item.model.is_active %}active{% endif %}">
-                                    <i class="fas fa-cube"></i>
+                                    {% if item.model.model_type == 'lstm' or item.model.model_type == 'transformer' %}
+                                    <i class="fas fa-brain"></i>
+                                    {% elif item.model.model_type == 'random_forest' %}
+                                    <i class="fas fa-tree"></i>
+                                    {% else %}
+                                    <i class="fas fa-chart-line"></i>
+                                    {% endif %}
                                 </div>
                                 <div class="model-name-info">
                                     <span class="model-name">{{ item.model.version_name }}</span>
                                     <span class="model-creator">by {{ item.model.created_by.username|default:"—" }}</span>
                                 </div>
                             </div>
+                        </td>
+
+                        <!-- Model Type -->
+                        <td class="col-type">
+                            <span class="type-badge type-{{ item.model.model_type }}">
+                                {{ item.model.get_model_type_display|default:item.model.model_type }}
+                            </span>
                         </td>
 
                         <!-- Status -->
@@ -129,7 +143,7 @@
                         <td class="col-metric">
                             {% if item.model.accuracy %}
                             <span class="metric-value-cell {% if item.model.accuracy >= 80 %}good{% elif item.model.accuracy >= 60 %}okay{% else %}low{% endif %}">
-                                {{ item.model.accuracy|floatformat:1 }}%
+                                {{ item.model.accuracy|floatformat:1 }}
                             </span>
                             {% else %}
                             <span class="metric-empty">—</span>
@@ -208,7 +222,7 @@
             <h4>No Models Yet</h4>
             <p>Train your first model to see it here</p>
             <a href="{% url 'ml_admin:training' %}" class="btn btn-primary">
-                <i class="fas fa-flask"></i> <span>Go to Training</span>
+                <span>Go to Training</span>
             </a>
         </div>
         {% endif %}
@@ -217,7 +231,7 @@
 
 <!-- Model Detail Modal -->
 <div class="modal" id="modelModal">
-    <div class="modal-content modal-md">
+    <div class="modal-content modal-lg">
         <div class="modal-header">
             <h3><i class="fas fa-cube"></i> <span id="modalModelName">Model Details</span></h3>
             <button class="modal-close" onclick="closeModal('modelModal')">&times;</button>
@@ -228,9 +242,9 @@
 
 <!-- Compare Models Modal -->
 <div class="modal" id="compareModal">
-    <div class="modal-content modal-lg">
+    <div class="modal-content modal-xl">
         <div class="modal-header">
-            <h3><i class="fas fa-columns"></i> Compare Models</h3>
+            <h3><i class="fas fa-columns"></i> Model Comparison</h3>
             <button class="modal-close" onclick="closeModal('compareModal')">&times;</button>
         </div>
         <div class="modal-body" id="compareContent">
@@ -247,15 +261,22 @@
         {
             id: {{ item.model.id }},
             name: '{{ item.model.version_name|escapejs }}',
+            model_type: '{{ item.model.model_type|default:"unknown" }}',
+            model_type_display: '{{ item.model.get_model_type_display|default:item.model.model_type|escapejs }}',
             accuracy: {{ item.model.accuracy|default:'null' }},
             precision: {{ item.model.precision|default:'null' }},
             recall: {{ item.model.recall|default:'null' }},
             f1: {{ item.model.f1_score|default:'null' }},
             created_at: '{{ item.model.created_at|date:"M d, Y" }}',
+            created_at_full: '{{ item.model.created_at|date:"F d, Y \\a\\t H:i" }}',
             created_by: '{{ item.model.created_by.username|default:"-"|escapejs }}',
             file_path: '{{ item.model.model_file_path|default:"-"|escapejs }}',
             is_active: {{ item.model.is_active|yesno:"true,false" }},
             job_dataset: '{% if item.job %}{{ item.job.data_upload.file_name|default:"-"|escapejs }}{% else %}-{% endif %}',
+            has_roc_plot: {{ item.model.roc_plot_base64|yesno:"true,false" }},
+            has_confusion_matrix: {{ item.model.confusion_matrix_base64|yesno:"true,false" }},
+            roc_plot: '{{ item.model.roc_plot_base64|default:""|escapejs }}',
+            confusion_matrix: '{{ item.model.confusion_matrix_base64|default:""|escapejs }}',
         },
         {% endfor %}
     ];
@@ -264,12 +285,49 @@
     const modelsById = {};
     modelsData.forEach(m => modelsById[m.id] = m);
 
+    // Get model type icon
+    function getModelTypeIcon(type) {
+        switch(type) {
+            case 'lstm':
+            case 'transformer':
+                return 'fa-brain';
+            case 'random_forest':
+                return 'fa-tree';
+            default:
+                return 'fa-chart-line';
+        }
+    }
+
     // Show model detail in modal
     function showModelDetail(id) {
         const model = modelsById[id];
         if (!model) return;
 
         document.getElementById('modalModelName').textContent = model.name;
+
+        let plotsHtml = '';
+        if (model.has_roc_plot || model.has_confusion_matrix) {
+            plotsHtml = `
+                <div class="detail-section">
+                    <h4><i class="fas fa-chart-area"></i> Performance Visualizations</h4>
+                    <div class="plots-grid">
+                        ${model.has_roc_plot ? `
+                        <div class="plot-item">
+                            <h5>ROC Curve</h5>
+                            <img src="data:image/png;base64,${model.roc_plot}" alt="ROC Curve" class="plot-image">
+                        </div>
+                        ` : ''}
+                        ${model.has_confusion_matrix ? `
+                        <div class="plot-item">
+                            <h5>Confusion Matrix</h5>
+                            <img src="data:image/png;base64,${model.confusion_matrix}" alt="Confusion Matrix" class="plot-image">
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
         document.getElementById('modalContent').innerHTML = `
             <div class="modal-status ${model.is_active ? 'active' : ''}">
                 ${model.is_active
@@ -278,10 +336,36 @@
             </div>
 
             <div class="detail-section">
+                <h4><i class="fas fa-info-circle"></i> Model Information</h4>
+                <div class="detail-rows">
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fas fa-${getModelTypeIcon(model.model_type)}"></i> Model Type</span>
+                        <span class="detail-value"><span class="type-badge type-${model.model_type}">${model.model_type_display}</span></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fas fa-calendar"></i> Created</span>
+                        <span class="detail-value">${model.created_at_full}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fas fa-user"></i> Created By</span>
+                        <span class="detail-value">${model.created_by}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fas fa-database"></i> Training Dataset</span>
+                        <span class="detail-value">${model.job_dataset}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fas fa-file"></i> Model File</span>
+                        <span class="detail-value code">${model.file_path}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
                 <h4><i class="fas fa-bullseye"></i> Performance Metrics</h4>
                 <div class="metrics-grid-modal">
-                    <div class="metric-box-modal">
-                        <span class="metric-value">${model.accuracy !== null ? model.accuracy.toFixed(1) + '%' : '—'}</span>
+                    <div class="metric-box-modal ${model.accuracy !== null && model.accuracy >= 80 ? 'good' : ''}">
+                        <span class="metric-value">${model.accuracy !== null ? model.accuracy.toFixed(1) : '—'}</span>
                         <span class="metric-label">Accuracy</span>
                     </div>
                     <div class="metric-box-modal">
@@ -299,27 +383,7 @@
                 </div>
             </div>
 
-            <div class="detail-section">
-                <h4><i class="fas fa-info-circle"></i> Information</h4>
-                <div class="detail-rows">
-                    <div class="detail-row">
-                        <span class="detail-label"><i class="fas fa-calendar"></i> Created</span>
-                        <span class="detail-value">${model.created_at}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label"><i class="fas fa-user"></i> Created By</span>
-                        <span class="detail-value">${model.created_by}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label"><i class="fas fa-database"></i> Training Dataset</span>
-                        <span class="detail-value">${model.job_dataset}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label"><i class="fas fa-file"></i> Model File</span>
-                        <span class="detail-value code">${model.file_path}</span>
-                    </div>
-                </div>
-            </div>
+            ${plotsHtml}
 
             ${!model.is_active ? `
             <div class="modal-actions">
