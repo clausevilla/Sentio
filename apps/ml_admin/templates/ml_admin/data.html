@@ -176,7 +176,7 @@
         {% if uploads %}
         <div class="dataset-list">
             {% for item in uploads %}
-            <div class="dataset-row {% if not item.upload.is_validated %}pending{% endif %}">
+            <div class="dataset-row {% if not item.upload.is_validated %}pending{% endif %}" data-upload-id="{{ item.upload.id }}">
                 <!-- Main Info -->
                 <div class="dataset-main">
                     <div class="dataset-icon">
