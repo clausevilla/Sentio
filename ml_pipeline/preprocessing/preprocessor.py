@@ -155,7 +155,7 @@ class DataPreprocessingPipeline:
             df: DataFrame with a 'text' column to be processed
 
         Returns:
-            Tuple of (df_with_preprocessed_text, report_dict)
+            Tuple of (text_preprocessed, report_dict)
         """
         import swifter as swifter
 
@@ -165,15 +165,15 @@ class DataPreprocessingPipeline:
         # Perform specific set of preprocessing steps depending on model type
         if model_type == 'traditional':
             # For classic ML models, all preprocessing steps included
-            df['processed_text'] = df['text'].swifter.apply(
+            df['text_preprocessed'] = df['text'].swifter.apply(
                 self._preprocess_traditional
             )
         elif model_type == 'rnn':
             # For RNN, less preprocessing
-            df['processed_text'] = df['text'].swifter.apply(self._preprocess_rnn)
+            df['text_preprocessed'] = df['text'].swifter.apply(self._preprocess_rnn)
         elif model_type == 'transformer':
             # For transformer, just basic cleanup steps
-            df['processed_text'] = df['text'].swifter.apply(
+            df['text_preprocessed'] = df['text'].swifter.apply(
                 self._preprocess_transformer
             )
         else:
@@ -181,7 +181,7 @@ class DataPreprocessingPipeline:
                 "Invalid model type. Must be 'traditional', 'rnn', or 'transformer'"
             )
 
-        return df
+        return df, self.report
 
     # Preprocessing branch for traditional ML (logistic regression)
     def _preprocess_traditional(self, text):

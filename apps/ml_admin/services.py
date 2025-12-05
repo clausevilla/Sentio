@@ -25,35 +25,23 @@ CATEGORY_MAP = {  # Define category mapping
     'stress': 3,
 }
 
-ALGO_TO_PREPROCESSING_TYPE = {
-    # Classical Algorithms share the same preprocessing
-    'logistic_regression': 'classical',
-    'random_forest': 'classical',
-    # Deep Learning models have specific needs
-    'rnn': 'rnn',
-    'transformer': 'transformer',
-}
-
-ALGO_TO_PREPROCESSING_TYPE = {
-    # Classical Algorithms share the same preprocessing
-    'logistic_regression': 'classical',
-    'random_forest': 'classical',
-    # Deep Learning models have specific needs
-    'rnn': 'rnn',
-    'transformer': 'transformer',
+PIPELINE_TO_MODEL_TYPE = {
+    'full': 'traditional',
+    'partial': 'rnn',
+    'raw': 'transformer',
 }
 
 
 def trigger_full_pipeline_in_background(
     data_upload_id: int,
     dataset_type: str = 'unlabeled',  # !!! PLACEHOLDER
-    algorithm_key: str = 'logistic_regression',  # !!! PLACEHOLDER
+    pipeline_type: str = 'full',
 ):
     """
     Wrapper to run the pipeline in a separate thread.
     """
     thread = threading.Thread(
-        target=run_full_pipeline, args=(data_upload_id, dataset_type, algorithm_key)
+        target=run_full_pipeline, args=(data_upload_id, dataset_type, pipeline_type)
     )
     thread.daemon = True
     thread.start()
@@ -62,7 +50,7 @@ def trigger_full_pipeline_in_background(
 def run_full_pipeline(
     data_upload_id: int,
     dataset_type: str = 'train',
-    algorithm_key: str = 'logistic_regression',
+    pipeline_type: str = 'full',
 ):
     # !!! PLACEHOLDERS here
     """
@@ -79,19 +67,19 @@ def run_full_pipeline(
 
         upload.status = 'processing'
         upload.save()
-        logger.info(f'Started pipeline for {upload.file_name} with {algorithm_key}')
+        logger.info(f'Started pipeline for {upload.file_name} with {pipeline_type}')
 
         # Run cleaning pipeline
         cleaner = DataCleaningPipeline()
         df, report = cleaner.clean_file(upload.file_path)
 
         # Determine the correct preprocessing branch to run based on the algorithm key
-        model_type = ALGO_TO_PREPROCESSING_TYPE.get(
-            algorithm_key, 'traditional'
+        model_type = PIPELINE_TO_MODEL_TYPE.get(
+            pipeline_type, 'traditional'
         )  # Fallback
 
         logger.info(
-            f"Algorithm '{algorithm_key}' selected. Branching to '{model_type}' preprocessing."
+            f"Pipeline type '{pipeline_type}' selected. Branching to '{model_type}' preprocessing."
         )
 
         # Run preprocessing pipeline, passing the cleaned data frame to the preprocessor
