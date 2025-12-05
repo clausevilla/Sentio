@@ -6,7 +6,39 @@ from apps.ml_admin.models import ModelVersion
 from apps.predictions.models import PredictionResult, TextSubmission
 import re
 
-NEGATIVE_WORDS = ['sad', 'angry', 'bad', 'mad', 'upset', 'frustrated', 'terrible', 'hopeless', 'pessimistic', 'worried', 'anxious', 'nervous', 'fear', 'awful', 'panic', 'stress', 'terrible', 'hate']
+NEGATIVE_WORDS = [
+    # Sadness / Depression
+    'sad', 'depressed', 'hopeless', 'empty', 'numb', 'lonely', 'miserable',
+    'worthless', 'useless', 'helpless', 'despair', 'grief', 'heartbroken',
+    'unhappy', 'down', 'low', 'blue', 'gloomy', 'melancholy', 'dejected',
+
+    # Anger / Frustration
+    'angry', 'mad', 'furious', 'rage', 'hate', 'frustrated', 'irritated',
+    'annoyed', 'bitter', 'resentful', 'hostile', 'agitated', 'outraged',
+
+    # Anxiety / Fear
+    'anxious', 'worried', 'nervous', 'scared', 'afraid', 'fear', 'panic',
+    'terrified', 'dread', 'uneasy', 'tense', 'restless', 'overwhelmed',
+    'paranoid', 'insecure', 'uncertain',
+
+    # Stress / Exhaustion
+    'stress', 'stressed', 'exhausted', 'tired', 'drained', 'burned', 'burnout',
+    'overwhelmed', 'pressured', 'overloaded', 'fatigued',
+
+    # General negative
+    'bad', 'terrible', 'awful', 'horrible', 'worst', 'painful', 'suffering',
+    'struggling', 'failing', 'broken', 'damaged', 'ruined', 'destroyed',
+    'pessimistic', 'negative', 'dark', 'lost', 'stuck', 'trapped',
+
+    # Self-critical
+    'stupid', 'dumb', 'idiot', 'failure', 'loser', 'pathetic', 'weak',
+    'ugly', 'fat', 'disgusting', 'ashamed', 'embarrassed', 'guilty',
+
+    # Crisis indicators (important for mental health)
+    'suicide', 'suicidal', 'die', 'dying', 'death', 'kill', 'end', 'goodbye',
+    'harm', 'hurt', 'cutting', 'selfharm',
+]
+
 
 # Loads the model
 MODEL_PATH = 'ml_pipeline/toy_models/LRmodel.pkl'  # Path to model used to predict
@@ -20,7 +52,7 @@ def analyze_text(analyzed_text):
     proba = MODEL.predict_proba([analyzed_text])[0]
     confidence = max(proba)
     model_version = (
-        ModelVersion.objects.first()
+        ModelVersion.objects.filter(is_active=True).first()
     )  # Placeholder, just uses the first model in the database
 
     return (label, confidence, model_version)
@@ -115,7 +147,7 @@ def calculate_metrics(text: str):
     return anxiety_level, negativity_level, emotional_intensity, word_count, char_count
 
 
-def save_prediction_to_database(user, user_text, prediction, confidence, recommendations, model_version):
+def save_prediction_to_database(user, user_text, prediction, confidence, model_version, recommendations):
     if user:
         submission = TextSubmission.objects.create(user=user, text_content=user_text)
         # Save to database
