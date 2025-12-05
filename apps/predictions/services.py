@@ -14,16 +14,13 @@ MODEL = joblib.load(MODEL_PATH)
 
 
 def analyze_text(analyzed_text):
-    prediction = MODEL.predict([analyzed_text])
+    predictions = MODEL.predict([analyzed_text])
 
-    label = prediction[0]
+    prediction = predictions[0]
     proba = MODEL.predict_proba([analyzed_text])[0]
     confidence = max(proba)
-    model_version = (
-        ModelVersion.objects.first()
-    )  # Placeholder, just uses the first model in the database
 
-    return (label, confidence, model_version)
+    return (prediction, confidence)
 
 
 def clean_user_input(text):
@@ -36,15 +33,18 @@ def clean_user_input(text):
 
 def preprocess_user_input(df, version_name):
     pipeline = DataPreprocessingPipeline()
-    pipeline.preprocess_dataframe(df, version_name)
-    return df['text']
+    df = pipeline.preprocess_dataframe(df, version_name)
+    return df['processed_text']
 
 
 def get_prediction_result(user, user_text):
-    prediction, confidence, model_version = analyze_text(user_text)
+    model_version = (
+        ModelVersion.objects.first()
+    )  # !!!Placeholder, just uses the first model in the database
+
     df = clean_user_input(user_text)
-    user_text = preprocess_user_input(df, model_version.version_name)
-    print(user_text)
+    processed_text = preprocess_user_input(df, model_version.version_name)
+    prediction, confidence = analyze_text(processed_text.iloc[0])
 
     if user:
         save_prediction_to_database(
