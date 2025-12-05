@@ -7,7 +7,7 @@
 
 /* Dashboard cards */
 .content > .grid-2 {
-    row-gap: 2.5rem;
+    row-gap: 1.5rem;
 }
 
 /* Stats row spacing */
@@ -15,9 +15,8 @@
     margin-bottom: 1.5rem;
 }
 
-
 .stat-card {
-    min-width: 0; /* Allow flex item to shrink */
+    min-width: 0;
     overflow: hidden;
 }
 
@@ -32,12 +31,12 @@
 }
 
 .stat-info {
-    min-width: 0; /* Allow text to shrink */
+    min-width: 0;
     overflow: hidden;
 }
 
 .stat-value {
-    font-size: clamp(1rem, 4vw, 1.5rem); /* Responsive font size */
+    font-size: clamp(1rem, 4vw, 1.5rem);
     font-weight: 700;
     color: var(--gray-800);
     white-space: nowrap;
@@ -45,7 +44,6 @@
     text-overflow: ellipsis;
 }
 
-/* Format large numbers */
 .stat-value[data-format="number"] {
     font-variant-numeric: tabular-nums;
 }
@@ -58,67 +56,186 @@
     white-space: nowrap;
 }
 
-/* Model Display */
-.model-display { text-align: center; }
+/* ========================================
+   Active Model Card
+   ======================================== */
 
-.model-name {
+.active-model-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.active-model-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.active-model-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.active-model-icon i {
     font-size: 1.25rem;
+    color: white;
+}
+
+.active-model-title {
+    flex: 1;
+    min-width: 0;
+}
+
+.active-model-name {
+    font-size: 1.1rem;
     font-weight: 600;
     color: var(--gray-800);
-    margin-bottom: 1rem;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.model-metrics {
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-}
-
-.model-metrics .metric { text-align: center; }
-
-.metric-val {
-    display: block;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--primary);
-}
-
-.metric-lbl {
+.active-model-type {
     font-size: 0.75rem;
     color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 2px;
+}
+
+.active-model-type .badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+}
+
+/* Metrics Grid */
+.model-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.metric-box {
+    background: var(--gray-50);
+    border-radius: var(--radius-sm);
+    padding: 0.6rem 0.5rem;
+    text-align: center;
+}
+
+.metric-box .value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary);
+    display: block;
+}
+
+.metric-box .label {
+    font-size: 0.65rem;
+    color: var(--gray-500);
     text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
-.empty-state .btn {
-    margin-top: 2rem;
+/* Model Meta Info */
+.model-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    font-size: 0.8rem;
+    color: var(--gray-600);
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--gray-100);
 }
 
+.model-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
 
-/* Job Stats - styled boxes */
+.model-meta-item i {
+    color: var(--gray-400);
+    font-size: 0.75rem;
+    width: 14px;
+}
+
+.model-meta-item strong {
+    color: var(--gray-700);
+    font-weight: 500;
+}
+
+/* Model Actions */
+.model-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+}
+
+.model-actions .btn {
+    flex: 1;
+    font-size: 0.8rem;
+    padding: 0.5rem;
+}
+
+/* Empty state for no model */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.empty-state i {
+    font-size: 2rem;
+    color: var(--gray-300);
+    margin-bottom: 0.75rem;
+}
+
+.empty-state p {
+    color: var(--gray-500);
+    margin-bottom: 1rem;
+}
+
+/* ========================================
+   Job Stats - Compact
+   ======================================== */
+
 .job-stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
 .job-stat {
     background: var(--gray-50);
     border: 1px solid var(--gray-200);
     border-radius: var(--radius-sm);
-    padding: 0.75rem;
+    padding: 0.5rem;
     text-align: center;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: var(--gray-600);
 }
 
 .job-stat span {
     display: block;
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 700;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
 }
 
 .job-stat.pending {
@@ -145,6 +262,13 @@
 }
 .job-stat.failed span { color: var(--danger); }
 
+/* ========================================
+   Recent Lists - Compact (No Scroll)
+   ======================================== */
+
+.card-body {
+    padding: 1rem 1.25rem;
+}
 
 .recent-list {
     list-style: none;
@@ -156,19 +280,24 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 0;
+    padding: 0.5rem 0;
     border-bottom: 1px solid var(--gray-100);
-    gap: 12px;
+    gap: 8px;
 }
 
 .recent-item:last-child {
     border-bottom: none;
+    padding-bottom: 0;
+}
+
+.recent-item:first-child {
+    padding-top: 0;
 }
 
 .recent-item.clickable {
     cursor: pointer;
-    margin: 0 -1.5rem;
-    padding: 12px 1.5rem;
+    margin: 0 -1.25rem;
+    padding: 0.5rem 1.25rem;
     border-radius: 0;
     transition: background 0.2s;
 }
@@ -180,16 +309,16 @@
 .recent-item-left {
     display: flex;
     align-items: center;
-    gap: 12px;
-    min-width: 0; /* Allow shrinking */
+    gap: 8px;
+    min-width: 0;
     flex: 1;
 }
 
 .recent-item-icon {
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
     background: rgba(74, 124, 89, 0.1);
-    border-radius: 8px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -198,17 +327,19 @@
 
 .recent-item-icon i {
     color: var(--primary);
-    font-size: 1rem;
+    font-size: 0.8rem;
 }
 
 .recent-item-info {
     display: flex;
     flex-direction: column;
-    min-width: 0; /* Allow text truncation */
+    min-width: 0;
+    gap: 1px;
 }
 
 .recent-item-title {
     font-weight: 500;
+    font-size: 0.85rem;
     color: var(--gray-800);
     white-space: nowrap;
     overflow: hidden;
@@ -216,7 +347,7 @@
 }
 
 .recent-item-subtitle {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: var(--gray-500);
     white-space: nowrap;
     overflow: hidden;
@@ -225,31 +356,45 @@
 
 .recent-item-right {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
+    align-items: center;
+    gap: 8px;
     flex-shrink: 0;
 }
 
 .recent-item-date {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--gray-400);
     white-space: nowrap;
 }
 
-/* Quick Actions */
+/* Compact badges */
+.recent-item .badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+}
+
+/* Status dot - smaller */
+.status-dot {
+    width: 6px;
+    height: 6px;
+}
+
+/* ========================================
+   Quick Actions - Compact
+   ======================================== */
+
 .quick-actions {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .action-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 1.25rem;
+    gap: 6px;
+    padding: 1rem;
     background: var(--gray-50);
     border-radius: var(--radius);
     text-decoration: none;
@@ -257,14 +402,39 @@
     transition: all 0.2s;
 }
 
-.action-btn:hover { background: var(--primary); color: white; }
-.action-btn i { font-size: 1.5rem; }
-.action-btn span { font-size: 0.85rem; font-weight: 500; }
+.action-btn:hover {
+    background: var(--primary);
+    color: white;
+}
 
-/* Responsive */
+.action-btn i {
+    font-size: 1.25rem;
+}
+
+.action-btn span {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* ========================================
+   Chart Card
+   ======================================== */
+
+.chart-wrap {
+    height: 280px;
+}
+
+/* ========================================
+   Responsive
+   ======================================== */
+
 @media (max-width: 1200px) {
     .stats-row {
         display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .model-metrics-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
@@ -276,24 +446,30 @@
 }
 
 @media (max-width: 768px) {
-    .quick-actions { grid-template-columns: 1fr; }
-    .model-metrics { gap: 1rem; }
-    .job-stats { grid-template-columns: repeat(2, 1fr); }
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .model-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .job-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
 
     .stats-row {
         grid-template-columns: 1fr;
     }
 
-    .recent-item {
-        flex-wrap: wrap;
+    .model-meta {
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
     .recent-item-right {
-        flex-direction: row;
-        gap: 8px;
-        width: 100%;
-        justify-content: flex-start;
-        margin-top: 4px;
-        padding-left: 48px; /* Align with text */
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
     }
 }
