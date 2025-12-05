@@ -99,15 +99,37 @@
         <!-- Main -->
         <main class="main-content">
             <header class="topbar">
-                <button class="menu-toggle" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1>{% block page_title %}Dashboard{% endblock %}</h1>
-                {% if active_model %}
-                <div class="active-badge"><i class="fas fa-check-circle"></i> {{ active_model.version_name }}</div>
-                {% else %}
-                <div class="active-badge warning"><i class="fas fa-exclamation-triangle"></i> No Model</div>
-                {% endif %}
+                <div class="topbar-left">
+                    <button class="menu-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+
+                <div class="topbar-right">
+                    <!-- Notification Bell -->
+                    <div class="notification-wrapper">
+                        <button class="notification-bell" onclick="toggleNotificationDropdown()" title="Notifications">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                        </button>
+
+                        <div class="notification-dropdown" id="notificationDropdown">
+                            <div class="notification-header">
+                                <h4>Notifications</h4>
+                                <button onclick="clearAllNotifications()">Clear all</button>
+                            </div>
+                            <div class="notification-list" id="notificationList"></div>
+                        </div>
+                    </div>
+
+                    <!-- Active Model Badge -->
+                    {% if active_model %}
+                    <div class="active-badge"><i class="fas fa-check-circle"></i> {{ active_model.version_name }}</div>
+                    {% else %}
+                    <div class="active-badge warning"><i class="fas fa-exclamation-triangle"></i> No Model</div>
+                    {% endif %}
+                </div>
             </header>
 
             <div class="content">

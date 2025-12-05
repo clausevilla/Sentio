@@ -1,6 +1,5 @@
 # Author: Lian Shi
 
-
 """
 Models for user accounts
 

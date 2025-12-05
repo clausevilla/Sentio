@@ -658,6 +658,15 @@
     margin: 0;
 }
 
+.dataset-row.status-updated {
+    animation: statusFlash 2s ease;
+}
+
+@keyframes statusFlash {
+    0%, 100% { background: transparent; }
+    50% { background: rgba(74, 124, 89, 0.15); }
+}
+
 /* Responsive - Components */
 @media (max-width: 1024px) {
     .detail-metrics { grid-template-columns: repeat(2, 1fr); }

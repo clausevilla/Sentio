@@ -18,7 +18,7 @@ urlpatterns = [
     path('models/', views.models_view, name='models'),
     path('users/', views.users_view, name='users'),
     path('analytics/', views.analytics_view, name='analytics'),
-    # Data APIs
+    # APIs
     path('api/upload/', views.upload_csv_api, name='upload_csv'),
     path(
         'api/data/<int:upload_id>/delete/',
@@ -39,11 +39,6 @@ urlpatterns = [
         name='update_split',
     ),
     path(
-        'api/data/<int:upload_id>/status/',
-        views.get_upload_status_api,
-        name='get_status',
-    ),
-    path(
         'api/data/<int:upload_id>/distribution/',
         views.get_upload_distribution_api,
         name='get_distribution',
@@ -58,9 +53,7 @@ urlpatterns = [
         views.get_upload_distribution_api,
         name='get_distribution',
     ),
-    # Training APIs
     path('api/training/start/', views.start_training_api, name='start_training'),
-    # Model APIs
     path(
         'api/models/<int:model_id>/activate/',
         views.activate_model_api,
@@ -68,5 +61,13 @@ urlpatterns = [
     ),
     path(
         'api/models/<int:model_id>/delete/', views.delete_model_api, name='delete_model'
+    ),
+    path(
+        'api/notifications/jobs/', views.get_jobs_status_api, name='notifications_jobs'
+    ),
+    path(
+        'api/notifications/uploads/',
+        views.get_uploads_status_api,
+        name='notifications_uploads',
     ),
 ]
