@@ -58,7 +58,7 @@
     color: var(--primary);
     background: white;
     border-bottom-color: var(--primary);
-    height:35pt;
+    height: 35pt;
 }
 
 .col-tab.static {
@@ -98,7 +98,7 @@
 }
 
 /* ================================
-   Algorithm Grid - Full Height
+   Algorithm Grid
 ================================ */
 .algo-grid {
     display: grid;
@@ -119,6 +119,7 @@
 }
 
 .algo-card {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -159,7 +160,6 @@
     border: 1.5pt solid var(--primary);
     background: rgba(74, 124, 89, 0.069);
     color: var(--primary);
-
 }
 
 .algo-option input:checked + .algo-card i {
@@ -170,11 +170,52 @@
     color: var(--gray-800);
 }
 
-
 .algo-option input:checked + .algo-card .algo-desc {
     color: var(--primary);
 }
 
+/* ================================
+   Configure Button
+================================ */
+.algo-config-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 0;
+    margin: 0;
+    background: none;
+    border: none;
+    font-size: 0.85rem;
+    color: var(--gray-400);
+    cursor: pointer;
+    transition: all 0.15s;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 2;
+    line-height: 1;
+}
+
+.algo-config-btn:hover {
+    color: var(--primary);
+    transform: rotate(45deg);
+}
+
+.algo-option input:checked + .algo-card .algo-config-btn {
+    opacity: 1;
+    visibility: visible;
+    color: var(--primary);
+}
+
+.algo-config-btn.modified::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 5px;
+    height: 5px;
+    background: var(--primary);
+    border-radius: 50%;
+}
 
 /* ================================
    Model List
@@ -189,6 +230,7 @@
 }
 
 .model-option {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -206,12 +248,41 @@
 }
 
 .model-option.selected {
-    border:1.5pt solid var(--primary);
+    border: 1.5pt solid var(--primary);
     background: rgba(74, 124, 89, 0.06);
 }
 
 .model-option input {
     display: none;
+}
+
+.model-option .algo-config-btn {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    font-size: 1.4rem;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.model-option .algo-config-btn:hover {
+    transform: translateY(-50%) rotate(45deg);
+}
+
+.model-option.selected .algo-config-btn {
+    opacity: 1;
+    visibility: visible;
+    color: var(--primary);
+}
+
+.model-option:hover .algo-config-btn {
+    opacity: 0.4;
+    visibility: visible;
+}
+
+.model-option:hover .algo-config-btn:hover {
+    opacity: 1;
 }
 
 .model-info {
@@ -234,6 +305,17 @@
     color: var(--gray-500);
 }
 
+.model-type-tag {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    background: var(--gray-100);
+    color: var(--gray-600);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
 .badge.sm {
     font-size: 9px;
     padding: 0.125rem 0.375rem;
@@ -245,6 +327,7 @@
     color: var(--gray-500);
     font-size: var(--font-sm);
 }
+
 /* ================================
    Parameters Modal Styles
 ================================ */
@@ -253,6 +336,10 @@
 .modal-lg {
     max-width: 700px;
     width: 95%;
+}
+
+.modal-md {
+    max-width: 500px;
 }
 
 /* Params Info Banner */
@@ -271,6 +358,39 @@
 
 .params-info i:first-child {
     color: var(--primary);
+}
+
+.params-info.retrain-info {
+    background: rgba(243, 156, 18, 0.08);
+    border-color: rgba(243, 156, 18, 0.25);
+}
+
+.params-info.retrain-info i:first-child {
+    color: #d68910;
+}
+
+/* Mode Badge */
+.mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+
+.mode-badge.retrain {
+    background: rgba(243, 156, 18, 0.15);
+    color: #d68910;
+    border: 1px solid rgba(243, 156, 18, 0.3);
+}
+
+.mode-badge i {
+    font-size: 0.55rem;
 }
 
 /* Parameters Grid */
@@ -298,9 +418,9 @@
 
 /* Hint Icon with Tooltip */
 .param-hint {
-    color: var(--gray-400);
     cursor: help;
-    font-size: 0.7rem;
+    color: var(--gray-400);
+    transition: color 0.2s;
     position: relative;
 }
 
@@ -311,35 +431,34 @@
 .param-hint[title]:hover::after {
     content: attr(title);
     position: absolute;
-    bottom: calc(100% + 6px);
+    bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--gray-800);
+    padding: 6px 10px;
+    background: var(--gray-800, #1f2937);
     color: white;
     font-size: 0.7rem;
-    font-weight: 400;
-    padding: 0.4rem 0.6rem;
+    font-weight: normal;
     border-radius: 4px;
     white-space: nowrap;
-    min-width: 150px;
-    white-space: normal;
-    text-align: center;
-    z-index: 1000;
+    z-index: 100;
+    margin-bottom: 6px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .param-hint[title]:hover::before {
     content: '';
     position: absolute;
-    bottom: calc(100% + 2px);
+    bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
     border: 5px solid transparent;
-    border-top-color: var(--gray-800);
-    z-index: 1000;
+    border-top-color: var(--gray-800, #1f2937);
+    margin-bottom: -4px;
+    z-index: 100;
 }
 
-/* Parameter Inputs */
+/* Parameter Inputs (select and number) */
 .param-input {
     padding: 0.5rem 0.625rem;
     border: 1px solid var(--gray-300);
@@ -361,15 +480,15 @@
     border-color: var(--gray-400);
 }
 
-/* Number input - hide spinners */
-.param-input[type="number"] {
+/* Number input - show spinners for increment/decrement */
+input[type="number"].param-input {
     -moz-appearance: textfield;
 }
 
-.param-input[type="number"]::-webkit-outer-spin-button,
-.param-input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+input[type="number"].param-input::-webkit-outer-spin-button,
+input[type="number"].param-input::-webkit-inner-spin-button {
+    opacity: 1;
+    cursor: pointer;
 }
 
 /* Select styling */
@@ -391,18 +510,7 @@ select.param-input {
     font-size: 0.75rem;
 }
 
-/* Modal Footer */
-#paramsModal .modal-footer {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--gray-200);
-    margin-top: 1.25rem;
-}
-
-
-/* Parameter item modified state */
+/* Modified state */
 .param-item.modified .param-input {
     border-color: var(--primary);
     background: rgba(74, 124, 89, 0.04);
@@ -415,7 +523,7 @@ select.param-input {
     font-size: 0.75rem;
 }
 
-/* Parameter item error state */
+/* Error state */
 .param-item.error .param-input {
     border-color: var(--danger);
     background: rgba(231, 76, 60, 0.04);
@@ -425,7 +533,17 @@ select.param-input {
     color: var(--danger);
 }
 
-/* Parameter error message */
+.param-item.error {
+    animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+/* Error message */
 .param-error {
     display: flex;
     align-items: center;
@@ -442,211 +560,14 @@ select.param-input {
     font-size: 0.65rem;
 }
 
-/* Mode Badge in Modal Title */
-.mode-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.2rem 0.5rem;
-    font-size: 0.65rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    border-radius: 4px;
-    margin-left: 0.5rem;
-    vertical-align: middle;
-}
-
-.mode-badge.retrain {
-    background: rgba(243, 156, 18, 0.15);
-    color: #d68910;
-    border: 1px solid rgba(243, 156, 18, 0.3);
-}
-
-.mode-badge i {
-    font-size: 0.55rem;
-}
-
-/* Retrain Info Banner */
-.params-info.retrain-info {
-    background: rgba(243, 156, 18, 0.08);
-    border-color: rgba(243, 156, 18, 0.25);
-}
-
-.params-info.retrain-info i:first-child {
-    color: #d68910;
-}
-
-/* Config button with modified indicator */
-.algo-config-btn.modified::after {
-    content: '';
-    position: absolute;
-    top: -2px;
-    right: -2px;
-    width: 6px;
-    height: 6px;
-    background: var(--primary);
-    border-radius: 50%;
-}
-
-/* ================================
-   Configure Button - Plain Icon Only
-================================ */
-
-/* Plain icon button - no box */
-.algo-config-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    padding: 0;
-    margin: 0;
-    background: none;
-    border: none;
-    font-size: 0.85rem;
-    color: var(--gray-400);
-    cursor: pointer;
-    transition: all 0.15s;
-    opacity: 0;
-    visibility: hidden;
-    z-index: 2;
-    line-height: 1;
-}
-
-.algo-config-btn:hover {
-    color: var(--primary);
-    transform: rotate(45deg);
-}
-
-/* Show button when algo-option is selected */
-.algo-option input:checked + .algo-card .algo-config-btn {
-    opacity: 1;
-    visibility: visible;
-    color: var(--primary);
-}
-
-/* Make algo-card position relative for absolute button */
-.algo-card {
-    position: relative;
-}
-
-/* Modified indicator (green dot) */
-.algo-config-btn.modified::after {
-    content: '';
-    position: absolute;
-    top: -2px;
-    right: -2px;
-    width: 5px;
-    height: 5px;
-    background: var(--primary);
-    border-radius: 50%;
-}
-
-/* ================================
-   Model List Config Button (Retrain)
-================================ */
-
-.model-option {
-    position: relative;
-}
-
-.model-option .algo-config-btn {
-    position: absolute;
-    top: 50%;
-    right: 12px;
-    transform: translateY(-50%);
-    font-size: 1.4rem;
-    opacity: 0;
-    visibility: hidden;
-}
-
-.model-option .algo-config-btn:hover {
-    transform: translateY(-50%) rotate(45deg);
-}
-
-/* Show on model selected */
-.model-option.selected .algo-config-btn {
-    opacity: 1;
-    visibility: visible;
-    color: var(--primary);
-}
-
-/* Show faded on hover */
-.model-option:hover .algo-config-btn {
-    opacity: 0.4;
-    visibility: visible;
-}
-
-.model-option:hover .algo-config-btn:hover {
-    opacity: 1;
-}
-
-/* ================================
-   Model Type Tag
-================================ */
-.model-type-tag {
-    font-size: 0.6rem;
-    padding: 0.1rem 0.35rem;
-    border-radius: 3px;
-    background: var(--gray-100);
-    color: var(--gray-600);
-    text-transform: uppercase;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-}
-
-/* ================================
-   Responsive
-================================ */
-@media (max-width: 768px) {
-    .params-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .modal-lg {
-        max-width: 95%;
-    }
-}
-
-@media (max-width: 480px) {
-    .params-grid {
-        grid-template-columns: 1fr;
-    }
-
-    #paramsModal .modal-footer {
-        flex-direction: column;
-    }
-
-    #paramsModal .modal-footer .btn {
-        width: 100%;
-    }
-}
-
-/* Mode Badge in Modal Title */
-.mode-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.2rem 0.5rem;
-    font-size: 0.65rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    border-radius: 4px;
-    margin-left: 0.5rem;
-    vertical-align: middle;
-}
-
-.mode-badge.retrain {
-    background: rgba(243, 156, 18, 0.15);
-    color: #d68910;
-    border: 1px solid rgba(243, 156, 18, 0.3);
-}
-
-/* Retrain Info Banner */
-.params-info.retrain-info {
-    background: rgba(243, 156, 18, 0.08);
-    border-color: rgba(243, 156, 18, 0.25);
-}
-
-.params-info.retrain-info i:first-child {
-    color: #d68910;
+/* Modal Footer */
+#paramsModal .modal-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-200);
+    margin-top: 1.25rem;
 }
 
 /* ================================
@@ -656,7 +577,7 @@ select.param-input {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    height: 160px; /* Fixed height - shows ~3 items */
+    height: 160px;
     overflow-y: auto;
     flex-shrink: 0;
     padding-right: 0.25rem;
@@ -680,9 +601,8 @@ select.param-input {
 }
 
 .dataset-option.selected {
-    border-color: var(--primary);
-    background: rgba(74, 124, 89, 0.06);
     border: 1.5pt solid var(--primary);
+    background: rgba(74, 124, 89, 0.06);
 }
 
 .dataset-option input[type="checkbox"] {
@@ -905,6 +825,23 @@ select.param-input {
     color: var(--gray-600);
 }
 
+.chart-wrap {
+    position: relative;
+}
+
+#testSetBars .dist-bar-row {
+    font-size: var(--font-xs);
+    padding: 0.25rem 0;
+}
+
+#testSetBars .dist-bar-label {
+    width: 80px;
+}
+
+#testSetBars .dist-bar-pct {
+    width: 70px;
+}
+
 /* ================================
    Current Baseline
 ================================ */
@@ -1040,10 +977,6 @@ select.param-input {
 /* ================================
    Job Details Modal
 ================================ */
-.modal-md {
-    max-width: 500px;
-}
-
 .job-detail-section {
     margin-bottom: 1.25rem;
 }
@@ -1136,26 +1069,6 @@ select.param-input {
 }
 
 /* ================================
-   Modal
-================================ */
-.chart-wrap {
-    position: relative;
-}
-
-#testSetBars .dist-bar-row {
-    font-size: var(--font-xs);
-    padding: 0.25rem 0;
-}
-
-#testSetBars .dist-bar-label {
-    width: 80px;
-}
-
-#testSetBars .dist-bar-pct {
-    width: 70px;
-}
-
-/* ================================
    Scrollbar Styling
 ================================ */
 .dataset-list::-webkit-scrollbar,
@@ -1222,6 +1135,14 @@ select.param-input {
         grid-template-rows: auto;
     }
 
+    .params-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .modal-lg {
+        max-width: 95%;
+    }
+
     .summary-items {
         flex-wrap: wrap;
         gap: 1rem;
@@ -1236,5 +1157,19 @@ select.param-input {
     .baseline-metrics {
         width: 100%;
         justify-content: space-between;
+    }
+}
+
+@media (max-width: 480px) {
+    .params-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #paramsModal .modal-footer {
+        flex-direction: column;
+    }
+
+    #paramsModal .modal-footer .btn {
+        width: 100%;
     }
 }

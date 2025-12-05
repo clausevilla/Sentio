@@ -477,22 +477,23 @@ function showJobDetails(jobId) {
    Algorithm Parameters Modal
 ================================ */
 
-// Algorithm parameter definitions, use SELECT dropdowns with specific choices
+// Algorithm parameter definitions
+// type: 'select' = dropdown, 'number' = custom input field
 const ALGORITHM_PARAMS = {
     logistic_regression: {
         name: 'Logistic Regression',
         icon: 'fa-chart-line',
         params: [
             // Logistic Regression specific
-            { key: 'max_iter', label: 'Max Iterations', default: 1000, options: [100, 500, 1000, 2000, 5000], hint: 'Maximum iterations for solver convergence' },
-            { key: 'regularization_strength', label: 'Regularization (C)', default: 1.0, options: [0.01, 0.1, 0.5, 1.0, 2.0, 10.0], hint: 'Inverse regularization strength' },
-            { key: 'solver', label: 'Solver', default: 'lbfgs', options: ['lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'], hint: 'Optimization algorithm' },
+            { key: 'max_iter', label: 'Max Iterations', type: 'select', default: 1000, options: [100, 500, 1000, 2000, 5000], hint: 'Maximum iterations for solver convergence' },
+            { key: 'regularization_strength', label: 'Regularization (C)', type: 'select', default: 1.0, options: [0.01, 0.1, 0.5, 1.0, 2.0, 10.0], hint: 'Inverse regularization strength' },
+            { key: 'solver', label: 'Solver', type: 'select', default: 'lbfgs', options: ['lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'], hint: 'Optimization algorithm' },
             // TF-IDF shared
-            { key: 'ngram_range_min', label: 'N-gram Min', default: 1, options: [1, 2], hint: 'Minimum n-gram size' },
-            { key: 'ngram_range_max', label: 'N-gram Max', default: 2, options: [1, 2, 3], hint: 'Maximum n-gram size (must be ≥ min)' },
-            { key: 'min_df', label: 'Min Doc Frequency', default: 2, options: [1, 2, 5, 10], hint: 'Ignore terms in fewer documents' },
-            { key: 'max_df', label: 'Max Doc Frequency', default: 0.95, options: [0.8, 0.9, 0.95, 1.0], hint: 'Ignore terms in more than X% docs' },
-            { key: 'tfidf_max_features', label: 'Max Features', default: 'None', options: ['None', 5000, 10000, 20000, 50000], hint: 'Max vocabulary size (None = unlimited)' },
+            { key: 'ngram_range_min', label: 'N-gram Min', type: 'select', default: 1, options: [1, 2], hint: 'Minimum n-gram size' },
+            { key: 'ngram_range_max', label: 'N-gram Max', type: 'select', default: 2, options: [1, 2, 3], hint: 'Maximum n-gram size (must be >= min)' },
+            { key: 'min_df', label: 'Min Doc Frequency', type: 'select', default: 2, options: [1, 2, 5, 10], hint: 'Ignore terms in fewer documents' },
+            { key: 'max_df', label: 'Max Doc Frequency', type: 'select', default: 0.95, options: [0.8, 0.9, 0.95, 1.0], hint: 'Ignore terms in more than X% docs' },
+            { key: 'tfidf_max_features', label: 'Max Features', type: 'select', default: 'None', options: ['None', 5000, 10000, 20000, 50000], hint: 'Max vocabulary size (None = unlimited)' },
         ]
     },
     random_forest: {
@@ -500,18 +501,18 @@ const ALGORITHM_PARAMS = {
         icon: 'fa-tree',
         params: [
             // Random Forest specific
-            { key: 'n_estimators', label: 'Number of Trees', default: 100, options: [50, 100, 200, 500, 1000], hint: 'Number of trees in the forest' },
-            { key: 'max_depth', label: 'Max Depth', default: 'None', options: ['None', 5, 10, 20, 50, 100], hint: 'Max depth of trees (None = unlimited)' },
-            { key: 'min_samples_split', label: 'Min Samples Split', default: 2, options: [2, 5, 10, 20], hint: 'Min samples to split a node' },
-            { key: 'min_samples_leaf', label: 'Min Samples Leaf', default: 1, options: [1, 2, 5, 10], hint: 'Min samples at leaf node' },
-            { key: 'rf_max_features', label: 'Max Features (Split)', default: 'sqrt', options: ['sqrt', 'log2', 'None'], hint: 'Features to consider for best split' },
-            { key: 'n_jobs', label: 'Parallel Jobs', default: -1, options: [-1, 1, 2, 4], hint: '-1 = use all CPUs' },
+            { key: 'n_estimators', label: 'Number of Trees', type: 'select', default: 100, options: [50, 100, 200, 500, 1000], hint: 'Number of trees in the forest' },
+            { key: 'max_depth', label: 'Max Depth', type: 'select', default: 'None', options: ['None', 5, 10, 20, 50, 100], hint: 'Max depth of trees (None = unlimited)' },
+            { key: 'min_samples_split', label: 'Min Samples Split', type: 'select', default: 2, options: [2, 5, 10, 20], hint: 'Min samples to split a node' },
+            { key: 'min_samples_leaf', label: 'Min Samples Leaf', type: 'select', default: 1, options: [1, 2, 5, 10], hint: 'Min samples at leaf node' },
+            { key: 'rf_max_features', label: 'Max Features (Split)', type: 'select', default: 'sqrt', options: ['sqrt', 'log2', 'None'], hint: 'Features to consider for best split' },
+            { key: 'n_jobs', label: 'Parallel Jobs', type: 'select', default: -1, options: [-1, 1, 2, 4], hint: '-1 = use all CPUs' },
             // TF-IDF shared
-            { key: 'ngram_range_min', label: 'N-gram Min', default: 1, options: [1, 2], hint: 'Minimum n-gram size' },
-            { key: 'ngram_range_max', label: 'N-gram Max', default: 2, options: [1, 2, 3], hint: 'Maximum n-gram size (must be ≥ min)' },
-            { key: 'min_df', label: 'Min Doc Frequency', default: 2, options: [1, 2, 5, 10], hint: 'Ignore terms in fewer documents' },
-            { key: 'max_df', label: 'Max Doc Frequency', default: 0.95, options: [0.8, 0.9, 0.95, 1.0], hint: 'Ignore terms in more than X% docs' },
-            { key: 'tfidf_max_features', label: 'Max Features', default: 'None', options: ['None', 5000, 10000, 20000, 50000], hint: 'Max vocabulary size' },
+            { key: 'ngram_range_min', label: 'N-gram Min', type: 'select', default: 1, options: [1, 2], hint: 'Minimum n-gram size' },
+            { key: 'ngram_range_max', label: 'N-gram Max', type: 'select', default: 2, options: [1, 2, 3], hint: 'Maximum n-gram size (must be >= min)' },
+            { key: 'min_df', label: 'Min Doc Frequency', type: 'select', default: 2, options: [1, 2, 5, 10], hint: 'Ignore terms in fewer documents' },
+            { key: 'max_df', label: 'Max Doc Frequency', type: 'select', default: 0.95, options: [0.8, 0.9, 0.95, 1.0], hint: 'Ignore terms in more than X% docs' },
+            { key: 'tfidf_max_features', label: 'Max Features', type: 'select', default: 'None', options: ['None', 5000, 10000, 20000, 50000], hint: 'Max vocabulary size' },
         ]
     },
     lstm: {
@@ -519,18 +520,18 @@ const ALGORITHM_PARAMS = {
         icon: 'fa-network-wired',
         params: [
             // LSTM specific
-            { key: 'embed_dim', label: 'Embedding Dim', default: 64, options: [32, 64, 128, 256], hint: 'Word embedding dimensions' },
-            { key: 'hidden_dim', label: 'Hidden Dim', default: 64, options: [32, 64, 128, 256], hint: 'LSTM hidden state size' },
+            { key: 'embed_dim', label: 'Embedding Dim', type: 'select', default: 64, options: [32, 64, 128, 256], hint: 'Word embedding dimensions' },
+            { key: 'hidden_dim', label: 'Hidden Dim', type: 'select', default: 64, options: [32, 64, 128, 256], hint: 'LSTM hidden state size' },
             // Shared neural networks
-            { key: 'num_layers', label: 'Number of Layers', default: 2, options: [1, 2, 3, 4, 6], hint: 'Stacked LSTM layers' },
-            { key: 'dropout', label: 'Dropout', default: 0.1, options: [0.0, 0.1, 0.2, 0.3, 0.5], hint: 'Dropout rate for regularization' },
-            { key: 'max_seq_length', label: 'Max Sequence Length', default: 512, options: [128, 256, 512, 1024], hint: 'Maximum input text length' },
-            { key: 'vocab_size', label: 'Vocabulary Size', default: 30000, options: [10000, 20000, 30000, 50000], hint: 'Maximum vocabulary size' },
-            { key: 'learning_rate', label: 'Learning Rate', default: 0.0001, options: [0.00001, 0.0001, 0.001, 0.01], hint: 'Optimizer learning rate' },
-            { key: 'batch_size', label: 'Batch Size', default: 32, options: [8, 16, 32, 64, 128], hint: 'Training batch size' },
-            { key: 'epochs', label: 'Epochs', default: 10, options: [5, 10, 20, 50], hint: 'Training epochs' },
-            { key: 'patience', label: 'Early Stop Patience', default: 5, options: [2, 3, 5, 10], hint: 'Epochs to wait before early stopping' },
-            { key: 'expand_vocab', label: 'Expand Vocabulary', default: 'False', options: ['True', 'False'], hint: 'Expand vocab with new data' },
+            { key: 'num_layers', label: 'Number of Layers', type: 'select', default: 2, options: [1, 2, 3, 4, 6], hint: 'Stacked LSTM layers' },
+            { key: 'dropout', label: 'Dropout', type: 'select', default: 0.1, options: [0.0, 0.1, 0.2, 0.3, 0.5], hint: 'Dropout rate for regularization' },
+            { key: 'max_seq_length', label: 'Max Sequence Length', type: 'select', default: 512, options: [128, 256, 512, 1024], hint: 'Maximum input text length' },
+            { key: 'vocab_size', label: 'Vocabulary Size', type: 'select', default: 30000, options: [10000, 20000, 30000, 50000], hint: 'Maximum vocabulary size' },
+            // Learning rate - custom number input (user can type or use arrows)
+            { key: 'learning_rate', label: 'Learning Rate', type: 'number', default: 0.0001, min: 0.000001, max: 1, step: 0.00001, hint: 'Optimizer learning rate (e.g., 0.0001)' },
+            { key: 'batch_size', label: 'Batch Size', type: 'select', default: 32, options: [8, 16, 32, 64, 128], hint: 'Training batch size' },
+            { key: 'epochs', label: 'Epochs', type: 'select', default: 10, options: [5, 10, 20, 50], hint: 'Training epochs' },
+            { key: 'patience', label: 'Early Stop Patience', type: 'select', default: 5, options: [2, 3, 5, 10], hint: 'Epochs to wait before early stopping' },
         ]
     },
     transformer: {
@@ -538,19 +539,19 @@ const ALGORITHM_PARAMS = {
         icon: 'fa-microchip',
         params: [
             // Transformer specific
-            { key: 'd_model', label: 'Model Dimension', default: 128, options: [64, 128, 256, 512], hint: 'Transformer dimension (must be divisible by n_head)' },
-            { key: 'n_head', label: 'Attention Heads', default: 4, options: [2, 4, 8], hint: 'Number of attention heads' },
-            { key: 'dim_feedforward', label: 'Feedforward Dim', default: 256, options: [128, 256, 512, 1024], hint: 'Feedforward network dimension' },
+            { key: 'd_model', label: 'Model Dimension', type: 'select', default: 128, options: [64, 128, 256, 512], hint: 'Transformer dimension (must be divisible by n_head)' },
+            { key: 'n_head', label: 'Attention Heads', type: 'select', default: 4, options: [2, 4, 8], hint: 'Number of attention heads' },
+            { key: 'dim_feedforward', label: 'Feedforward Dim', type: 'select', default: 256, options: [128, 256, 512, 1024], hint: 'Feedforward network dimension' },
             // Shared neural networks
-            { key: 'num_layers', label: 'Number of Layers', default: 2, options: [1, 2, 3, 4, 6], hint: 'Transformer encoder layers' },
-            { key: 'dropout', label: 'Dropout', default: 0.1, options: [0.0, 0.1, 0.2, 0.3, 0.5], hint: 'Dropout rate' },
-            { key: 'max_seq_length', label: 'Max Sequence Length', default: 512, options: [128, 256, 512, 1024], hint: 'Maximum input length' },
-            { key: 'vocab_size', label: 'Vocabulary Size', default: 30000, options: [10000, 20000, 30000, 50000], hint: 'Maximum vocabulary size' },
-            { key: 'learning_rate', label: 'Learning Rate', default: 0.0001, options: [0.00001, 0.0001, 0.001, 0.01], hint: 'Optimizer learning rate' },
-            { key: 'batch_size', label: 'Batch Size', default: 32, options: [8, 16, 32, 64, 128], hint: 'Training batch size' },
-            { key: 'epochs', label: 'Epochs', default: 10, options: [5, 10, 20, 50], hint: 'Training epochs' },
-            { key: 'patience', label: 'Early Stop Patience', default: 5, options: [2, 3, 5, 10], hint: 'Epochs to wait before early stopping' },
-            { key: 'expand_vocab', label: 'Expand Vocabulary', default: 'False', options: ['True', 'False'], hint: 'Expand vocab with new data' },
+            { key: 'num_layers', label: 'Number of Layers', type: 'select', default: 2, options: [1, 2, 3, 4, 6], hint: 'Transformer encoder layers' },
+            { key: 'dropout', label: 'Dropout', type: 'select', default: 0.1, options: [0.0, 0.1, 0.2, 0.3, 0.5], hint: 'Dropout rate' },
+            { key: 'max_seq_length', label: 'Max Sequence Length', type: 'select', default: 512, options: [128, 256, 512, 1024], hint: 'Maximum input length' },
+            { key: 'vocab_size', label: 'Vocabulary Size', type: 'select', default: 30000, options: [10000, 20000, 30000, 50000], hint: 'Maximum vocabulary size' },
+            // Learning rate - custom number input (user can type or use arrows)
+            { key: 'learning_rate', label: 'Learning Rate', type: 'number', default: 0.0001, min: 0.000001, max: 1, step: 0.00001, hint: 'Optimizer learning rate (e.g., 0.0001)' },
+            { key: 'batch_size', label: 'Batch Size', type: 'select', default: 32, options: [8, 16, 32, 64, 128], hint: 'Training batch size' },
+            { key: 'epochs', label: 'Epochs', type: 'select', default: 10, options: [5, 10, 20, 50], hint: 'Training epochs' },
+            { key: 'patience', label: 'Early Stop Patience', type: 'select', default: 5, options: [2, 3, 5, 10], hint: 'Epochs to wait before early stopping' },
         ]
     }
 };
@@ -560,7 +561,6 @@ const INCREMENTAL_DEFAULTS = {
     learning_rate: 0.00001,   // 10x lower than full (0.0001)
     epochs: 5,                // Half of full (10)
     patience: 3,              // Lower than full (5)
-    expand_vocab: 'True',     // Expand vocab with new data (vs False for full)
 };
 
 // Which algorithms are neural networks (use incremental NN defaults)
@@ -651,6 +651,7 @@ function openParamsModal(algoKey) {
     // Add event listeners for validation and change tracking
     grid.querySelectorAll('.param-input').forEach(input => {
         input.addEventListener('change', handleParamChange);
+        input.addEventListener('input', handleParamChange);  // For number inputs
     });
 
     // Show modal
@@ -658,7 +659,7 @@ function openParamsModal(algoKey) {
 }
 
 // ================================
-// Normalize Algorithm Key so 
+// Normalize Algorithm Key
 // ================================
 function normalizeAlgoKey(algoKey) {
     if (!algoKey) return 'logistic_regression';
@@ -700,7 +701,13 @@ function getDefaultValue(algoKey, paramKey, isIncremental = false) {
 // ================================
 function handleParamChange(e) {
     const key = e.target.dataset.key;
-    const value = e.target.value;
+    let value = e.target.value;
+
+    // For number inputs, parse the value
+    if (e.target.type === 'number') {
+        value = parseFloat(value);
+        if (isNaN(value)) return;  // Don't update if invalid
+    }
 
     const modal = document.getElementById('paramsModal');
     const paramsKey = modal?.dataset.paramsKey;
@@ -727,7 +734,7 @@ function handleParamChange(e) {
 // ================================
 // Validate Parameters
 // ================================
-function validateParams(algoKey) {
+function validateParams(algoKey, showLearningRateError = false) {
     const modal = document.getElementById('paramsModal');
     const paramsKey = modal?.dataset.paramsKey;
     if (!paramsKey) return { valid: true, errors: [] };
@@ -763,6 +770,17 @@ function validateParams(algoKey) {
         }
     }
 
+    // Validate learning rate range when clicking Done
+    if (showLearningRateError && params.learning_rate !== undefined) {
+        const lr = parseFloat(params.learning_rate);
+        if (isNaN(lr) || lr <= 0 || lr > 1) {
+            errors.push({
+                key: 'learning_rate',
+                message: 'Learning rate must be between 0 and 1'
+            });
+        }
+    }
+
     // Show errors
     errors.forEach(err => {
         const input = document.querySelector(`[data-key="${err.key}"]`);
@@ -782,17 +800,43 @@ function validateParams(algoKey) {
 }
 
 // ================================
-// Render Parameter Input (SELECT only)
+// Render Parameter Input
 // ================================
 function renderParamInput(param, value, isModified = false) {
     const modifiedClass = isModified ? 'modified' : '';
+    const type = param.type || 'select';
 
-    const options = param.options.map(opt => {
-        const optStr = String(opt);
-        const valStr = String(value);
-        const selected = optStr === valStr ? 'selected' : '';
-        return `<option value="${opt}" ${selected}>${opt}</option>`;
-    }).join('');
+    let inputHtml = '';
+
+    if (type === 'number') {
+        // Number input for custom values (like learning rate)
+        // lang="en" forces dot as decimal separator instead of comma
+        inputHtml = `
+            <input type="number"
+                   class="param-input"
+                   data-key="${param.key}"
+                   value="${value}"
+                   min="${param.min || 0}"
+                   max="${param.max || 1}"
+                   step="${param.step || 0.00001}"
+                   lang="en"
+                   placeholder="${param.default}">
+        `;
+    } else {
+        // Select dropdown (default)
+        const options = param.options.map(opt => {
+            const optStr = String(opt);
+            const valStr = String(value);
+            const selected = optStr === valStr ? 'selected' : '';
+            return `<option value="${opt}" ${selected}>${opt}</option>`;
+        }).join('');
+
+        inputHtml = `
+            <select class="param-input" data-key="${param.key}">
+                ${options}
+            </select>
+        `;
+    }
 
     return `
         <div class="param-item ${modifiedClass}">
@@ -802,9 +846,7 @@ function renderParamInput(param, value, isModified = false) {
                     <i class="fas fa-question-circle"></i>
                 </span>
             </label>
-            <select class="param-input" data-key="${param.key}">
-                ${options}
-            </select>
+            ${inputHtml}
         </div>
     `;
 }
@@ -818,7 +860,7 @@ function closeParamsModal() {
     const algoKey = modal?.dataset.algorithm;
 
     if (algoKey) {
-        const validation = validateParams(algoKey);
+        const validation = validateParams(algoKey, true);  // true = show learning rate error
         if (!validation.valid) {
             toast('Please fix validation errors', 'error');
             return;
@@ -921,10 +963,17 @@ function getCurrentParams() {
     }
 
     // Always add training_mode based on current tab (not user-selectable)
-    return {
+    const result = {
         ...params,
         training_mode: isIncremental ? 'incremental' : 'full'
     };
+
+    // Add expand_vocab only for neural networks in retrain mode
+    if (isIncremental && isNeuralNetwork(algoKey)) {
+        result.expand_vocab = 'True';
+    }
+
+    return result;
 }
 
 // ================================

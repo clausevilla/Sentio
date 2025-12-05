@@ -56,7 +56,7 @@ body {
 
 /* Sidebar */
 .sidebar {
-    width: 260px;
+    width: 210px;
     background: linear-gradient(180deg, #1a3a3a 0%, #0f2828 100%);
     display: flex;
     flex-direction: column;
@@ -168,8 +168,9 @@ body {
 /* Main Content */
 .main-content {
     flex: 1;
-    margin-left: 260px;
+    margin-left: 210px;
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
 .topbar {
