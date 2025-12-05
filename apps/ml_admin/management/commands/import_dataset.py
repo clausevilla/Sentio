@@ -1,3 +1,5 @@
+# Authors: Claudia Sevilla, Julia McCall
+
 from django.core.management.base import BaseCommand
 
 from apps.ml_admin.models import DataUpload

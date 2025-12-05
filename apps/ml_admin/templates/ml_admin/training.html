@@ -1,6 +1,8 @@
 <!--Author: Lian Shi-->
 <!-- Disclaimer: LLM has used to generate initial layout related to training, and fine tuning was done manually to different elements -->
 
+<!--TODO: THIS PAGE NEEDS TO BE FIXED TO REFLECT REAL DATABASE AND SERVICES !!!!!!!!!-->
+
 {% extends 'ml_admin/base_admin.html' %}
 {% load static %}
 {% block title %}Training{% endblock %}
@@ -30,7 +32,7 @@
 {% else %}
 <div class="alert warning">
     <i class="fas fa-exclamation-triangle"></i>
-    <span><strong>No test set!</strong> Use Split in Data page to create one.</span>
+    <span><strong>No test set!</strong> Upload or use Split in Data page to create one.</span>
 </div>
 {% endif %}
 
@@ -42,7 +44,7 @@
 
     <div class="card-body">
         {% if uploads %}
-        <!-- Two Column Layout - Fixed Height -->
+        <!-- Two Column Layout -->
         <div class="training-columns">
             <!-- LEFT: Train/Retrain Selection -->
             <div class="training-col">
@@ -66,11 +68,18 @@
                                 <i class="fas {{ algo.icon }}"></i>
                                 <span class="algo-name">{{ algo.name }}</span>
                                 <span class="algo-desc">{{ algo.description }}</span>
+                                <!-- config button - shows when selected -->
+                                <button type="button" class="algo-config-btn"
+                                        onclick="event.preventDefault(); event.stopPropagation(); openParamsModal('{{ key }}')"
+                                        title="Configure parameters">
+                                    <i class="fas fa-cog"></i>
+                                </button>
                             </div>
                         </label>
                         {% endfor %}
                     </div>
                 </div>
+
 
                 <!-- Retrain Content -->
                 <div class="col-body" id="retrainContent" style="display: none;">
@@ -78,7 +87,7 @@
                     {% if all_models %}
                     <div class="model-list">
                         {% for model in all_models %}
-                        <div class="model-option" onclick="selectModel(this, {{ model.id }})">
+                        <div class="model-option" onclick="selectModel(this, {{ model.id }}, '{{ model.model_type }}', '{{ model.version_name|escapejs }}')">
                             <input type="radio" name="base_model" value="{{ model.id }}">
                             <div class="model-info">
                                 <span class="model-name">
@@ -86,10 +95,18 @@
                                     {% if model.is_active %}<span class="badge success sm">Active</span>{% endif %}
                                 </span>
                                 <span class="model-meta">
-                                    {% if model.accuracy %}{{ model.accuracy|floatformat:1 }}% acc{% endif %}
+                                    <span class="model-type-tag">{{ model.get_model_type_display }}</span>
+                                    {% if model.accuracy %} · Accuracy: {{ model.accuracy|floatformat:1 }}{% endif %}
                                     {% if model.f1_score %} · F1: {{ model.f1_score|floatformat:2 }}{% endif %}
+                                    · {{ model.created_at|date:"M d" }}
                                 </span>
                             </div>
+                            <!-- Icon config button - shows when selected -->
+                            <button type="button" class="algo-config-btn"
+                                    onclick="event.stopPropagation(); openParamsModal('{{ model.model_type }}')"
+                                    title="Configure parameters">
+                                <i class="fas fa-cog"></i>
+                            </button>
                         </div>
                         {% endfor %}
                     </div>
@@ -112,7 +129,7 @@
                     <!-- Dataset List -->
                     <div class="dataset-list">
                         {% for item in uploads %}
-                        <div class="dataset-option" onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }})" data-distribution='{{ item.distribution_json|safe }}'>
+                        <div class="dataset-option" onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }}, event)" data-distribution='{{ item.distribution_json|safe }}'>
                             <input type="checkbox" data-id="{{ item.upload.id }}" data-count="{{ item.count }}">
                             <div class="dataset-info">
                                 <span class="dataset-name">{{ item.upload.file_name }}</span>
@@ -210,7 +227,7 @@
             <div class="baseline-name">{{ active_model.version_name }}</div>
             <div class="baseline-metrics">
                 <div class="metric">
-                    <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}%{% else %}—{% endif %}</span>
+                    <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}{% else %}—{% endif %}</span>
                     <span class="metric-lbl">Accuracy</span>
                 </div>
                 <div class="metric">
@@ -242,23 +259,27 @@
             <thead>
                 <tr>
                     <th>Job</th>
+                    <th>Algorithm</th>
                     <th>Dataset</th>
                     <th>Records</th>
                     <th>Started</th>
                     <th>Duration</th>
                     <th>Status</th>
-                    <th>Result</th>
-                    <th>Metrics</th>
+                    <th>Accuracy</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
                 {% for job in jobs %}
-                <tr class="{% if job.status == 'FAILED' %}row-failed{% endif %}">
+                <tr data-job-id="{{ job.id }}">
                     <td>
                         <strong>#{{ job.id }}</strong>
                         {% if job.initiated_by %}
                         <span class="job-user">{{ job.initiated_by.username }}</span>
                         {% endif %}
+                    </td>
+                    <td>
+                        <span class="model-type-tag">{{ job.get_model_type_display|default:"-" }}</span>
                     </td>
                     <td>
                         <span class="dataset-cell" title="{{ job.data_upload.file_name }}">
@@ -288,57 +309,18 @@
                         </span>
                     </td>
                     <td>
-                        {% if job.resulting_model %}
-                        <span class="result-model">
-                            <i class="fas fa-cube"></i> {{ job.resulting_model.version_name }}
-                        </span>
+                        {% if job.resulting_model and job.resulting_model.accuracy %}
+                        <span class="accuracy-value">{{ job.resulting_model.accuracy|floatformat:1 }}%</span>
                         {% elif job.status == 'FAILED' %}
-                        <span class="result-failed" title="{{ job.error_message|default:'Unknown error' }}">
-                            <i class="fas fa-exclamation-circle"></i> Failed
-                        </span>
-                        {% elif job.status == 'RUNNING' %}
-                        <span class="result-running">Training...</span>
-                        {% elif job.status == 'PENDING' %}
-                        <span class="result-pending">Queued</span>
+                        <span class="text-danger">—</span>
                         {% else %}—{% endif %}
                     </td>
                     <td>
-                        {% if job.resulting_model %}
-                        <div class="metrics-cell">
-                            {% if job.resulting_model.accuracy %}
-                            <span class="metric-tag acc" title="Accuracy">
-                                <strong>{{ job.resulting_model.accuracy|floatformat:1 }}%</strong>
-                            </span>
-                            {% endif %}
-                            {% if job.resulting_model.f1_score %}
-                            <span class="metric-tag f1" title="F1 Score">
-                                F1: <strong>{{ job.resulting_model.f1_score|floatformat:2 }}</strong>
-                            </span>
-                            {% endif %}
-                            {% if job.resulting_model.precision %}
-                            <span class="metric-tag prec" title="Precision">
-                                P: <strong>{{ job.resulting_model.precision|floatformat:1 }}%</strong>
-                            </span>
-                            {% endif %}
-                            {% if job.resulting_model.recall %}
-                            <span class="metric-tag rec" title="Recall">
-                                R: <strong>{{ job.resulting_model.recall|floatformat:1 }}%</strong>
-                            </span>
-                            {% endif %}
-                        </div>
-                        {% else %}—{% endif %}
+                        <button class="btn-icon" onclick="showJobDetails({{ job.id }})" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </td>
                 </tr>
-                {% if job.status == 'FAILED' and job.error_message %}
-                <tr class="error-row">
-                    <td colspan="8">
-                        <div class="error-message-row">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            {{ job.error_message|truncatechars:150 }}
-                        </div>
-                    </td>
-                </tr>
-                {% endif %}
                 {% endfor %}
             </tbody>
         </table>
@@ -347,6 +329,72 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Job Details Modal -->
+<div class="modal" id="jobDetailsModal">
+    <div class="modal-content modal-md">
+        <div class="modal-header">
+            <h3><i class="fas fa-info-circle"></i> <span id="jobModalTitle">Job Details</span></h3>
+            <button class="modal-close" onclick="closeModal('jobDetailsModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="jobModalBody">
+            <!-- Content loaded by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Parameters Configuration Modal -->
+<div class="modal" id="paramsModal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3 id="paramsModalTitle"><i class="fas fa-sliders-h"></i> Algorithm Parameters</h3>
+            <button class="modal-close" onclick="closeParamsModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="params-info">
+                <i class="fas fa-info-circle"></i>
+                Adjust parameters to fine-tune model training. Hover over <i class="fas fa-question-circle"></i> for hints.
+            </div>
+            <div id="paramsGrid" class="params-grid">
+                <!-- Dynamically filled by JS -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="resetParamsToDefaults()">
+                <i class="fas fa-undo"></i> Reset to Defaults
+            </button>
+            <button class="btn btn-primary" onclick="closeParamsModal()">
+                <i class="fas fa-check"></i> Done
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Job Data for JS -->
+<script type="application/json" id="jobsData">
+[{% for job in jobs %}{
+    "id": {{ job.id }},
+    "status": "{{ job.status }}",
+    "model_type": "{{ job.model_type|default:'' }}",
+    "started_at": "{{ job.started_at|date:'M d, Y H:i' }}",
+    "completed_at": "{{ job.completed_at|date:'M d, Y H:i'|default:'' }}",
+    "initiated_by": "{{ job.initiated_by.username|default:'-' }}",
+    "dataset": "{{ job.data_upload.file_name|default:'-' }}",
+    "records": {{ job.data_upload.row_count|default:'null' }},
+    "error_message": "{{ job.error_message|default:''|escapejs }}",
+    {% if job.resulting_model %}
+    "model": {
+        "name": "{{ job.resulting_model.version_name }}",
+        "accuracy": {{ job.resulting_model.accuracy|default:'null' }},
+        "precision": {{ job.resulting_model.precision|default:'null' }},
+        "recall": {{ job.resulting_model.recall|default:'null' }},
+        "f1_score": {{ job.resulting_model.f1_score|default:'null' }}
+    }
+    {% else %}
+    "model": null
+    {% endif %}
+}{% if not forloop.last %},{% endif %}{% endfor %}]
+</script>
 
 <!-- Test Set Modal -->
 <div class="modal" id="testSetModal">
