@@ -116,7 +116,7 @@ def dashboard_view(request):
     dataset_overview = {
         'train': DatasetRecord.objects.filter(dataset_type='train').count(),
         'test': DatasetRecord.objects.filter(dataset_type='test').count(),
-        'unlabeled': DatasetRecord.objects.filter(dataset_type='unlabeled').count(),
+        'increment': DatasetRecord.objects.filter(dataset_type='incremet').count(),
     }
     dataset_overview['total'] = sum(dataset_overview.values())
 
@@ -168,8 +168,8 @@ def data_view(request):
         test_count = DatasetRecord.objects.filter(
             data_upload=upload, dataset_type='test'
         ).count()
-        unlabeled_count = DatasetRecord.objects.filter(
-            data_upload=upload, dataset_type='unlabeled'
+        increment_count = DatasetRecord.objects.filter(
+            data_upload=upload, dataset_type='increment'
         ).count()
 
         uploads_with_stats.append(
@@ -178,7 +178,7 @@ def data_view(request):
                 'distribution': dist,
                 'training_count': training_count,
                 'test_count': test_count,
-                'unlabeled_count': unlabeled_count,
+                'increment_count': increment_count,
             }
         )
 
@@ -193,7 +193,7 @@ def data_view(request):
     type_breakdown = {
         'training': DatasetRecord.objects.filter(dataset_type='train').count(),
         'test': DatasetRecord.objects.filter(dataset_type='test').count(),
-        'unlabeled': DatasetRecord.objects.filter(dataset_type='unlabeled').count(),
+        'increment': DatasetRecord.objects.filter(dataset_type='increment').count(),
     }
 
     total_records = DatasetRecord.objects.count()
@@ -230,7 +230,7 @@ def upload_csv_api(request):
             )
 
         dataset_type = request.POST.get('dataset_type', 'train')
-        if dataset_type not in ['train', 'test', 'unlabeled']:
+        if dataset_type not in ['train', 'test', 'increment']:
             dataset_type = 'train'
 
         upload_dir = os.path.join('data', 'uploads')
@@ -331,8 +331,8 @@ def get_upload_distribution_api(request, upload_id):
             'test': DatasetRecord.objects.filter(
                 data_upload=upload, dataset_type='test'
             ).count(),
-            'unlabeled': DatasetRecord.objects.filter(
-                data_upload=upload, dataset_type='unlabeled'
+            'increment': DatasetRecord.objects.filter(
+                data_upload=upload, dataset_type='increment'
             ).count(),
         }
 
@@ -376,8 +376,8 @@ def get_upload_split_api(request, upload_id):
         'test': DatasetRecord.objects.filter(
             data_upload=upload, dataset_type='test'
         ).count(),
-        'unlabeled': DatasetRecord.objects.filter(
-            data_upload=upload, dataset_type='unlabeled'
+        'increment': DatasetRecord.objects.filter(
+            data_upload=upload, dataset_type='increment'
         ).count(),
     }
     breakdown['total'] = sum(breakdown.values())
@@ -460,8 +460,8 @@ def update_upload_split_api(request, upload_id):
             'test': DatasetRecord.objects.filter(
                 data_upload=upload, dataset_type='test'
             ).count(),
-            'unlabeled': DatasetRecord.objects.filter(
-                data_upload=upload, dataset_type='unlabeled'
+            'increment': DatasetRecord.objects.filter(
+                data_upload=upload, dataset_type='increment'
             ).count(),
         }
 
