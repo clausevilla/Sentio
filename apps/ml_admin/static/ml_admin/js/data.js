@@ -15,7 +15,7 @@ let distModalChart = null;
 const DATASET_TYPE_LABELS = {
     'train': 'Training',
     'test': 'Test',
-    'unlabeled': 'Unlabeled'
+    'increment': 'Increment'
 };
 
 // TODO : Display names for pipeline types, to be matched with model later
@@ -884,9 +884,9 @@ async function loadSplitInfo(id, name) {
                     <span class="split-count">${formatNumber(b.test)}</span>
                     <span class="split-label">Test</span>
                 </div>
-                <div class="split-stat unlabeled">
-                    <span class="split-count">${formatNumber(b.unlabeled)}</span>
-                    <span class="split-label">Unlabeled</span>
+                <div class="split-stat increment">
+                    <span class="split-count">${formatNumber(b.increment)}</span>
+                    <span class="split-label">Increment</span>
                 </div>
             </div>
 
