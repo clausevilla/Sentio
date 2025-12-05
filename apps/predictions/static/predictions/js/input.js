@@ -1,4 +1,4 @@
-/* Author: Lian Shi */
+/* Author: Lian Shi, Claudia Sevilla */
 
 // predictions/input.js - Text analysis input page functionality
 
@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         stress: "I have so much on my plate right now. Work deadlines are piling up, bills need to be paid, and I barely have time to breathe. I feel overwhelmed and like I'm drowning. My body feels tense all the time and I get headaches every day. I snap at people I care about because I'm so on edge.",
 
+        normal: "I have been feeling pretty good lately. I finished my tasks for the day and even had time to grab coffee with a friend. The weather was really nice! So I took a short walk and it really boosted my mood. Nothing overly extraordinary happened, but it felt like a genuinely pleasant day!",
     };
 
     // Character counter
