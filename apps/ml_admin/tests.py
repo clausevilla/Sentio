@@ -1,3 +1,5 @@
+# Author: Claudia Sevilla
+
 import os
 import tempfile
 
