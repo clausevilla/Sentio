@@ -346,7 +346,8 @@ class DataPreprocessingTests(TestCase):
         self.assertNotIn('!', result)
         self.assertNotIn('#', result)
         self.assertNotIn('?', result)
-        self.assertIn('depressed', result)
+        self.assertNotIn('...', result)
+        self.assertIn('depress', result)
 
     # Test for removing urls
     def test_http_url_removal(self):

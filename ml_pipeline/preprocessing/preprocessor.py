@@ -269,7 +269,6 @@ class DataPreprocessingPipeline:
         tokens = [word for word in tokens if not word.isdigit()]
 
         # 9. Lemmatize
-        tokens = word_tokenize(text)
         tags = pos_tag(tokens)
         lemmatized = [
             self.lemmatizer.lemmatize(t, self.get_wordnet_pos(pos)) for t, pos in tags
@@ -278,7 +277,8 @@ class DataPreprocessingPipeline:
         # 10. Join tokens back into string
         return ' '.join(lemmatized)
 
-    def get_wordnet_pos(self, treebank_tag):
+    @staticmethod
+    def get_wordnet_pos(treebank_tag):
         """
         Helper function for getting the grammatical type of the token.
         """
