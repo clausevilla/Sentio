@@ -6,9 +6,9 @@ ML Admin Dashboard - 6 Pages: Dashboard, Data, Training, Models, Users, Analytic
 """
 
 import json
+import logging
 import os
 from datetime import timedelta
-from venv import logger
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
@@ -38,6 +38,8 @@ try:
 except ImportError:
     PREDICTIONS_AVAILABLE = False
 
+logger = logging.getLogger(__name__)
+
 ML_ALGORITHMS = {
     'logistic_regression': {
         'name': 'Logistic Regression',
@@ -60,6 +62,85 @@ ML_ALGORITHMS = {
         'icon': 'fa-microchip',
     },
 }
+
+
+def _parse_param_value(value):
+    """
+    Convert frontend parameter values to Python types.
+    """
+    if value is None or value == '':
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value
+
+    str_value = str(value).strip()
+
+    if str_value.lower() == 'true':
+        return True
+    if str_value.lower() == 'false':
+        return False
+    if str_value in ('None', 'null'):
+        return None
+
+    try:
+        if '.' in str_value:
+            return float(str_value)
+        return int(str_value)
+    except ValueError:
+        return str_value
+
+
+def _build_training_config(
+    algorithm: str, params: dict, is_incremental: bool = False
+) -> dict:
+    """
+    Transform frontend params into trainer-compatible config.
+    """
+    config = {}
+
+    for key, value in params.items():
+        parsed = _parse_param_value(value)
+        if parsed is not None:
+            config[key] = parsed
+
+    config['training_mode'] = 'incremental' if is_incremental else 'full'
+
+    if algorithm in ('logistic_regression', 'random_forest'):
+        tfidf_config = {}
+
+        ngram_min = config.pop('ngram_range_min', None)
+        ngram_max = config.pop('ngram_range_max', None)
+        if ngram_min is not None and ngram_max is not None:
+            tfidf_config['ngram_range'] = (int(ngram_min), int(ngram_max))
+
+        for key in ['min_df', 'max_df']:
+            if key in config:
+                tfidf_config[key] = config.pop(key)
+
+        max_features = config.pop('tfidf_max_features', None)
+        if max_features is not None and max_features != 'None':
+            tfidf_config['max_features'] = int(max_features)
+
+        if tfidf_config:
+            config['tfidf'] = tfidf_config
+
+        if algorithm == 'logistic_regression' and 'regularization_strength' in config:
+            config['C'] = config.pop('regularization_strength')
+
+        if algorithm == 'random_forest' and 'rf_max_features' in config:
+            rf_max = config.pop('rf_max_features')
+            config['max_features'] = None if rf_max == 'None' else rf_max
+
+    elif algorithm in ('lstm', 'transformer'):
+        if 'max_seq_length' in config:
+            config['max_seq_len'] = config.pop('max_seq_length')
+
+        if algorithm == 'transformer' and 'n_head' in config:
+            config['nhead'] = config.pop('n_head')
+
+    return config
 
 
 # ============================================
@@ -694,61 +775,48 @@ def start_training_api(request):
 
         from apps.ml_admin.services import train_full, train_incremental
 
-        # Process params - convert string booleans to actual booleans
-        processed_params = {}
-        for key, value in params.items():
-            if value == 'true':
-                processed_params[key] = True
-            elif value == 'false':
-                processed_params[key] = False
-            elif value == '' or value is None:
-                processed_params[key] = None
-            else:
-                processed_params[key] = value
-
-        # Create training configuration using helper function
-        from .models import create_training_config
-
-        config = create_training_config(
-            training_job=job,
-            algorithm=algorithm,
-            custom_params=processed_params,
-            base_model=base_model,
-        )
-
-        # TODO: Trigger actual training
-        # from ml_pipeline.training import train_model
-        # train_model.delay(job.id, upload_ids)
-
-        algo_names = {
-            'logistic_regression': 'Logistic Regression',
-            'random_forest': 'Random Forest',
-            'lstm': 'LSTM',
-            'transformer': 'Transformer',
-        }
-
         if mode == 'retrain':
             if not base_model_id:
                 return JsonResponse(
                     {'success': False, 'error': 'No base model selected'}, status=400
                 )
-            base_model = ModelVersion.objects.get(id=base_model_id)
+
+            try:
+                base_model = ModelVersion.objects.get(id=base_model_id)
+            except ModelVersion.DoesNotExist:
+                return JsonResponse(
+                    {'success': False, 'error': 'Base model not found'}, status=400
+                )
+
+            model_type = base_model.model_type
+            config = _build_training_config(model_type, params, is_incremental=True)
+
             result = train_incremental(
-                model_name=base_model.model_type,
+                model_name=model_type,
                 base_model_path=base_model.model_file_path,
-                config={},
+                config=config,
                 initiated_by=request.user.id,
                 upload_ids=upload_ids,
             )
             message = f'Started retraining based on {base_model.version_name}'
         else:
+            if algorithm not in ML_ALGORITHMS:
+                return JsonResponse(
+                    {'success': False, 'error': f'Unknown algorithm: {algorithm}'},
+                    status=400,
+                )
+
+            config = _build_training_config(algorithm, params, is_incremental=False)
+
             result = train_full(
                 model_name=algorithm,
-                config={},
+                config=config,
                 initiated_by=request.user.id,
                 upload_ids=upload_ids,
             )
             message = f'Started {ML_ALGORITHMS[algorithm]["name"]} training'
+
+        logger.info(f'Training started: {message}, config keys: {list(config.keys())}')
 
         return JsonResponse(
             {
@@ -759,13 +827,10 @@ def start_training_api(request):
             }
         )
 
-    except ModelVersion.DoesNotExist:
-        return JsonResponse(
-            {'success': False, 'error': 'Base model not found'}, status=400
-        )
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
     except Exception as e:
+        logger.exception(f'Training API error: {e}')
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 

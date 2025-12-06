@@ -2,13 +2,19 @@
 import csv
 import logging
 import threading
-from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import pandas as pd
 from django.conf import settings
+from django.utils import timezone
 
-from apps.ml_admin.models import DatasetRecord, DataUpload, ModelVersion, TrainingJob
+from apps.ml_admin.models import (
+    DatasetRecord,
+    DataUpload,
+    ModelVersion,
+    Parameter,
+    TrainingJob,
+)
 from ml_pipeline.data_cleaning.cleaner import DataCleaningPipeline
 from ml_pipeline.preprocessing.preprocessor import DataPreprocessingPipeline
 from ml_pipeline.storage.handler import StorageHandler
@@ -235,6 +241,56 @@ def _save_dataset_records(
     logger.info(f'=== Saved {len(records):,} records to database ===')
 
 
+def _save_training_parameters(model_version, model_name: str, config: dict):
+    """
+    Save training configuration as Parameter record linked to ModelVersion.
+    """
+
+    param_data = {'model_version': model_version}
+
+    field_mapping = {
+        'max_iter': 'max_iter',
+        'C': 'regularization_strength',
+        'solver': 'solver',
+        'n_estimators': 'n_estimators',
+        'max_depth': 'max_depth',
+        'min_samples_split': 'min_samples_split',
+        'min_samples_leaf': 'min_samples_leaf',
+        'max_features': 'rf_max_features',
+        'n_jobs': 'n_jobs',
+        'num_layers': 'num_layers',
+        'dropout': 'dropout',
+        'max_seq_len': 'max_seq_length',
+        'vocab_size': 'vocab_size',
+        'learning_rate': 'learning_rate',
+        'batch_size': 'batch_size',
+        'epochs': 'epochs',
+        'embed_dim': 'embed_dim',
+        'hidden_dim': 'hidden_dim',
+        'd_model': 'd_model',
+        'nhead': 'n_head',
+        'dim_feedforward': 'dim_feedforward',
+    }
+
+    for config_key, param_field in field_mapping.items():
+        if config_key in config:
+            param_data[param_field] = config[config_key]
+
+    if 'tfidf' in config:
+        tfidf = config['tfidf']
+        if 'ngram_range' in tfidf:
+            param_data['ngram_range_min'] = tfidf['ngram_range'][0]
+            param_data['ngram_range_max'] = tfidf['ngram_range'][1]
+        if 'min_df' in tfidf:
+            param_data['min_df'] = tfidf['min_df']
+        if 'max_df' in tfidf:
+            param_data['max_df'] = tfidf['max_df']
+        if 'max_features' in tfidf:
+            param_data['tfidf_max_features'] = tfidf['max_features']
+
+    Parameter.objects.create(**param_data)
+
+
 def _finalize_upload(upload, count):
     upload.row_count = count
     upload.status = 'completed'
@@ -384,14 +440,17 @@ def _run_training(
             created_by_id=job.initiated_by_id,
         )
 
+        # Save training parameters
+        _save_training_parameters(model_version, model_name, config)
+
         job.status = 'COMPLETED'
-        job.completed_at = datetime.now()
+        job.completed_at = timezone.now()
         job.resulting_model = model_version
         job.save()
 
     except Exception as e:
         job.status = 'FAILED'
-        job.completed_at = datetime.now()
+        job.completed_at = timezone.now()
         job.error_message = str(e)
         job.save()
 
