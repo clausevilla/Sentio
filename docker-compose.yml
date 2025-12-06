@@ -1,0 +1,53 @@
+# Author: Julia McCall
+# Disclaimer: This file was created based on the template
+# https://docs.docker.com/compose/intro/compose-application-model/ and refined with the help of LLM
+
+services:
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=sentio_db
+      - POSTGRES_USER=sentio_user
+      - POSTGRES_PASSWORD=super_secret_password
+    restart: always
+
+  web:
+    build: .
+    command: /app/docker/entrypoint.sh
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    expose:
+      - 8000
+    environment:
+      - DJANGO_SETTINGS_MODULE=sentio.settings.production
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - DEBUG=1
+      - SECRET_KEY=your_dev_secret_key
+      - SQL_ENGINE=django.db.backends.postgresql
+      - SQL_DATABASE=sentio_db
+      - SQL_USER=sentio_user
+      - SQL_PASSWORD=super_secret_password
+      - SQL_HOST=db
+      - SQL_PORT=5432
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:

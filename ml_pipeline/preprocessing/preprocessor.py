@@ -6,7 +6,7 @@ from typing import Dict, Tuple
 
 import nltk
 import pandas as pd
-from nltk import pos_tag, word_tokenize
+from nltk import pos_tag
 from nltk.corpus import stopwords, wordnet
 from nltk.stem import WordNetLemmatizer
 
@@ -154,7 +154,7 @@ class DataPreprocessingPipeline:
             df: DataFrame with a 'text' column to be processed
 
         Returns:
-            Tuple of (df_with_preprocessed_text, report_dict)
+            Tuple of (text_preprocessed, report_dict)
         """
         import swifter as swifter
 
@@ -164,15 +164,15 @@ class DataPreprocessingPipeline:
         # Perform specific set of preprocessing steps depending on model type
         if model_type == 'traditional':
             # For classic ML models, all preprocessing steps included
-            df['processed_text'] = df['text'].swifter.apply(
+            df['text_preprocessed'] = df['text'].swifter.apply(
                 self._preprocess_traditional
             )
         elif model_type == 'rnn':
             # For RNN, less preprocessing
-            df['processed_text'] = df['text'].swifter.apply(self._preprocess_rnn)
+            df['text_preprocessed'] = df['text'].swifter.apply(self._preprocess_rnn)
         elif model_type == 'transformer':
             # For transformer, just basic cleanup steps
-            df['processed_text'] = df['text'].swifter.apply(
+            df['text_preprocessed'] = df['text'].swifter.apply(
                 self._preprocess_transformer
             )
         else:
@@ -180,10 +180,13 @@ class DataPreprocessingPipeline:
                 "Invalid model type. Must be 'traditional', 'rnn', or 'transformer'"
             )
 
-        return df
+        return df, self.report
 
     # Preprocessing branch for traditional ML (logistic regression)
     def _preprocess_traditional(self, text):
+        if pd.isna(text) or text == '':
+            return ''
+
         text = self._expand_contractions(str(text).lower())
         text = re.sub(r'[^a-z\s]', ' ', text)
         tokens = word_tokenize(text)
@@ -193,6 +196,9 @@ class DataPreprocessingPipeline:
 
     # Preprocessing branch for RNN (LSTM)
     def _preprocess_rnn(self, text):
+        if pd.isna(text) or text == '':
+            return ''
+
         # No stopword removal and no lemmatization
         text = self._expand_contractions(str(text).lower())
         text = re.sub(r'([?.!,])', r' \1 ', text)
@@ -202,6 +208,9 @@ class DataPreprocessingPipeline:
 
     # Preprocessing branch for transformer
     def _preprocess_transformer(self, text):
+        if pd.isna(text) or text == '':
+            return ''
+
         # Very minimal preprocessing to preserve context
         text = str(text)
         text = re.sub(r'\s+', ' ', text).strip()
@@ -259,7 +268,6 @@ class DataPreprocessingPipeline:
         tokens = [word for word in tokens if not word.isdigit()]
 
         # 9. Lemmatize
-        tokens = word_tokenize(text)
         tags = pos_tag(tokens)
         lemmatized = [
             self.lemmatizer.lemmatize(t, self.get_wordnet_pos(pos)) for t, pos in tags
@@ -268,6 +276,7 @@ class DataPreprocessingPipeline:
         # 10. Join tokens back into string
         return ' '.join(lemmatized)
 
+    @staticmethod
     def get_wordnet_pos(treebank_tag):
         """
         Helper function for getting the grammatical type of the token.

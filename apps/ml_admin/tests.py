@@ -1,10 +1,10 @@
 # Authors: Claudia Sevilla Eslava, Julia McCall
-# Disclaimer: LLM was used to improve unit test coverage.
+# Disclaimer: LLM was used to debug and improve unit test coverage.
 
 import os
 import tempfile
-from unittest.mock import patch
 
+import nltk
 import pandas as pd
 from django.test import TestCase
 
@@ -255,8 +255,13 @@ class DataCleaningTests(TestCase):
 
 class DataPreprocessingTests(TestCase):
     def setUp(self):
-        with patch('nltk.download'):
-            self.pipeline = DataPreprocessingPipeline()
+        nltk.download('stopwords', quiet=True)
+        nltk.download('punkt', quiet=True)
+        nltk.download('wordnet', quiet=True)
+        nltk.download('omw-1.4', quiet=True)
+        nltk.download('averaged_perceptron_tagger', quiet=True)
+
+        self.pipeline = DataPreprocessingPipeline()
 
     def create_csv_file(self, rows):
         csv_file = 'text\n'
@@ -289,7 +294,9 @@ class DataPreprocessingTests(TestCase):
             initial_row_count = len(df)
             print(f'{initial_row_count} rows before preprocessing')
 
-            df_processed, report = self.pipeline.preprocess_dataframe(df)
+            df_processed, report = self.pipeline.preprocess_dataframe(
+                df, model_type='traditional'
+            )
 
             self.assertTrue(len(df_processed) > 0, 'Pipeline execution failed')
             self.assertIn('text_preprocessed', df_processed.columns)
@@ -308,7 +315,9 @@ class DataPreprocessingTests(TestCase):
 
         try:
             df = pd.read_csv(temp_file_path)
-            df_processed, report = self.pipeline.preprocess_dataframe(df)
+            df_processed, report = self.pipeline.preprocess_dataframe(
+                df, model_type='traditional'
+            )
 
             expected_columns = ['text', 'text_preprocessed']
 
@@ -337,7 +346,8 @@ class DataPreprocessingTests(TestCase):
         self.assertNotIn('!', result)
         self.assertNotIn('#', result)
         self.assertNotIn('?', result)
-        self.assertIn('depressed', result)
+        self.assertNotIn('...', result)
+        self.assertIn('depress', result)
 
     # Test for removing urls
     def test_http_url_removal(self):
@@ -409,7 +419,9 @@ class DataPreprocessingTests(TestCase):
 
         try:
             df = pd.read_csv(temp_file_path)
-            df_processed, report = self.pipeline.preprocess_dataframe(df)
+            df_processed, report = self.pipeline.preprocess_dataframe(
+                df, model_type='traditional'
+            )
 
             for i in range(len(df_processed)):
                 self.assertEqual(df_processed.loc[i, 'text_preprocessed'], '')
