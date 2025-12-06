@@ -263,6 +263,20 @@ def upload_csv_api(request):
             pipeline_type=pipeline_type,
         )
 
+        # Prepare complete upload data for dynamic row creation in the frontend
+        upload_data = {
+            'id': upload.id,
+            'file_name': upload.file_name,
+            'uploaded_at': upload.uploaded_at.strftime('%b %d, %Y %H:%M'),
+            'uploaded_by': request.user.username,
+            'row_count': 0,
+            'status': upload.status,
+            'is_validated': upload.is_validated,
+            'pipeline_type': upload.pipeline_type,
+            'training_count': 0,
+            'test_count': 0,
+        }
+
         if PIPELINE_AVAILABLE:
             trigger_full_pipeline_in_background(upload.id, dataset_type, pipeline_type)
             return JsonResponse(
@@ -270,6 +284,7 @@ def upload_csv_api(request):
                     'success': True,
                     'message': 'Upload started. Processing in background...',
                     'upload_id': upload.id,
+                    'upload': upload_data,  # Include full upload data
                 }
             )
         else:
@@ -278,6 +293,7 @@ def upload_csv_api(request):
                     'success': True,
                     'message': 'Uploaded (pipeline not available)',
                     'upload_id': upload.id,
+                    'upload': upload_data,  # Include full upload data
                 }
             )
 
@@ -1160,4 +1176,3 @@ def get_uploads_status_api(request):
             ],
         }
     )
-    
