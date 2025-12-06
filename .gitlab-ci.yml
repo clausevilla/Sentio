@@ -41,15 +41,6 @@ build:
 
 unit-tests:
   stage: test
-  before_script:
-    - python -m pip install --upgrade pip
-    - pip install torch==2.8.0+cpu --index-url https://download.pytorch.org/whl/cpu --no-cache-dir
-    - pip install -r requirements.txt --no-cache-dir
-    - python3 -m nltk.downloader stopwords
-    - python3 - <<EOF
-      import nltk
-      nltk.download('stopwords')
-     EOF
   script:
     - python -m pytest -m "not integration" --cov=ml_pipeline --cov=apps --cov-report=term-missing
   tags:
