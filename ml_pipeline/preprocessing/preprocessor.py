@@ -9,7 +9,6 @@ import pandas as pd
 from nltk import pos_tag, word_tokenize
 from nltk.corpus import stopwords, wordnet
 from nltk.stem import WordNetLemmatizer
-from nltk.tokenize import word_tokenize
 
 logger = logging.getLogger(__name__)
 
