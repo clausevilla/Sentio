@@ -150,8 +150,16 @@ def clean_user_input(text):
 
 def preprocess_user_input(df, version_name):
     pipeline = DataPreprocessingPipeline()
-    process_tuple = pipeline.preprocess_dataframe(df, version_name)
-    return process_tuple[0]['text_preprocessed']
+    pipeline_version = ''
+    if version_name == 'lstm' or version_name == 'random_forest':
+        pipeline_version = 'rnn'
+    elif version_name == 'transformer':
+        pipeline_version = version_name
+    else:
+        pipeline_version = 'traditional'
+
+    processed_tuple = pipeline.preprocess_dataframe(df, pipeline_version)
+    return processed_tuple[0]['text_preprocessed']
 
 
 def get_prediction_result(user, user_text):
@@ -160,7 +168,9 @@ def get_prediction_result(user, user_text):
     )  # !!!Placeholder, just uses the first model in the database
 
     df = clean_user_input(user_text)
-    processed_text = preprocess_user_input(df, 'traditional')  #!!! Placerholder
+    processed_text = preprocess_user_input(
+        df, model_version.model_type
+    )  #!!! Placerholder
     prediction, confidence = analyze_text(processed_text.iloc[0])
 
     # Calculate metrics
