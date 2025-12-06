@@ -6,7 +6,7 @@ from typing import Dict, Tuple
 
 import nltk
 import pandas as pd
-from nltk import pos_tag, word_tokenize
+from nltk import pos_tag
 from nltk.corpus import stopwords, wordnet
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize

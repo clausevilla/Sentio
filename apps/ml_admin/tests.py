@@ -289,7 +289,9 @@ class DataPreprocessingTests(TestCase):
             initial_row_count = len(df)
             print(f'{initial_row_count} rows before preprocessing')
 
-            df_processed, report = self.pipeline.preprocess_dataframe(df)
+            df_processed, report = self.pipeline.preprocess_dataframe(
+                df, model_type='traditional'
+            )
 
             self.assertTrue(len(df_processed) > 0, 'Pipeline execution failed')
             self.assertIn('text_preprocessed', df_processed.columns)
@@ -308,7 +310,9 @@ class DataPreprocessingTests(TestCase):
 
         try:
             df = pd.read_csv(temp_file_path)
-            df_processed, report = self.pipeline.preprocess_dataframe(df)
+            df_processed, report = self.pipeline.preprocess_dataframe(
+                df, model_type='traditional'
+            )
 
             expected_columns = ['text', 'text_preprocessed']
 
@@ -409,7 +413,9 @@ class DataPreprocessingTests(TestCase):
 
         try:
             df = pd.read_csv(temp_file_path)
-            df_processed, report = self.pipeline.preprocess_dataframe(df)
+            df_processed, report = self.pipeline.preprocess_dataframe(
+                df, model_type='traditional'
+            )
 
             for i in range(len(df_processed)):
                 self.assertEqual(df_processed.loc[i, 'text_preprocessed'], '')
