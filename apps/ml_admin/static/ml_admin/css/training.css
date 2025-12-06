@@ -535,6 +535,40 @@ select.param-input {
     animation: shake 0.3s ease;
 }
 
+/* Locked parameter styling */
+.param-item.readonly .param-input {
+    background: #e9ecef !important;
+    color: #868e96 !important;
+    cursor: not-allowed;
+    opacity: 0.75;
+    border-color: #ced4da !important;
+}
+
+.param-item.readonly .param-input:disabled {
+    background: #e9ecef !important;
+    color: #868e96 !important;
+}
+
+.param-item.readonly .param-label {
+    color: #868e96;
+}
+
+.param-item.readonly {
+    opacity: 0.7;
+}
+
+/* Disabled select specific styling */
+.param-item.readonly select.param-input:disabled {
+    background-color: #e9ecef !important;
+    color: #868e96 !important;
+
+}
+
+/* Disabled number input styling */
+.param-item.readonly input.param-input:disabled {
+    background-color: #e9ecef !important;
+    color: #868e96 !important;
+}
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-4px); }

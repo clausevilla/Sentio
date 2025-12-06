@@ -1,8 +1,6 @@
 <!--Author: Lian Shi-->
 <!-- Disclaimer: LLM has used to generate initial layout related to training, and fine tuning was done manually to different elements -->
 
-<!--TODO: THIS PAGE NEEDS TO BE FIXED TO REFLECT REAL DATABASE AND SERVICES !!!!!!!!!-->
-
 {% extends 'ml_admin/base_admin.html' %}
 {% load static %}
 {% block title %}Training{% endblock %}
@@ -81,12 +79,12 @@
                 </div>
 
 
-                <!-- Retrain Content -->
+                <!-- Retrain/Fine-tune Content - Only Neural Network Models -->
                 <div class="col-body" id="retrainContent" style="display: none;">
-                    <label class="body-label">Select Base Model</label>
-                    {% if all_models %}
+                    <label class="body-label">Select a Neural Network Model</label>
+                    {% if neural_network_models %}
                     <div class="model-list">
-                        {% for model in all_models %}
+                        {% for model in neural_network_models %}
                         <div class="model-option" onclick="selectModel(this, {{ model.id }}, '{{ model.model_type }}', '{{ model.version_name|escapejs }}')">
                             <input type="radio" name="base_model" value="{{ model.id }}">
                             <div class="model-info">
@@ -104,14 +102,18 @@
                             <!-- Icon config button - shows when selected -->
                             <button type="button" class="algo-config-btn"
                                     onclick="event.stopPropagation(); openParamsModal('{{ model.model_type }}')"
-                                    title="Configure parameters">
+                                    title="Configure fine-tuning parameters">
                                 <i class="fas fa-cog"></i>
                             </button>
                         </div>
                         {% endfor %}
                     </div>
                     {% else %}
-                    <div class="empty-msg">No models available</div>
+                    <div class="empty-msg">
+                        <i class="fas fa-info-circle"></i>
+                        <p>No neural network models available for fine-tuning.</p>
+                        <p class="hint">Only LSTM and Transformer models can be retrained. Train a new neural network model first.</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -421,6 +423,8 @@
     };
     const URLS = { startTraining: '{% url "ml_admin:start_training" %}' };
     const testSetDistribution = {{ test_set_json|safe }};
+    // Pass retrainable models data (with saved_params) to JS
+    const retrainableModelsData = {{ retrainable_models_json|safe }};
 </script>
 <script src="{% static 'ml_admin/js/training.js' %}"></script>
 {% endblock %}
