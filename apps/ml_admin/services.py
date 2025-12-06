@@ -241,7 +241,7 @@ def _save_dataset_records(
     logger.info(f'=== Saved {len(records):,} records to database ===')
 
 
-def _save_training_parameters(model_version, model_name: str, config: dict):
+def _save_training_parameters(model_version, config: dict):
     """
     Save training configuration as Parameter record linked to ModelVersion.
     """
@@ -582,11 +582,12 @@ def register_model(
     """
     Register a trained model into the database.
 
-    Reads model_type and metrics directly from the model file.
+    Reads model_type, metrics, and config directly from the model file.
     """
     metadata = _load_model_metadata(model_file_path)
     model_type = metadata['model_type']
     metrics = metadata['metrics']
+    config = metadata.get('config', {})
 
     if model_type is None:
         raise ValueError(f'Could not determine model_type from {model_file_path}')
@@ -610,6 +611,10 @@ def register_model(
         confusion_matrix_base64=metrics.get('confusion_matrix_base64'),
         is_active=set_active,
     )
+
+    # Save parameters from config
+    if config:
+        _save_training_parameters(model_version, config)
 
     logger.info(f'Registered model: {version_name}')
 

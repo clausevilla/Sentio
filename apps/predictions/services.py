@@ -130,6 +130,7 @@ NEGATIVE_WORDS = [
     'selfharm',
 ]
 
+
 def get_predictor():
     """
     Get or create predictor with the active model loaded.
