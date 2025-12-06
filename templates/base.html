@@ -20,8 +20,8 @@
     {% block extra_css %}{% endblock %}
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}" />
-</head>
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}"></head>
 
 <body>
     <!-- Toast Container -->
@@ -59,8 +59,8 @@
     <!-- Navigation -->
     <nav>
         <div class="nav-container">
-            <a href="{% url 'home' %}" class="logo">
-                <i class="fas fa-brain"></i> Sentio
+            <a href="{% url 'home' %}" class="logo" style="color: #2C4A4A;">
+                <i class="fas fa-brain" style="margin-right: 5px;"></i> Sentio
             </a>
 
             <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu" aria-expanded="false">

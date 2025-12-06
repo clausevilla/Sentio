@@ -7,6 +7,7 @@ let selectedDatasets = {};
 let datasetDistributions = {};
 let selectedModelId = null;
 let selectedModelName = null;
+let selectedModelType = null;
 let distChart = null;
 let testSetChart = null;
 
@@ -57,29 +58,37 @@ function initAlgorithmListeners() {
 // Model Selection (Retrain)
 // ================================
 
-function selectModel(element, modelId) {
+function selectModel(element, modelId, modelType, modelName) {
     // Update UI
     document.querySelectorAll('.model-option').forEach(opt => {
         opt.classList.remove('selected');
+        opt.querySelector('input').checked = false;
     });
+
     element.classList.add('selected');
     element.querySelector('input').checked = true;
 
     // Store selection
     selectedModelId = modelId;
-    const nameEl = element.querySelector('.model-name');
-    selectedModelName = nameEl ? nameEl.textContent.trim().split('\n')[0].trim() : 'Model #' + modelId;
+    selectedModelType = modelType;
+    selectedModelName = modelName;
 
-    updateSummary();
+    // Set algorithm for params
+    currentParamsAlgorithm = modelType;
+
+    updateRetrainSummary();
 }
 
 // ================================
 // Dataset Selection (Shared)
 // ================================
 
-function toggleDataset(element, id, count) {
+function toggleDataset(element, id, count, event) {
     const checkbox = element.querySelector('input[type="checkbox"]');
-    checkbox.checked = !checkbox.checked;
+
+    if (!event || event.target.type !== 'checkbox') {
+        checkbox.checked = !checkbox.checked;
+    }
     element.classList.toggle('selected', checkbox.checked);
 
     // Get distribution data
@@ -131,6 +140,10 @@ function updateSummary() {
         // Enable/disable button (need both model and datasets)
         document.getElementById('retrainBtn').disabled = !selectedModelId || datasetCount === 0;
     }
+}
+
+function updateRetrainSummary() {
+    updateSummary();
 }
 
 // ================================
@@ -308,7 +321,8 @@ async function startTraining(mode) {
         payload = {
             upload_ids: ids,
             mode: 'retrain',
-            base_model_id: selectedModelId
+            base_model_id: selectedModelId,
+            params: getCurrentParams()
         };
     } else {
         const algoRadio = document.querySelector('input[name="algorithm"]:checked');
@@ -320,11 +334,18 @@ async function startTraining(mode) {
         payload = {
             upload_ids: ids,
             mode: 'new',
-            algorithm: algorithm
+            algorithm: algorithm,
+            params: getCurrentParams()
         };
     }
 
-    if (!confirm(confirmMsg)) return;
+    const confirmed = await showConfirm({
+        title: 'Start Training',
+        message: confirmMsg,
+        type: 'warning',
+        confirmText: 'Confirm'
+    });
+    if (!confirmed) return;
 
     btn.disabled = true;
     const originalText = btn.innerHTML;
@@ -350,7 +371,6 @@ async function startTraining(mode) {
 // ================================
 
 function showJobDetails(jobId) {
-    // Get job data from embedded JSON
     let jobsData = [];
     try {
         const dataEl = document.getElementById('jobsData');
@@ -437,7 +457,6 @@ function showJobDetails(jobId) {
         `;
     }
 
-    // Show error if failed
     if (job.status === 'FAILED' && job.error_message) {
         html += `
             <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--gray-200);">
@@ -452,4 +471,542 @@ function showJobDetails(jobId) {
 
     document.getElementById('jobModalBody').innerHTML = html;
     openModal('jobDetailsModal');
+}
+
+/* ================================
+   Algorithm Parameters Modal
+================================ */
+
+// Algorithm parameter definitions
+// type: 'select' = dropdown, 'number' = custom input field
+const ALGORITHM_PARAMS = {
+    logistic_regression: {
+        name: 'Logistic Regression',
+        icon: 'fa-chart-line',
+        params: [
+            // Logistic Regression specific
+            { key: 'max_iter', label: 'Max Iterations', type: 'select', default: 1000, options: [100, 500, 1000, 2000, 5000], hint: 'Maximum iterations for solver convergence' },
+            { key: 'regularization_strength', label: 'Regularization (C)', type: 'select', default: 1.0, options: [0.01, 0.1, 0.5, 1.0, 2.0, 10.0], hint: 'Inverse regularization strength' },
+            { key: 'solver', label: 'Solver', type: 'select', default: 'lbfgs', options: ['lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'], hint: 'Optimization algorithm' },
+            // TF-IDF shared
+            { key: 'ngram_range_min', label: 'N-gram Min', type: 'select', default: 1, options: [1, 2], hint: 'Minimum n-gram size' },
+            { key: 'ngram_range_max', label: 'N-gram Max', type: 'select', default: 2, options: [1, 2, 3], hint: 'Maximum n-gram size (must be >= min)' },
+            { key: 'min_df', label: 'Min Doc Frequency', type: 'select', default: 2, options: [1, 2, 5, 10], hint: 'Ignore terms in fewer documents' },
+            { key: 'max_df', label: 'Max Doc Frequency', type: 'select', default: 0.95, options: [0.8, 0.9, 0.95, 1.0], hint: 'Ignore terms in more than X% docs' },
+            { key: 'tfidf_max_features', label: 'Max Features', type: 'select', default: 'None', options: ['None', 5000, 10000, 20000, 50000], hint: 'Max vocabulary size (None = unlimited)' },
+        ]
+    },
+    random_forest: {
+        name: 'Random Forest',
+        icon: 'fa-tree',
+        params: [
+            // Random Forest specific
+            { key: 'n_estimators', label: 'Number of Trees', type: 'select', default: 100, options: [50, 100, 200, 500, 1000], hint: 'Number of trees in the forest' },
+            { key: 'max_depth', label: 'Max Depth', type: 'select', default: 'None', options: ['None', 5, 10, 20, 50, 100], hint: 'Max depth of trees (None = unlimited)' },
+            { key: 'min_samples_split', label: 'Min Samples Split', type: 'select', default: 2, options: [2, 5, 10, 20], hint: 'Min samples to split a node' },
+            { key: 'min_samples_leaf', label: 'Min Samples Leaf', type: 'select', default: 1, options: [1, 2, 5, 10], hint: 'Min samples at leaf node' },
+            { key: 'rf_max_features', label: 'Max Features (Split)', type: 'select', default: 'sqrt', options: ['sqrt', 'log2', 'None'], hint: 'Features to consider for best split' },
+            { key: 'n_jobs', label: 'Parallel Jobs', type: 'select', default: -1, options: [-1, 1, 2, 4], hint: '-1 = use all CPUs' },
+            // TF-IDF shared
+            { key: 'ngram_range_min', label: 'N-gram Min', type: 'select', default: 1, options: [1, 2], hint: 'Minimum n-gram size' },
+            { key: 'ngram_range_max', label: 'N-gram Max', type: 'select', default: 2, options: [1, 2, 3], hint: 'Maximum n-gram size (must be >= min)' },
+            { key: 'min_df', label: 'Min Doc Frequency', type: 'select', default: 2, options: [1, 2, 5, 10], hint: 'Ignore terms in fewer documents' },
+            { key: 'max_df', label: 'Max Doc Frequency', type: 'select', default: 0.95, options: [0.8, 0.9, 0.95, 1.0], hint: 'Ignore terms in more than X% docs' },
+            { key: 'tfidf_max_features', label: 'Max Features', type: 'select', default: 'None', options: ['None', 5000, 10000, 20000, 50000], hint: 'Max vocabulary size' },
+        ]
+    },
+    lstm: {
+        name: 'LSTM (RNN)',
+        icon: 'fa-network-wired',
+        params: [
+            // LSTM specific
+            { key: 'embed_dim', label: 'Embedding Dim', type: 'select', default: 64, options: [32, 64, 128, 256], hint: 'Word embedding dimensions' },
+            { key: 'hidden_dim', label: 'Hidden Dim', type: 'select', default: 64, options: [32, 64, 128, 256], hint: 'LSTM hidden state size' },
+            // Shared neural networks
+            { key: 'num_layers', label: 'Number of Layers', type: 'select', default: 2, options: [1, 2, 3, 4, 6], hint: 'Stacked LSTM layers' },
+            { key: 'dropout', label: 'Dropout', type: 'select', default: 0.1, options: [0.0, 0.1, 0.2, 0.3, 0.5], hint: 'Dropout rate for regularization' },
+            { key: 'max_seq_length', label: 'Max Sequence Length', type: 'select', default: 512, options: [128, 256, 512, 1024], hint: 'Maximum input text length' },
+            { key: 'vocab_size', label: 'Vocabulary Size', type: 'select', default: 30000, options: [10000, 20000, 30000, 50000], hint: 'Maximum vocabulary size' },
+            // Learning rate - custom number input (user can type or use arrows)
+            { key: 'learning_rate', label: 'Learning Rate', type: 'number', default: 0.00001, min: 0.000001, max: 1, step: 0.00001, hint: 'Optimizer learning rate (e.g., 0.0001)' },
+            { key: 'batch_size', label: 'Batch Size', type: 'select', default: 32, options: [8, 16, 32, 64, 128], hint: 'Training batch size' },
+            { key: 'epochs', label: 'Epochs', type: 'select', default: 10, options: [5, 10, 20, 50], hint: 'Training epochs' },
+            { key: 'patience', label: 'Early Stop Patience', type: 'select', default: 5, options: [2, 3, 5, 10], hint: 'Epochs to wait before early stopping' },
+        ]
+    },
+    transformer: {
+        name: 'Transformer',
+        icon: 'fa-microchip',
+        params: [
+            // Transformer specific
+            { key: 'd_model', label: 'Model Dimension', type: 'select', default: 128, options: [64, 128, 256, 512], hint: 'Transformer dimension (must be divisible by n_head)' },
+            { key: 'n_head', label: 'Attention Heads', type: 'select', default: 4, options: [2, 4, 8], hint: 'Number of attention heads' },
+            { key: 'dim_feedforward', label: 'Feedforward Dim', type: 'select', default: 256, options: [128, 256, 512, 1024], hint: 'Feedforward network dimension' },
+            // Shared neural networks
+            { key: 'num_layers', label: 'Number of Layers', type: 'select', default: 2, options: [1, 2, 3, 4, 6], hint: 'Transformer encoder layers' },
+            { key: 'dropout', label: 'Dropout', type: 'select', default: 0.1, options: [0.0, 0.1, 0.2, 0.3, 0.5], hint: 'Dropout rate' },
+            { key: 'max_seq_length', label: 'Max Sequence Length', type: 'select', default: 512, options: [128, 256, 512, 1024], hint: 'Maximum input length' },
+            { key: 'vocab_size', label: 'Vocabulary Size', type: 'select', default: 30000, options: [10000, 20000, 30000, 50000], hint: 'Maximum vocabulary size' },
+            // Learning rate - custom number input (user can type or use arrows)
+            { key: 'learning_rate', label: 'Learning Rate', type: 'number', default: 0.00001, min: 0.000001, max: 1, step: 0.00001, hint: 'Optimizer learning rate (e.g., 0.0001)' },
+            { key: 'batch_size', label: 'Batch Size', type: 'select', default: 32, options: [8, 16, 32, 64, 128], hint: 'Training batch size' },
+            { key: 'epochs', label: 'Epochs', type: 'select', default: 10, options: [5, 10, 20, 50], hint: 'Training epochs' },
+            { key: 'patience', label: 'Early Stop Patience', type: 'select', default: 5, options: [2, 3, 5, 10], hint: 'Epochs to wait before early stopping' },
+        ]
+    }
+};
+
+// Incremental/Retrain defaults - override these when in retrain mode (neural networks only)
+const INCREMENTAL_DEFAULTS = {
+    learning_rate: 0.00001,   // 10x lower than full (0.0001)
+    epochs: 5,                // Half of full (10)
+    patience: 3,              // Lower than full (5)
+};
+
+// Which algorithms are neural networks (use incremental NN defaults)
+const NEURAL_NETWORK_ALGOS = ['lstm', 'transformer', 'rnn'];
+
+// Alias for different naming conventions
+ALGORITHM_PARAMS['rnn'] = ALGORITHM_PARAMS['lstm'];
+ALGORITHM_PARAMS['LSTM'] = ALGORITHM_PARAMS['lstm'];
+ALGORITHM_PARAMS['RNN'] = ALGORITHM_PARAMS['lstm'];
+ALGORITHM_PARAMS['Transformer'] = ALGORITHM_PARAMS['transformer'];
+
+// Current parameter values - stored per mode+algorithm
+// Key format: 'new_logistic_regression' or 'retrain_lstm'
+let currentParams = {};
+let currentParamsAlgorithm = null;
+let currentParamsMode = null;  // 'new' or 'retrain'
+
+// ================================
+// Open Parameters Modal
+// ================================
+function openParamsModal(algoKey) {
+    // Normalize algorithm key
+    const normalizedKey = normalizeAlgoKey(algoKey);
+    const algo = ALGORITHM_PARAMS[normalizedKey];
+
+    if (!algo) {
+        console.error('Unknown algorithm:', algoKey);
+        toast('Unknown algorithm type', 'error');
+        return;
+    }
+
+    currentParamsAlgorithm = normalizedKey;
+
+    // Check if we're in retrain mode (retrain tab is active)
+    const isIncremental = currentTab === 'retrain';
+    currentParamsMode = isIncremental ? 'retrain' : 'new';
+
+    // Create unique key for this mode+algorithm combination
+    const paramsKey = `${currentParamsMode}_${normalizedKey}`;
+
+    // Initialize params with mode-specific defaults if not already set
+    if (!currentParams[paramsKey]) {
+        currentParams[paramsKey] = {};
+        algo.params.forEach(p => {
+            currentParams[paramsKey][p.key] = getDefaultValue(normalizedKey, p.key, isIncremental);
+        });
+    }
+
+    // Store mode info on modal
+    const modal = document.getElementById('paramsModal');
+    if (modal) {
+        modal.dataset.isIncremental = isIncremental;
+        modal.dataset.paramsKey = paramsKey;
+        modal.dataset.algorithm = normalizedKey;
+    }
+
+    // Update modal title with mode indicator
+    const modeLabel = isIncremental ? ' <span class="mode-badge retrain"><i class="fas fa-sync-alt"></i> Fine-tuning</span>' : '';
+    document.getElementById('paramsModalTitle').innerHTML = `
+        <i class="fas ${algo.icon}"></i> ${algo.name} Parameters${modeLabel}
+    `;
+
+    // Update info text based on mode
+    const infoEl = document.querySelector('.params-info');
+    if (infoEl) {
+        if (isIncremental) {
+            infoEl.innerHTML = `<i class="fas fa-info-circle"></i> <strong>Fine-tuning mode:</strong> Lower learning rate and fewer epochs by default for incremental training.`;
+            infoEl.classList.add('retrain-info');
+        } else {
+            infoEl.innerHTML = `<i class="fas fa-info-circle"></i> Adjust training parameters below or use defaults. Hover over <i class="fas fa-question-circle"></i> for hints.`;
+            infoEl.classList.remove('retrain-info');
+        }
+    }
+
+    // Build params grid
+    const grid = document.getElementById('paramsGrid');
+    let html = '';
+
+    algo.params.forEach(param => {
+        const value = currentParams[paramsKey][param.key];
+        const defaultVal = getDefaultValue(normalizedKey, param.key, isIncremental);
+        const isModified = String(value) !== String(defaultVal);
+        html += renderParamInput(param, value, isModified);
+    });
+
+    grid.innerHTML = html;
+
+    // Add event listeners for validation and change tracking
+    grid.querySelectorAll('.param-input').forEach(input => {
+        input.addEventListener('change', handleParamChange);
+        input.addEventListener('input', handleParamChange);  // For number inputs
+    });
+
+    // Show modal
+    openModal('paramsModal');
+}
+
+// ================================
+// Normalize Algorithm Key
+// ================================
+function normalizeAlgoKey(algoKey) {
+    if (!algoKey) return 'logistic_regression';
+    const key = algoKey.toLowerCase().replace(/[^a-z_]/g, '');
+    if (key === 'rnn') return 'lstm';
+    return key;
+}
+
+// ================================
+// Check if Neural Network
+// ================================
+function isNeuralNetwork(algoKey) {
+    const normalized = normalizeAlgoKey(algoKey);
+    return NEURAL_NETWORK_ALGOS.includes(normalized);
+}
+
+// ================================
+// Get Default Value
+// ================================
+function getDefaultValue(algoKey, paramKey, isIncremental = false) {
+    const normalizedKey = normalizeAlgoKey(algoKey);
+    const algoConfig = ALGORITHM_PARAMS[normalizedKey];
+
+    if (!algoConfig) return null;
+
+    const param = algoConfig.params.find(p => p.key === paramKey);
+    if (!param) return null;
+
+    // Check incremental defaults for neural networks
+    if (isIncremental && isNeuralNetwork(normalizedKey) && INCREMENTAL_DEFAULTS[paramKey] !== undefined) {
+        return INCREMENTAL_DEFAULTS[paramKey];
+    }
+
+    return param.default;
+}
+
+// ================================
+// Handle Parameter Change
+// ================================
+function handleParamChange(e) {
+    const key = e.target.dataset.key;
+    let value = e.target.value;
+
+    // For number inputs, parse the value
+    if (e.target.type === 'number') {
+        value = parseFloat(value);
+        if (isNaN(value)) return;  // Don't update if invalid
+    }
+
+    const modal = document.getElementById('paramsModal');
+    const paramsKey = modal?.dataset.paramsKey;
+    const algoKey = modal?.dataset.algorithm;
+    const isIncremental = modal?.dataset.isIncremental === 'true';
+
+    if (!paramsKey || !algoKey) return;
+
+    // Store the value
+    currentParams[paramsKey][key] = value;
+
+    // Update modified state
+    const defaultVal = getDefaultValue(algoKey, key, isIncremental);
+    const isModified = String(value) !== String(defaultVal);
+    const paramItem = e.target.closest('.param-item');
+    if (paramItem) {
+        paramItem.classList.toggle('modified', isModified);
+    }
+
+    // Cross-field validation
+    validateParams(algoKey);
+}
+
+// ================================
+// Validate Parameters
+// ================================
+function validateParams(algoKey, showLearningRateError = false) {
+    const modal = document.getElementById('paramsModal');
+    const paramsKey = modal?.dataset.paramsKey;
+    if (!paramsKey) return { valid: true, errors: [] };
+
+    const params = currentParams[paramsKey] || {};
+    const errors = [];
+
+    // Clear previous errors
+    document.querySelectorAll('.param-error').forEach(el => el.remove());
+    document.querySelectorAll('.param-item.error').forEach(el => el.classList.remove('error'));
+
+    // Validate ngram_range for traditional ML
+    if (params.ngram_range_min !== undefined && params.ngram_range_max !== undefined) {
+        const min = parseInt(params.ngram_range_min);
+        const max = parseInt(params.ngram_range_max);
+        if (max < min) {
+            errors.push({
+                key: 'ngram_range_max',
+                message: 'N-gram Max must be ≥ N-gram Min'
+            });
+        }
+    }
+
+    // Validate d_model % n_head == 0 for transformer
+    if (algoKey === 'transformer' && params.d_model !== undefined && params.n_head !== undefined) {
+        const dModel = parseInt(params.d_model);
+        const nHead = parseInt(params.n_head);
+        if (dModel % nHead !== 0) {
+            errors.push({
+                key: 'd_model',
+                message: `Model Dimension (${dModel}) must be divisible by Attention Heads (${nHead})`
+            });
+        }
+    }
+
+    // Validate learning rate range when clicking Done
+    if (showLearningRateError && params.learning_rate !== undefined) {
+        const lr = parseFloat(params.learning_rate);
+        if (isNaN(lr) || lr <= 0 || lr > 1) {
+            errors.push({
+                key: 'learning_rate',
+                message: 'Learning rate must be between 0 and 1'
+            });
+        }
+    }
+
+    // Show errors
+    errors.forEach(err => {
+        const input = document.querySelector(`[data-key="${err.key}"]`);
+        if (input) {
+            const paramItem = input.closest('.param-item');
+            if (paramItem) {
+                paramItem.classList.add('error');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'param-error';
+                errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${err.message}`;
+                paramItem.appendChild(errorDiv);
+            }
+        }
+    });
+
+    return { valid: errors.length === 0, errors };
+}
+
+// ================================
+// Render Parameter Input
+// ================================
+function renderParamInput(param, value, isModified = false) {
+    const modifiedClass = isModified ? 'modified' : '';
+    const type = param.type || 'select';
+
+    let inputHtml = '';
+
+    if (type === 'number') {
+        // Number input for custom values (like learning rate)
+        // lang="en" forces dot as decimal separator instead of comma
+        inputHtml = `
+            <input type="number"
+                   class="param-input"
+                   data-key="${param.key}"
+                   value="${value}"
+                   min="${param.min || 0}"
+                   max="${param.max || 1}"
+                   step="${param.step || 0.00001}"
+                   lang="en"
+                   placeholder="${param.default}">
+        `;
+    } else {
+        // Select dropdown (default)
+        const options = param.options.map(opt => {
+            const optStr = String(opt);
+            const valStr = String(value);
+            const selected = optStr === valStr ? 'selected' : '';
+            return `<option value="${opt}" ${selected}>${opt}</option>`;
+        }).join('');
+
+        inputHtml = `
+            <select class="param-input" data-key="${param.key}">
+                ${options}
+            </select>
+        `;
+    }
+
+    return `
+        <div class="param-item ${modifiedClass}">
+            <label class="param-label">
+                ${param.label}
+                <span class="param-hint" title="${param.hint}">
+                    <i class="fas fa-question-circle"></i>
+                </span>
+            </label>
+            ${inputHtml}
+        </div>
+    `;
+}
+
+// ================================
+// Close Modal
+// ================================
+function closeParamsModal() {
+    // Validate before closing
+    const modal = document.getElementById('paramsModal');
+    const algoKey = modal?.dataset.algorithm;
+
+    if (algoKey) {
+        const validation = validateParams(algoKey, true);  // true = show learning rate error
+        if (!validation.valid) {
+            toast('Please fix validation errors', 'error');
+            return;
+        }
+    }
+
+    closeModal('paramsModal');
+
+    // Update the config button to show modified indicator
+    updateConfigButtonState();
+}
+
+// ================================
+// Update config button modified state
+// ================================
+function updateConfigButtonState() {
+    if (!currentParamsAlgorithm) return;
+
+    const isModified = hasCustomParams(currentParamsAlgorithm);
+
+    // For train tab - find by radio value
+    const trainRadio = document.querySelector(`input[name="algorithm"][value="${currentParamsAlgorithm}"]`);
+    if (trainRadio) {
+        const btn = trainRadio.closest('.algo-option')?.querySelector('.algo-config-btn');
+        if (btn) {
+            btn.classList.toggle('modified', isModified);
+        }
+    }
+
+    // For retrain tab - find by selected model
+    const selectedModel = document.querySelector('.model-option.selected .algo-config-btn');
+    if (selectedModel) {
+        selectedModel.classList.toggle('modified', isModified);
+    }
+}
+
+// ================================
+// Reset to Defaults
+// ================================
+function resetParamsToDefaults() {
+    if (!currentParamsAlgorithm) return;
+
+    const algo = ALGORITHM_PARAMS[currentParamsAlgorithm];
+    if (!algo) return;
+
+    // Get mode from modal
+    const modal = document.getElementById('paramsModal');
+    const isIncremental = modal?.dataset.isIncremental === 'true';
+    const paramsKey = modal?.dataset.paramsKey || `${isIncremental ? 'retrain' : 'new'}_${currentParamsAlgorithm}`;
+
+    // Reset values with mode-specific defaults
+    currentParams[paramsKey] = {};
+    algo.params.forEach(param => {
+        const defaultVal = getDefaultValue(currentParamsAlgorithm, param.key, isIncremental);
+        currentParams[paramsKey][param.key] = defaultVal;
+
+        // Update input
+        const input = document.querySelector(`[data-key="${param.key}"]`);
+        if (input) {
+            input.value = defaultVal;
+        }
+
+        // Remove modified class
+        const paramItem = input?.closest('.param-item');
+        if (paramItem) {
+            paramItem.classList.remove('modified');
+        }
+    });
+
+    // Clear any validation errors
+    document.querySelectorAll('.param-error').forEach(el => el.remove());
+    document.querySelectorAll('.param-item.error').forEach(el => el.classList.remove('error'));
+
+    const modeText = isIncremental ? 'fine-tuning' : 'training';
+    toast(`Parameters reset to ${modeText} defaults`);
+}
+
+// ================================
+// Get Current Parameters
+// ================================
+function getCurrentParams() {
+    const algoKey = currentParamsAlgorithm || getSelectedAlgorithm();
+    const isIncremental = currentTab === 'retrain';
+    const paramsKey = `${isIncremental ? 'retrain' : 'new'}_${algoKey}`;
+
+    let params = currentParams[paramsKey];
+
+    // If no custom params set, return defaults
+    if (!params) {
+        const algo = ALGORITHM_PARAMS[algoKey];
+        if (!algo) {
+            // Still add training_mode even if no algo config
+            return { training_mode: isIncremental ? 'incremental' : 'full' };
+        }
+
+        params = {};
+        algo.params.forEach(p => {
+            params[p.key] = getDefaultValue(algoKey, p.key, isIncremental);
+        });
+    }
+
+    // Always add training_mode based on current tab (not user-selectable)
+    const result = {
+        ...params,
+        training_mode: isIncremental ? 'incremental' : 'full'
+    };
+
+    // Add expand_vocab only for neural networks in retrain mode
+    if (isIncremental && isNeuralNetwork(algoKey)) {
+        result.expand_vocab = 'True';
+    }
+
+    return result;
+}
+
+// ================================
+// Get Selected Algorithm
+// ================================
+function getSelectedAlgorithm() {
+    // For retrain - use stored model type
+    if (currentTab === 'retrain' && selectedModelType) {
+        return normalizeAlgoKey(selectedModelType);
+    }
+
+    // For new training - check radio button
+    const radio = document.querySelector('input[name="algorithm"]:checked');
+    if (radio) return radio.value;
+
+    return 'logistic_regression';
+}
+
+// ================================
+// Check if params are modified from defaults
+// ================================
+function hasCustomParams(algoKey) {
+    const algo = ALGORITHM_PARAMS[algoKey];
+    if (!algo) return false;
+
+    const isIncremental = currentTab === 'retrain';
+    const paramsKey = `${isIncremental ? 'retrain' : 'new'}_${algoKey}`;
+    const params = currentParams[paramsKey];
+
+    if (!params) return false;
+
+    return algo.params.some(p => {
+        const defaultVal = getDefaultValue(algoKey, p.key, isIncremental);
+        return String(params[p.key]) !== String(defaultVal);
+    });
 }

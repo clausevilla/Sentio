@@ -50,32 +50,79 @@
         </div>
         <div class="card-body">
             {% if active_model %}
-            <div class="model-display">
-                <div class="model-name">{{ active_model.version_name }}</div>
-                <div class="model-metrics">
-                    <div class="metric">
-                        <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|percentage }}{% else %}—{% endif %}</span>
-                        <span class="metric-lbl">Accuracy</span>
+            <div class="active-model-card">
+                <!-- Header with icon and name -->
+                <div class="active-model-header">
+                    <div class="active-model-icon">
+                        {% if active_model.model_type == 'lstm' or active_model.model_type == 'transformer' %}
+                        <i class="fas fa-brain"></i>
+                        {% elif active_model.model_type == 'random_forest' %}
+                        <i class="fas fa-tree"></i>
+                        {% else %}
+                        <i class="fas fa-chart-line"></i>
+                        {% endif %}
                     </div>
-                    <div class="metric">
-                        <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|percentage }}{% else %}—{% endif %}</span>
-                        <span class="metric-lbl">F1</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-val">{% if active_model.precision %}{{ active_model.precision|percentage }}{% else %}—{% endif %}</span>
-                        <span class="metric-lbl">Precision</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-val">{% if active_model.recall %}{{ active_model.recall|percentage}}{% else %}—{% endif %}</span>
-                        <span class="metric-lbl">Recall</span>
+                    <div class="active-model-title">
+                        <h4 class="active-model-name">{{ active_model.version_name }}</h4>
+                        <div class="active-model-type">
+                            <span class="badge info">{{ active_model.get_model_type_display|default:active_model.model_type }}</span>
+                            <span>Deployed</span>
+                        </div>
                     </div>
                 </div>
-                <a href="{% url 'ml_admin:models' %}" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-cog"></i> Manage Models
-                </a>
+
+                <!-- Metrics Grid -->
+                <div class="model-metrics-grid">
+                    <div class="metric-box">
+                        <span class="value">{% if active_model.accuracy %}{{ active_model.accuracy|percentage }}{% else %}—{% endif %}</span>
+                        <span class="label">Accuracy</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="value">{% if active_model.f1_score %}{{ active_model.f1_score|percentage }}{% else %}—{% endif %}</span>
+                        <span class="label">F1 Score</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="value">{% if active_model.precision %}{{ active_model.precision|percentage }}{% else %}—{% endif %}</span>
+                        <span class="label">Precision</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="value">{% if active_model.recall %}{{ active_model.recall|percentage }}{% else %}—{% endif %}</span>
+                        <span class="label">Recall</span>
+                    </div>
+                </div>
+
+                <!-- Meta Information -->
+                <div class="model-meta">
+                    <div class="model-meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>Created <strong>{{ active_model.created_at|date:"M d, Y" }}</strong></span>
+                    </div>
+                    {% if active_model.created_by %}
+                    <div class="model-meta-item">
+                        <i class="fas fa-user"></i>
+                        <span>By <strong>{{ active_model.created_by.username }}</strong></span>
+                    </div>
+                    {% endif %}
+                    {% if active_model_job %}
+                    <div class="model-meta-item">
+                        <i class="fas fa-database"></i>
+                        <span>Dataset: <strong>{{ active_model_job.data_upload.file_name|truncatechars:20 }}</strong></span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Actions -->
+                <div class="model-actions">
+                    <a href="{% url 'ml_admin:models' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-cog"></i> Manage
+                    </a>
+                    <a href="{% url 'ml_admin:training' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-sync"></i> Train/Retrain
+                    </a>
+                </div>
             </div>
             {% else %}
-            <div class="empty-state small">
+            <div class="empty-state">
                 <i class="fas fa-exclamation-triangle"></i>
                 <p>No active model deployed</p>
                 <a href="{% url 'ml_admin:models' %}" class="btn btn-primary btn-sm">Deploy Model</a>
@@ -99,26 +146,26 @@
             </div>
             {% if recent_jobs %}
             <ul class="recent-list">
-                {% for job in recent_jobs %}
+                {% for job in recent_jobs|slice:":5" %}
                 <li class="recent-item clickable" onclick="location.href='{% url 'ml_admin:training' %}'">
                     <div class="recent-item-left">
                         <span class="status-dot {{ job.status|lower }}"></span>
                         <div class="recent-item-info">
-                            <span class="recent-item-title">Job #{{ job.id }}</span>
+                            <span class="recent-item-title">Job #{{ job.id }} · {{ job.get_model_type_display|default:job.model_type }}</span>
                             {% if job.data_upload %}
-                            <span class="recent-item-subtitle">{{ job.data_upload.file_name }}</span>
+                            <span class="recent-item-subtitle">{{ job.data_upload.file_name|truncatechars:25 }}</span>
                             {% endif %}
                         </div>
                     </div>
                     <div class="recent-item-right">
                         <span class="badge {{ job.status|lower }}">{{ job.status }}</span>
-                        <span class="recent-item-date">{{ job.started_at|date:"M d, H:i" }}</span>
+                        <span class="recent-item-date">{{ job.started_at|date:"M d" }}</span>
                     </div>
                 </li>
                 {% endfor %}
             </ul>
             {% else %}
-            <p class="text-muted text-center" style="padding: 1rem;">No training jobs yet</p>
+            <p class="text-muted text-center" style="padding: 1rem 0;">No training jobs yet</p>
             {% endif %}
         </div>
     </div>
@@ -134,14 +181,14 @@
         <div class="card-body">
             {% if recent_uploads %}
             <ul class="recent-list">
-                {% for upload in recent_uploads %}
+                {% for upload in recent_uploads|slice:":5" %}
                 <li class="recent-item clickable" onclick="location.href='{% url 'ml_admin:data' %}'">
                     <div class="recent-item-left">
                         <div class="recent-item-icon">
                             <i class="fas fa-file-csv"></i>
                         </div>
                         <div class="recent-item-info">
-                            <span class="recent-item-title">{{ upload.file_name }}</span>
+                            <span class="recent-item-title">{{ upload.file_name|truncatechars:25 }}</span>
                             <span class="recent-item-subtitle">{{ upload.row_count|default:0 }} records</span>
                         </div>
                     </div>
@@ -151,7 +198,7 @@
                         {% else %}
                         <span class="badge pending">Pending</span>
                         {% endif %}
-                        <span class="recent-item-date">{{ upload.uploaded_at|date:"M d, Y" }}</span>
+                        <span class="recent-item-date">{{ upload.uploaded_at|date:"M d" }}</span>
                     </div>
                 </li>
                 {% endfor %}
@@ -193,17 +240,6 @@
     </div>
 </div>
 
-<!-- Model Comparison -->
-{% if models_for_comparison %}
-<div class="card" style="margin-top: 1.5rem;">
-    <div class="card-header">
-        <h3><i class="fas fa-chart-bar"></i> Model Performance Comparison</h3>
-    </div>
-    <div class="card-body">
-        <div class="chart-wrap"><canvas id="modelCompareChart"></canvas></div>
-    </div>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}
