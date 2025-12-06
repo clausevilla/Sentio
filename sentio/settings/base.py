@@ -1,4 +1,4 @@
-# Author: Marcus Berggren, Lian Shi
+# Author: Marcus Berggren, Lian Shi, Julia McCall
 
 """
 Django settings for sentio project.
@@ -137,3 +137,7 @@ LOGOUT_REDIRECT_URL = 'accounts:login'
 SESSION_COOKIE_AGE = 24000  # 6 hours in seconds
 SESSION_SAVE_EVERY_REQUEST = False
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Session persists after browser close
+
+# Media files for saving trained models
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

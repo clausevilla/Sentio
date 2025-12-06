@@ -40,6 +40,9 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Neural network model types (only these can be retrained)
+NEURAL_NETWORK_TYPES = ['lstm', 'transformer', 'rnn']
+
 ML_ALGORITHMS = {
     'logistic_regression': {
         'name': 'Logistic Regression',
@@ -52,12 +55,12 @@ ML_ALGORITHMS = {
         'icon': 'fa-tree',
     },
     'lstm': {
-        'name': 'RNN/LSTM',
+        'name': 'LSTM (RNN)',
         'description': 'Recurrent neural network',
         'icon': 'fa-network-wired',
     },
     'transformer': {
-        'name': 'Custom Transformer',
+        'name': 'Transformer',
         'description': 'Encoder-only transformer',
         'icon': 'fa-microchip',
     },
@@ -330,8 +333,6 @@ def upload_csv_api(request):
             for chunk in csv_file.chunks():
                 f.write(chunk)
 
-        # TODO : please update here matching pipeline types in model later (each uploaded dataset have different preprocessing pipeline types)
-        # waiting to be implemented later after preprocessing pipeline types are defined in model
         pipeline_type = request.POST.get('pipeline_type', 'full')
 
         upload = DataUpload.objects.create(
@@ -344,7 +345,7 @@ def upload_csv_api(request):
         )
 
         if PIPELINE_AVAILABLE:
-            trigger_full_pipeline_in_background(upload.id, dataset_type)
+            trigger_full_pipeline_in_background(upload.id, dataset_type, pipeline_type)
             return JsonResponse(
                 {
                     'success': True,
@@ -648,6 +649,54 @@ def get_dataset_distribution_api(request, upload_id):
 # ============================================
 
 
+def _get_model_training_params(model):
+    """
+    Get saved training parameters for a model.
+    Returns params dict from TrainingConfig if available, else None.
+    """
+    try:
+        job = TrainingJob.objects.filter(resulting_model=model).first()
+        if job and hasattr(job, 'config'):
+            config = job.config
+            # Build params dict from config fields
+            params = {}
+
+            # Neural network params
+            if config.embed_dim:
+                params['embed_dim'] = config.embed_dim
+            if config.hidden_dim:
+                params['hidden_dim'] = config.hidden_dim
+            if config.num_layers:
+                params['num_layers'] = config.num_layers
+            if config.dropout is not None:
+                params['dropout'] = float(config.dropout)
+            if config.max_seq_length:
+                params['max_seq_length'] = config.max_seq_length
+            if config.vocab_size:
+                params['vocab_size'] = config.vocab_size
+            if config.learning_rate:
+                params['learning_rate'] = float(config.learning_rate)
+            if config.batch_size:
+                params['batch_size'] = config.batch_size
+            if config.epochs:
+                params['epochs'] = config.epochs
+            if config.patience:
+                params['patience'] = config.patience
+
+            # Transformer specific
+            if config.d_model:
+                params['d_model'] = config.d_model
+            if config.n_head:
+                params['n_head'] = config.n_head
+            if config.dim_feedforward:
+                params['dim_feedforward'] = config.dim_feedforward
+
+            return params if params else None
+    except Exception as e:
+        logger.warning(f'Failed to get training params for model {model.id}: {e}')
+    return None
+
+
 @staff_member_required
 def training_view(request):
     jobs = TrainingJob.objects.order_by('-started_at')[:20]
@@ -691,9 +740,19 @@ def training_view(request):
         'uploads': len(uploads_with_counts),
     }
 
+    # All models for new training comparison
     all_models = ModelVersion.objects.order_by('-created_at')
+
+    # Only neural network models can be retrained (fine-tuned)
+    neural_network_models = ModelVersion.objects.filter(
+        model_type__in=NEURAL_NETWORK_TYPES
+    ).order_by('-created_at')
+
     retrainable_models = []
-    for model in all_models:
+    for model in neural_network_models:
+        # Get saved training params if available
+        saved_params = _get_model_training_params(model)
+
         model_info = {
             'id': model.id,
             'version_name': model.version_name,
@@ -701,7 +760,8 @@ def training_view(request):
             'f1_score': float(model.f1_score) if model.f1_score else None,
             'created_at': model.created_at.strftime('%Y-%m-%d'),
             'is_active': model.is_active,
-            'algorithm': getattr(model, 'algorithm', 'unknown'),
+            'algorithm': model.model_type or 'unknown',
+            'saved_params': saved_params,  # Include saved training params
         }
         retrainable_models.append(model_info)
 
@@ -718,6 +778,7 @@ def training_view(request):
             'test_set_json': json.dumps(test_set_info['distribution']),
             'training_totals': training_totals,
             'all_models': all_models,
+            'neural_network_models': neural_network_models,  # For template display
             'retrainable_models_json': json.dumps(retrainable_models),
         },
     )

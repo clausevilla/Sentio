@@ -50,6 +50,14 @@ class DataUpload(models.Model):
     row_count = models.IntegerField(null=True, blank=True)
     is_validated = models.BooleanField(default=False)
     validation_errors = models.TextField(null=True, blank=True)
+    PIPELINE_CHOICES = (
+        ('full', 'Full'),
+        ('partial', 'Partial'),
+        ('raw', 'Raw'),
+    )
+    pipeline_type = models.CharField(
+        max_length=20, choices=PIPELINE_CHOICES, default='full'
+    )
     PROCESSING_STATUS = (
         ('pending', 'Pending'),
         ('processing', 'Processing'),
