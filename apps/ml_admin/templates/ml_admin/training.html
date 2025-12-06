@@ -306,7 +306,7 @@
                     </td>
                     <td>
                         {% if job.resulting_model and job.resulting_model.accuracy %}
-                        <span class="accuracy-value">{{ job.resulting_model.accuracy|floatformat:1 }}%</span>
+                        <span class="accuracy-value">{{ job.resulting_model.accuracy|percentage }}</span>
                         {% elif job.status == 'FAILED' %}
                         <span class="text-danger">—</span>
                         {% else %}—{% endif %}
