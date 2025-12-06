@@ -1132,9 +1132,15 @@ def get_jobs_status_api(request):
         :20
     ]
 
+    # Count running and pending jobs for the banner update
+    running_count = TrainingJob.objects.filter(status='RUNNING').count()
+    pending_count = TrainingJob.objects.filter(status='PENDING').count()
+
     return JsonResponse(
         {
             'success': True,
+            'running_count': running_count,
+            'pending_count': pending_count,
             'jobs': [
                 {
                     'id': job.id,
@@ -1143,6 +1149,12 @@ def get_jobs_status_api(request):
                     'started_at': job.started_at.isoformat(),
                     'completed_at': job.completed_at.isoformat()
                     if job.completed_at
+                    else None,
+                    'accuracy': float(job.resulting_model.accuracy)
+                    if job.resulting_model and job.resulting_model.accuracy
+                    else None,
+                    'error_message': job.error_message
+                    if hasattr(job, 'error_message')
                     else None,
                 }
                 for job in jobs

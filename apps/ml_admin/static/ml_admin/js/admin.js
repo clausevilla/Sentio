@@ -304,7 +304,7 @@ function showConfirm({ title, message, type = 'warning', confirmText = 'Confirm'
 // ================================
 
 const NOTIFICATION_KEY = 'ml_admin_notifications';
-const NOTIFICATION_POLL_INTERVAL = 3000; // 3 seconds
+const NOTIFICATION_POLL_INTERVAL = 1000; // 1 second
 
 let notifications = [];
 let notificationPollTimer = null;
@@ -509,7 +509,8 @@ async function checkNotificationUpdates() {
                     }
                     lastKnownStates.jobs[job.id] = job.status;
                 });
-                updateTrainingTable(jobsData.jobs);
+                // Pass full data including running/pending counts
+                updateTrainingTable(jobsData);
             }
         }
 
@@ -606,25 +607,133 @@ function updateDatasetRows(uploads) {
     });
 }
 
-// Auto-update training page table
-function updateTrainingTable(jobs) {
-    const tbody = document.querySelector('.jobs-table tbody');
+// Auto-update training page table and banner
+function updateTrainingTable(data) {
+    // Update the running/pending jobs banner
+    updateTrainingBanner(data.running_count, data.pending_count);
+
+    // Update job rows in the training jobs table
+    const tbody = document.querySelector('#trainingJobsTable tbody');
     if (!tbody) return;
+
+    const jobs = data.jobs || [];
 
     jobs.forEach(job => {
         const row = tbody.querySelector(`tr[data-job-id="${job.id}"]`);
         if (!row) return;
 
         const badge = row.querySelector('.badge');
-        if (!badge || badge.textContent.trim() === job.status) return;
+        if (!badge) return;
 
-        badge.className = `badge ${job.status.toLowerCase()}`;
-        const icon = job.status === 'COMPLETED' ? 'fa-check-circle' :
-            job.status === 'FAILED' ? 'fa-times-circle' :
+        // Get current status from badge CSS class (more reliable than textContent)
+        const statusClasses = ['pending', 'running', 'completed', 'failed'];
+        const currentStatus = statusClasses.find(s => badge.classList.contains(s));
+        const newStatus = job.status.toLowerCase();
+
+        // Skip if status hasn't changed
+        if (currentStatus === newStatus) return;
+
+        // Remove old status class and add new one
+        statusClasses.forEach(s => badge.classList.remove(s));
+        badge.classList.add(newStatus);
+
+        // Update badge icon and text
+        const icon = job.status === 'COMPLETED' ? 'fa-check' :
+            job.status === 'FAILED' ? 'fa-times' :
                 job.status === 'RUNNING' ? 'fa-spinner fa-spin' : 'fa-clock';
         badge.innerHTML = `<i class="fas ${icon}"></i> ${job.status}`;
 
+        // Update accuracy column if job completed successfully
+        if (job.status === 'COMPLETED' && job.accuracy !== null) {
+            const cells = row.querySelectorAll('td');
+            // Accuracy is typically the 8th column (index 7)
+            if (cells.length >= 8) {
+                const accuracyCell = cells[7];
+                accuracyCell.innerHTML = `<span class="accuracy-value">${job.accuracy.toFixed(1)}%</span>`;
+            }
+        }
+
+        // Update accuracy column if job failed
+        if (job.status === 'FAILED') {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 8) {
+                const accuracyCell = cells[7];
+                accuracyCell.innerHTML = '<span class="text-danger">—</span>';
+            }
+        }
+
+        // Update duration column
+        if (job.completed_at) {
+            const cells = row.querySelectorAll('td');
+            // Duration is typically the 6th column (index 5)
+            if (cells.length >= 6) {
+                const durationCell = cells[5];
+                const duration = formatDuration(new Date(job.started_at), new Date(job.completed_at));
+                durationCell.innerHTML = `<span class="duration">${duration}</span>`;
+            }
+        }
+
+        // Add highlight animation
         row.classList.add('status-updated');
         setTimeout(() => row.classList.remove('status-updated'), 2000);
     });
+}
+
+/**
+ * Updates the "number training job(s) currently running" banner at the top of the training page
+ */
+function updateTrainingBanner(runningCount, pendingCount) {
+    const existingBanner = document.querySelector('.alert.info');
+    const contentArea = document.querySelector('.content');
+
+    // Calculate total active jobs
+    const totalActive = (runningCount || 0) + (pendingCount || 0);
+
+    if (totalActive > 0) {
+        // Need to show or update the banner
+        const bannerText = totalActive === 1
+            ? `<strong>1</strong> training job currently ${runningCount > 0 ? 'running' : 'pending'}`
+            : `<strong>${totalActive}</strong> training job(s) currently active`;
+
+        if (existingBanner) {
+            // Update existing banner
+            existingBanner.querySelector('span').innerHTML = bannerText;
+        } else if (contentArea) {
+            // Create new banner at the top of content area
+            const banner = document.createElement('div');
+            banner.className = 'alert info';
+            banner.innerHTML = `
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>${bannerText}</span>
+            `;
+            contentArea.insertBefore(banner, contentArea.firstChild);
+        }
+    } else {
+        // No active jobs - remove the banner if it exists
+        if (existingBanner) {
+            existingBanner.style.transition = 'opacity 0.3s';
+            existingBanner.style.opacity = '0';
+            setTimeout(() => existingBanner.remove(), 300);
+        }
+    }
+}
+
+/**
+ * Formats duration between two dates in a human-readable format.
+ */
+function formatDuration(start, end) {
+    const diffMs = end - start;
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+
+    if (diffHours > 0) {
+        const mins = diffMinutes % 60;
+        return `${diffHours}h ${mins}m`;
+    } else if (diffMinutes > 0) {
+        const secs = diffSeconds % 60;
+        return `${diffMinutes}m ${secs}s`;
+    } else {
+        return `${diffSeconds}s`;
+    }
 }
