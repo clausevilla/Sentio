@@ -1,10 +1,10 @@
 # Authors: Claudia Sevilla Eslava, Julia McCall
-# Disclaimer: LLM was used to improve unit test coverage.
+# Disclaimer: LLM was used to debug and improve unit test coverage.
 
 import os
 import tempfile
-from unittest.mock import patch
 
+import nltk
 import pandas as pd
 from django.test import TestCase
 
@@ -255,8 +255,12 @@ class DataCleaningTests(TestCase):
 
 class DataPreprocessingTests(TestCase):
     def setUp(self):
-        with patch('nltk.download'):
-            self.pipeline = DataPreprocessingPipeline()
+        nltk.download('stopwords', quiet=True)
+        nltk.download('punkt', quiet=True)
+        nltk.download('wordnet', quiet=True)
+        nltk.download('omw-1.4', quiet=True)
+
+        self.pipeline = DataPreprocessingPipeline()
 
     def create_csv_file(self, rows):
         csv_file = 'text\n'
