@@ -185,6 +185,9 @@ class DataPreprocessingPipeline:
 
     # Preprocessing branch for traditional ML (logistic regression)
     def _preprocess_traditional(self, text):
+        if pd.isna(text) or text == '':
+            return ''
+
         text = self._expand_contractions(str(text).lower())
         text = re.sub(r'[^a-z\s]', ' ', text)
         tokens = word_tokenize(text)
@@ -194,6 +197,9 @@ class DataPreprocessingPipeline:
 
     # Preprocessing branch for RNN (LSTM)
     def _preprocess_rnn(self, text):
+        if pd.isna(text) or text == '':
+            return ''
+
         # No stopword removal and no lemmatization
         text = self._expand_contractions(str(text).lower())
         text = re.sub(r'([?.!,])', r' \1 ', text)
@@ -203,6 +209,9 @@ class DataPreprocessingPipeline:
 
     # Preprocessing branch for transformer
     def _preprocess_transformer(self, text):
+        if pd.isna(text) or text == '':
+            return ''
+
         # Very minimal preprocessing to preserve context
         text = str(text)
         text = re.sub(r'\s+', ' ', text).strip()
@@ -269,7 +278,7 @@ class DataPreprocessingPipeline:
         # 10. Join tokens back into string
         return ' '.join(lemmatized)
 
-    def get_wordnet_pos(treebank_tag):
+    def get_wordnet_pos(self, treebank_tag):
         """
         Helper function for getting the grammatical type of the token.
         """
