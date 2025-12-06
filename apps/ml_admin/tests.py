@@ -259,6 +259,7 @@ class DataPreprocessingTests(TestCase):
         nltk.download('punkt', quiet=True)
         nltk.download('wordnet', quiet=True)
         nltk.download('omw-1.4', quiet=True)
+        nltk.download('averaged_perceptron_tagger', quiet=True)
 
         self.pipeline = DataPreprocessingPipeline()
 
