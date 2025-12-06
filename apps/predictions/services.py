@@ -148,15 +148,19 @@ def clean_user_input(text):
     return df
 
 
-def preprocess_user_input(df, version_name):
+def preprocess_user_input(df, model_type):
     pipeline = DataPreprocessingPipeline()
     pipeline_version = ''
-    if version_name == 'lstm' or version_name == 'random_forest':
+    if model_type == 'lstm' or model_type == 'random_forest':
         pipeline_version = 'rnn'
-    elif version_name == 'transformer':
-        pipeline_version = version_name
-    else:
+    elif model_type == 'transformer':
+        pipeline_version = model_type
+    elif model_type == 'logistic_regression':
         pipeline_version = 'traditional'
+    else:
+        raise ValueError(
+            'Invalid model type. must be logistic_regression, lstm, transformer or random_forest '
+        )
 
     processed_tuple = pipeline.preprocess_dataframe(df, pipeline_version)
     return processed_tuple[0]['text_preprocessed']
