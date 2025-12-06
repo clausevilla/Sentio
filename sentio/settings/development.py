@@ -1,3 +1,5 @@
+# Author: Marcus Berggren, Julia McCall
+
 from .base import *
 
 # SECURITY WARNING: keep the secret key used in production secret!
