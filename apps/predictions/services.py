@@ -150,8 +150,8 @@ def clean_user_input(text):
 
 def preprocess_user_input(df, version_name):
     pipeline = DataPreprocessingPipeline()
-    df = pipeline.preprocess_dataframe(df, version_name)
-    return df['processed_text']
+    process_tuple = pipeline.preprocess_dataframe(df, version_name)
+    return process_tuple[0]['text_preprocessed']
 
 
 def get_prediction_result(user, user_text):
