@@ -662,6 +662,17 @@ function updateTrainingTable(data) {
             }
         }
 
+        // Remove cancel button if job is no longer running/pending
+        if (job.status !== 'RUNNING' && job.status !== 'PENDING') {
+            const actionsCell = row.querySelector('.actions-cell');
+            if (actionsCell) {
+                const cancelBtn = actionsCell.querySelector('.btn-icon.danger');
+                if (cancelBtn) {
+                    cancelBtn.remove();
+                }
+            }
+        }
+
         // Update duration column
         if (job.completed_at) {
             const cells = row.querySelectorAll('td');
@@ -680,10 +691,15 @@ function updateTrainingTable(data) {
 }
 
 /**
- * Updates the "number training job(s) currently running" banner at the top of the training page
+ * Updates the "X training job(s) currently running" banner at the top of the training page.
+ * Only shows the banner on the training page (where #trainingJobsTable exists).
  */
 function updateTrainingBanner(runningCount, pendingCount) {
-    const existingBanner = document.querySelector('.alert.info');
+    // Only show banner on the training page
+    const trainingTable = document.querySelector('#trainingJobsTable');
+    if (!trainingTable) return;
+
+    const existingBanner = document.querySelector('.alert.info.training-banner');
     const contentArea = document.querySelector('.content');
 
     // Calculate total active jobs
@@ -701,7 +717,7 @@ function updateTrainingBanner(runningCount, pendingCount) {
         } else if (contentArea) {
             // Create new banner at the top of content area
             const banner = document.createElement('div');
-            banner.className = 'alert info';
+            banner.className = 'alert info training-banner';
             banner.innerHTML = `
                 <i class="fas fa-spinner fa-spin"></i>
                 <span>${bannerText}</span>

@@ -55,6 +55,11 @@ urlpatterns = [
     ),
     path('api/training/start/', views.start_training_api, name='start_training'),
     path(
+        'api/training/<int:job_id>/cancel/',
+        views.cancel_training_api,
+        name='cancel_training',
+    ),
+    path(
         'api/models/<int:model_id>/activate/',
         views.activate_model_api,
         name='activate_model',

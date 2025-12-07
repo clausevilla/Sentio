@@ -693,12 +693,17 @@ def training_view(request):
             'version_name': model.version_name,
             'accuracy': float(model.accuracy) if model.accuracy else None,
             'f1_score': float(model.f1_score) if model.f1_score else None,
-            'created_at': model.created_at.strftime('%Y-%m-%d'),
+            'created_at': model.created_at.strftime('%Y-%m-%d')
+            if model.created_at
+            else None,
             'is_active': model.is_active,
             'algorithm': model.model_type or 'unknown',
             'saved_params': saved_params,  # Include saved training params
         }
         retrainable_models.append(model_info)
+
+    running_count = TrainingJob.objects.filter(status='RUNNING').count()
+    pending_count = TrainingJob.objects.filter(status='PENDING').count()
 
     return render(
         request,
@@ -708,7 +713,8 @@ def training_view(request):
             'uploads': uploads_with_counts,
             'algorithms': ML_ALGORITHMS,
             'active_model': active_model,
-            'running_count': TrainingJob.objects.filter(status='RUNNING').count(),
+            'running_count': running_count,
+            'pending_count': pending_count,
             'test_set_info': test_set_info,
             'test_set_json': json.dumps(test_set_info['distribution']),
             'training_totals': training_totals,
@@ -854,6 +860,40 @@ def start_training_api(request):
 
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@staff_member_required
+@require_http_methods(['POST'])
+def cancel_training_api(request, job_id):
+    """
+    Cancel a running or pending training job by deleting it.
+    """
+    try:
+        job = get_object_or_404(TrainingJob, id=job_id)
+
+        # Only allow cancelling PENDING or RUNNING jobs
+        if job.status not in ['PENDING', 'RUNNING']:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': f'Cannot cancel job with status {job.status}',
+                },
+                status=400,
+            )
+
+        # Delete the job
+        job.delete()
+
+        return JsonResponse(
+            {
+                'success': True,
+                'message': f'Training job #{job_id} has been cancelled and removed',
+                'job_id': job_id,
+            }
+        )
+
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 

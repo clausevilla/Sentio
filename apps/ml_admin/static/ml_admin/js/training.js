@@ -378,6 +378,112 @@ async function startTraining(mode) {
 }
 
 // ================================
+// Cancel Training Job
+// ================================
+
+/**
+ * Cancels a running or pending training job.
+ * Shows a confirmation dialog before cancelling and removing.
+ */
+async function cancelJob(jobId) {
+    const confirmed = await showConfirm({
+        title: 'Cancel Training Job',
+        message: `Are you sure you want to cancel and remove training job <strong>#${jobId}</strong>? This action cannot be undone.`,
+        type: 'warning',
+        confirmText: 'Cancel Job',
+        cancelText: 'Keep Running',
+        danger: true
+    });
+
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`/management/api/training/${jobId}/cancel/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRF()
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            toast('Training job cancelled', 'success');
+            // Remove the row from the table
+            removeJobRow(jobId);
+        } else {
+            toast(data.error || 'Failed to cancel job', 'error');
+        }
+    } catch (error) {
+        console.error('Cancel error:', error);
+        toast('Failed to cancel job', 'error');
+    }
+}
+
+/**
+ * Removes a job row from the table with animation.
+ * Also updates the banner count.
+ */
+function removeJobRow(jobId) {
+    const row = document.querySelector(`tr[data-job-id="${jobId}"]`);
+    if (!row) return;
+
+    // Animate out
+    row.style.transition = 'opacity 0.3s, transform 0.3s';
+    row.style.opacity = '0';
+    row.style.transform = 'translateX(-20px)';
+
+    setTimeout(() => {
+        row.remove();
+
+        // Check if table is now empty
+        const tbody = document.querySelector('#trainingJobsTable tbody');
+        if (tbody && tbody.children.length === 0) {
+            // Replace table with empty state
+            const tableWrap = document.querySelector('#trainingJobsTable');
+            if (tableWrap) {
+                tableWrap.outerHTML = '<div class="empty-state small"><p>No training jobs yet</p></div>';
+            }
+        }
+
+        // Update the banner
+        updateTrainingBannerAfterCancel();
+    }, 300);
+}
+
+/**
+ * Updates the training banner after a job is cancelled.
+ */
+function updateTrainingBannerAfterCancel() {
+    const banner = document.querySelector('.alert.info.training-banner');
+    if (!banner) return;
+
+    const spanEl = banner.querySelector('span');
+    if (!spanEl) return;
+
+    // Parse current count
+    const match = spanEl.innerHTML.match(/<strong>(\d+)<\/strong>/);
+    if (match) {
+        const currentCount = parseInt(match[1]);
+        const newCount = currentCount - 1;
+
+        if (newCount <= 0) {
+            // Remove the banner
+            banner.style.transition = 'opacity 0.3s';
+            banner.style.opacity = '0';
+            setTimeout(() => banner.remove(), 300);
+        } else {
+            // Update the count
+            const text = newCount === 1
+                ? '<strong>1</strong> training job currently running'
+                : `<strong>${newCount}</strong> training job(s) currently active`;
+            spanEl.innerHTML = text;
+        }
+    }
+}
+
+// ================================
 // Job Details Modal
 // ================================
 

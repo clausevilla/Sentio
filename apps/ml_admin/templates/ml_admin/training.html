@@ -8,10 +8,18 @@
 {% block page_css %}<link rel="stylesheet" href="{% static 'ml_admin/css/training.css' %}">{% endblock %}
 
 {% block content %}
-{% if running_count > 0 %}
-<div class="alert info">
+{% if running_count > 0 or pending_count > 0 %}
+<div class="alert info training-banner">
     <i class="fas fa-spinner fa-spin"></i>
-    <span><strong>{{ running_count }}</strong> training job(s) currently running</span>
+    <span>
+        {% if running_count > 0 and pending_count > 0 %}
+            <strong>{{ running_count }}</strong> running, <strong>{{ pending_count }}</strong> pending
+        {% elif running_count > 0 %}
+            <strong>{{ running_count }}</strong> training job{{ running_count|pluralize }} currently running
+        {% else %}
+            <strong>{{ pending_count }}</strong> training job{{ pending_count|pluralize }} pending
+        {% endif %}
+    </span>
 </div>
 {% endif %}
 
@@ -317,10 +325,15 @@
                         <span class="text-danger">—</span>
                         {% else %}—{% endif %}
                     </td>
-                    <td>
+                    <td class="actions-cell">
                         <button class="btn-icon" onclick="showJobDetails({{ job.id }})" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
+                        {% if job.status == 'RUNNING' or job.status == 'PENDING' %}
+                        <button class="btn-icon danger" onclick="cancelJob({{ job.id }})" title="Cancel Job">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

@@ -1239,3 +1239,22 @@ select.param-input {
     color: var(--gray-800);
     font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
 }
+
+/* ================================
+   Cancel Button (Danger Icon Button)
+================================ */
+
+.btn-icon.danger {
+    color: var(--danger);
+}
+
+.btn-icon.danger:hover {
+    background: var(--danger);
+    color: white;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: flex-end;
+}
