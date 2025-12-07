@@ -1241,6 +1241,8 @@ def get_jobs_status_api(request):
                     'progress_log': job.progress_log
                     if hasattr(job, 'progress_log')
                     else None,
+                    'current_epoch': job.current_epoch,
+                    'total_epochs': job.total_epochs,
                 }
                 for job in jobs
             ],

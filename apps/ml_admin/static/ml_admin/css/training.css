@@ -1018,6 +1018,38 @@ select.param-input {
     color: #7F8C8D;
 }
 
+.epoch-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.epoch-bar {
+    width: 60px;
+    height: 6px;
+    background: var(--gray-200);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.epoch-fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.3s ease;
+}
+
+.epoch-text {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+.duration.small {
+    font-size: 0.7rem;
+    display: block;
+    margin-top: 2px;
+}
+
 /* ================================
    Job Details Modal
 ================================ */

@@ -414,11 +414,12 @@ def _create_progress_callback(job_id: int):
         if job.status == 'CANCELLED':
             raise InterruptedError('Job was cancelled')
 
+        # Add info to progress_log, current_epoch and total_epochs
         log_line = f'Epoch {epoch}/{total_epochs} - Loss: {loss:.4f}, Val Acc: {val_accuracy:.4f}'
-        job.progress_log = (
-            (job.progress_log + '\n' + log_line) if job.progress_log else log_line
-        )
-        job.save(update_fields=['progress_log'])
+        job.progress_log = ((job.progress_log + '\n' + log_line) if job.progress_log else log_line)
+        job.current_epoch = epoch
+        job.total_epochs = total_epochs
+        job.save(update_fields=['progress_log', 'current_epoch', 'total_epochs'])
 
     return callback
 
@@ -458,6 +459,11 @@ def _run_training(
             raise ValueError('No training data found')
         if not X_test:
             raise ValueError('No test data found. Split your dataset first.')
+
+        job.progress_log = f'Initializing {model_name} training...'
+        job.current_epoch = 0
+        job.total_epochs = config.get('epochs', 10)
+        job.save(update_fields=['progress_log', 'current_epoch', 'total_epochs'])
 
         result = trainer.train(
             model_name=model_name,

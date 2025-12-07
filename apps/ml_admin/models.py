@@ -156,6 +156,8 @@ class TrainingJob(models.Model):
     progress_log = models.TextField(null=True, blank=True)
     initiated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     data_uploads = models.ManyToManyField(DataUpload, related_name='training_jobs')
+    current_epoch = models.IntegerField(null=True, blank=True)
+    total_epochs = models.IntegerField(null=True, blank=True)
 
 
 class Parameter(models.Model):
