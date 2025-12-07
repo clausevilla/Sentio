@@ -463,7 +463,7 @@ def _run_training(
         )
 
         # Save training parameters
-        _save_training_parameters(model_version, model_name, config)
+        _save_training_parameters(model_version, config)
 
         job.status = 'COMPLETED'
         job.completed_at = timezone.now()
