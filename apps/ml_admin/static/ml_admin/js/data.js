@@ -15,7 +15,7 @@ let distModalChart = null;
 const DATASET_TYPE_LABELS = {
     'train': 'Training',
     'test': 'Test',
-    'unlabeled': 'Unlabeled'
+    'increment': 'Increment'
 };
 
 // TODO : Display names for pipeline types, to be matched with model later
@@ -30,6 +30,12 @@ document.addEventListener('DOMContentLoaded', function () {
     initLabelDistChart();
     resumePendingUploads();
 });
+
+// CSRF Token
+function getCSRF() {
+    const cookie = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='));
+    return cookie ? cookie.split('=')[1] : null;
+}
 
 // ================================
 // Pipeline Selection
@@ -309,17 +315,244 @@ function startStatusPolling(taskId, uploadId) {
             if (data.success) {
                 if (data.status === 'processing') {
                     updateTaskStage(taskId, 'cleaning', 'Processing data...', 40);
+                    // Also update the dataset row status if it exists
+                    updateDatasetRowStatus(uploadId, 'processing');
                 } else if (data.status === 'completed') {
                     updateTaskStatus(taskId, 'success', 'Completed', `${formatNumber(data.row_count)} records`);
-                    setTimeout(() => location.reload(), 2000);
+                    // Update dataset row in-place (no reload needed!)
+                    updateDatasetRowComplete(uploadId, data);
                 } else if (data.status === 'failed') {
                     updateTaskStatus(taskId, 'error', 'Processing failed');
+                    // Update dataset row to show failed status
+                    updateDatasetRowStatus(uploadId, 'failed');
                 }
             }
         } catch (error) {
             console.error('Status polling error:', error);
         }
     }, 2000);
+}
+
+// ================================
+// Dynamic Dataset Row Management
+// ================================
+
+/**
+ * Creates a new dataset row in the list immediately after upload.
+ * This allows the user to see the new dataset without page reload.
+ */
+function addDatasetRow(upload) {
+    const datasetList = document.querySelector('.dataset-list');
+
+    // If there's an empty state message, remove it and create the list container
+    const emptyState = document.querySelector('.card-body.no-pad .empty-state');
+    if (emptyState) {
+        const cardBody = emptyState.parentElement;
+        emptyState.remove();
+        const newList = document.createElement('div');
+        newList.className = 'dataset-list';
+        cardBody.appendChild(newList);
+    }
+
+    const list = document.querySelector('.dataset-list');
+    if (!list) return;
+
+    // Determine pipeline badge HTML
+    let pipelineBadgeHtml = '';
+    if (upload.pipeline_type) {
+        const pipelineIcons = {
+            'raw': '<i class="fas fa-feather"></i> Raw',
+            'partial': '<i class="fas fa-adjust"></i> Partial',
+            'full': '<i class="fas fa-broom"></i> Full'
+        };
+        pipelineBadgeHtml = `
+            <span class="pipeline-badge ${upload.pipeline_type}">
+                ${pipelineIcons[upload.pipeline_type] || pipelineIcons['full']}
+            </span>
+        `;
+    }
+
+    // Create the new row HTML
+    const rowHtml = `
+        <div class="dataset-row pending" data-upload-id="${upload.id}">
+            <!-- Main Info -->
+            <div class="dataset-main">
+                <div class="dataset-icon">
+                    <i class="fas fa-file-csv"></i>
+                </div>
+                <div class="dataset-info">
+                    <div class="dataset-name">${escapeHtml(upload.file_name)}</div>
+                    <div class="dataset-meta">
+                        <span><i class="fas fa-calendar"></i> ${upload.uploaded_at}</span>
+                        <span><i class="fas fa-user"></i> ${escapeHtml(upload.uploaded_by || '—')}</span>
+                        <span><i class="fas fa-table"></i> ${formatNumber(upload.row_count || 0)} rows</span>
+                        ${pipelineBadgeHtml}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Split Info -->
+            <div class="dataset-split">
+                <div class="split-badge training" title="Training records">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>${formatNumber(upload.training_count || 0)}</span>
+                </div>
+                <div class="split-badge test" title="Test records">
+                    <i class="fas fa-flask"></i>
+                    <span>${formatNumber(upload.test_count || 0)}</span>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="dataset-status">
+                <span class="badge pending"><i class="fas fa-clock"></i> Pending</span>
+            </div>
+
+            <!-- Actions -->
+            <div class="dataset-actions">
+                <button class="btn btn-sm btn-secondary" onclick="viewRecords(${upload.id}, '${escapeHtml(upload.file_name)}')" title="View Records">
+                    <i class="fas fa-eye"></i> View
+                </button>
+                <button class="btn btn-sm btn-secondary" onclick="viewDistribution(${upload.id}, '${escapeHtml(upload.file_name)}')" title="View Distribution">
+                    <i class="fas fa-chart-pie"></i> Distribution
+                </button>
+                <button class="btn btn-sm btn-secondary" onclick="manageSplit(${upload.id}, '${escapeHtml(upload.file_name)}')" title="Manage Split">
+                    <i class="fas fa-random"></i> Split
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteDataset(${upload.id}, '${escapeHtml(upload.file_name)}')" title="Delete">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Insert at the top of the list
+    list.insertAdjacentHTML('afterbegin', rowHtml);
+
+    // Add highlight animation
+    const newRow = list.querySelector(`[data-upload-id="${upload.id}"]`);
+    if (newRow) {
+        newRow.classList.add('status-updated');
+        setTimeout(() => newRow.classList.remove('status-updated'), 2000);
+    }
+
+    // Update the total count in header
+    updateDatasetCount(1);
+}
+
+/**
+ * Updates the status badge of an existing dataset row.
+ */
+function updateDatasetRowStatus(uploadId, status) {
+    const row = document.querySelector(`.dataset-row[data-upload-id="${uploadId}"]`);
+    if (!row) return;
+
+    const statusDiv = row.querySelector('.dataset-status');
+    if (!statusDiv) return;
+
+    const badge = statusDiv.querySelector('.badge');
+    if (!badge) return;
+
+    // Update based on status
+    if (status === 'processing') {
+        badge.className = 'badge running';
+        badge.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing';
+    } else if (status === 'failed') {
+        badge.className = 'badge failed';
+        badge.innerHTML = '<i class="fas fa-times"></i> Failed';
+    } else if (status === 'pending') {
+        badge.className = 'badge pending';
+        badge.innerHTML = '<i class="fas fa-clock"></i> Pending';
+    }
+}
+
+/**
+ * Updates a dataset row when processing completes successfully.
+ * Updates status, row count, and removes pending styling.
+ */
+function updateDatasetRowComplete(uploadId, data) {
+    const row = document.querySelector(`.dataset-row[data-upload-id="${uploadId}"]`);
+    if (!row) return;
+
+    // Update status badge to validated/success
+    const statusDiv = row.querySelector('.dataset-status');
+    if (statusDiv) {
+        const badge = statusDiv.querySelector('.badge');
+        if (badge) {
+            badge.className = 'badge success';
+            badge.innerHTML = '<i class="fas fa-check"></i> Validated';
+        }
+    }
+
+    // Update row count in metadata
+    if (data.row_count) {
+        const metaSpans = row.querySelectorAll('.dataset-meta span');
+        metaSpans.forEach(span => {
+            if (span.innerHTML.includes('fa-table')) {
+                span.innerHTML = `<i class="fas fa-table"></i> ${formatNumber(data.row_count)} rows`;
+            }
+        });
+    }
+
+    // Remove pending class
+    row.classList.remove('pending');
+
+    // Add highlight animation
+    row.classList.add('status-updated');
+    setTimeout(() => row.classList.remove('status-updated'), 2000);
+
+    // Fetch updated split counts and update them
+    fetchAndUpdateSplitCounts(uploadId);
+}
+
+/**
+ * Fetches the train/test split counts for an upload and updates the row.
+ */
+async function fetchAndUpdateSplitCounts(uploadId) {
+    try {
+        const response = await fetch(`/management/api/data/${uploadId}/split/`);
+        const data = await response.json();
+
+        if (data.success && data.breakdown) {
+            const row = document.querySelector(`.dataset-row[data-upload-id="${uploadId}"]`);
+            if (!row) return;
+
+            // Update training count
+            const trainBadge = row.querySelector('.split-badge.training span');
+            if (trainBadge) {
+                trainBadge.textContent = formatNumber(data.breakdown.training || 0);
+            }
+
+            // Update test count
+            const testBadge = row.querySelector('.split-badge.test span');
+            if (testBadge) {
+                testBadge.textContent = formatNumber(data.breakdown.test || 0);
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching split counts:', error);
+    }
+}
+
+/**
+ * Updates the total dataset count in the header.
+ */
+function updateDatasetCount(delta) {
+    const countEl = document.querySelector('.card-header .header-count');
+    if (countEl) {
+        const match = countEl.textContent.match(/(\d+)/);
+        if (match) {
+            const newCount = parseInt(match[1]) + delta;
+            countEl.textContent = `${newCount} total`;
+        }
+    }
+
+    // Also update the stat card
+    const statValue = document.querySelector('.stat-card .stat-value');
+    if (statValue) {
+        const currentCount = parseInt(statValue.textContent) || 0;
+        statValue.textContent = currentCount + delta;
+    }
 }
 
 function resumePendingUploads() {
@@ -397,6 +630,12 @@ async function uploadFile() {
         if (data.success) {
             activeTasks[taskId].uploadId = data.upload_id;
             updateTaskStage(taskId, 'cleaning', 'Processing...', 30);
+
+            // Immediately add the new row to the dataset list (no reload needed!)
+            if (data.upload) {
+                addDatasetRow(data.upload);
+            }
+
             startStatusPolling(taskId, data.upload_id);
         } else {
             updateTaskStatus(taskId, 'error', data.error || 'Upload failed');
@@ -409,19 +648,65 @@ async function uploadFile() {
 }
 
 // Delete Dataset
-function deleteDataset(id, name) {
-    confirmAction(`Delete "${name}" and all its records?`, async function () {
-        const { ok, data } = await apiCall(`/management/api/data/${id}/delete/`, {
-            method: 'POST'
-        });
-
-        if (ok && data.success) {
-            toast('Deleted successfully');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            toast(data.error || 'Delete failed', 'error');
-        }
+// Delete Dataset
+async function deleteDataset(id, name) {
+    const confirmed = await showConfirm({
+        title: 'Delete Dataset',
+        message: `Are you sure you want to delete "<strong>${escapeHtml(name)}</strong>" and all its records? This action cannot be undone.`,
+        type: 'danger',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        danger: true
     });
+
+    if (!confirmed) return;
+
+    const { ok, data } = await apiCall(`/management/api/data/${id}/delete/`, {
+        method: 'POST'
+    });
+
+    if (ok && data.success) {
+        toast('Deleted successfully');
+        removeDatasetRow(id);
+    } else {
+        toast(data.error || 'Delete failed', 'error');
+    }
+}
+
+/**
+ * Removes a dataset row from the list with a fade-out animation.
+ * Also updates the count and shows empty state if needed.
+ */
+function removeDatasetRow(uploadId) {
+    const row = document.querySelector(`.dataset-row[data-upload-id="${uploadId}"]`);
+    if (!row) return;
+
+    // Animate out
+    row.style.transition = 'opacity 0.3s, transform 0.3s';
+    row.style.opacity = '0';
+    row.style.transform = 'translateX(-20px)';
+
+    setTimeout(() => {
+        row.remove();
+
+        // Update the count
+        updateDatasetCount(-1);
+
+        // Check if list is now empty
+        const list = document.querySelector('.dataset-list');
+        if (list && list.children.length === 0) {
+            // Replace with empty state
+            const cardBody = list.parentElement;
+            list.remove();
+            cardBody.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h4>No Datasets Yet</h4>
+                    <p>Upload your first CSV using the panel above</p>
+                </div>
+            `;
+        }
+    }, 300);
 }
 
 // View Records Modal
@@ -438,7 +723,7 @@ let currentRecordsData = [];
 let currentViewIndex = 0;
 
 // Available labels for filter
-const LABELS = ['Normal', 'Depression','Stress', 'Suicidal'];
+const LABELS = ['Normal', 'Depression', 'Stress', 'Suicidal'];
 
 // View Records Modal
 function viewRecords(id, name) {
@@ -884,9 +1169,9 @@ async function loadSplitInfo(id, name) {
                     <span class="split-count">${formatNumber(b.test)}</span>
                     <span class="split-label">Test</span>
                 </div>
-                <div class="split-stat unlabeled">
-                    <span class="split-count">${formatNumber(b.unlabeled)}</span>
-                    <span class="split-label">Unlabeled</span>
+                <div class="split-stat increment">
+                    <span class="split-count">${formatNumber(b.increment)}</span>
+                    <span class="split-label">Increment</span>
                 </div>
             </div>
 
@@ -915,10 +1200,10 @@ async function loadSplitInfo(id, name) {
                 <div class="split-quick-actions">
                     <label>Quick Actions:</label>
                     <button class="btn btn-secondary btn-block" onclick="applySplit('all_training')">
-                        <i class="fas fa-graduation-cap"></i> All → Training
+                        <i class="fas fa-graduation-cap"></i> All â†’ Training
                     </button>
                     <button class="btn btn-secondary btn-block" onclick="applySplit('all_test')">
-                        <i class="fas fa-flask"></i> All → Test
+                        <i class="fas fa-flask"></i> All â†’ Test
                     </button>
                 </div>
             </div>

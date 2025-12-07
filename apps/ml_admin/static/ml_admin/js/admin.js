@@ -1,4 +1,5 @@
 /* Author: Lian Shi*/
+
 /* Disclaimer: LLM has used to help with implement chart display functions */
 
 /**
@@ -90,17 +91,17 @@ async function apiCall(url, options = {}) {
         },
     };
 
-    const config = { ...defaults, ...options };
+    const config = {...defaults, ...options};
     if (options.headers) {
-        config.headers = { ...defaults.headers, ...options.headers };
+        config.headers = {...defaults.headers, ...options.headers};
     }
 
     try {
         const response = await fetch(url, config);
         const data = await response.json();
-        return { ok: response.ok, data };
+        return {ok: response.ok, data};
     } catch (error) {
-        return { ok: false, data: { error: error.message } };
+        return {ok: false, data: {error: error.message}};
     }
 }
 
@@ -155,20 +156,20 @@ const CHART_DEFAULTS = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: { display: false }
+            legend: {display: false}
         },
         scales: {
-            y: { beginAtZero: true }
+            y: {beginAtZero: true}
         }
     },
     bar: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: { display: false }
+            legend: {display: false}
         },
         scales: {
-            y: { beginAtZero: true }
+            y: {beginAtZero: true}
         }
     }
 };
@@ -193,7 +194,7 @@ function createDoughnutChart(canvasId, labels, data, options = {}) {
                 borderWidth: 0,
             }]
         },
-        options: { ...CHART_DEFAULTS.doughnut, ...options }
+        options: {...CHART_DEFAULTS.doughnut, ...options}
     });
 }
 
@@ -220,7 +221,7 @@ function createLineChart(canvasId, labels, data, options = {}) {
                 tension: 0.3,
             }]
         },
-        options: { ...CHART_DEFAULTS.line, ...options }
+        options: {...CHART_DEFAULTS.line, ...options}
     });
 }
 
@@ -244,7 +245,7 @@ function createBarChart(canvasId, labels, data, options = {}) {
                 backgroundColor: CHART_COLORS[0],
             }]
         },
-        options: { ...CHART_DEFAULTS.bar, ...options }
+        options: {...CHART_DEFAULTS.bar, ...options}
     });
 }
 
@@ -253,7 +254,14 @@ function createBarChart(canvasId, labels, data, options = {}) {
 // Custom Confirm Modal
 // ================================
 
-function showConfirm({ title, message, type = 'warning', confirmText = 'Confirm', cancelText = 'Cancel', danger = false }) {
+function showConfirm({
+                         title,
+                         message,
+                         type = 'warning',
+                         confirmText = 'Confirm',
+                         cancelText = 'Cancel',
+                         danger = false
+                     }) {
     return new Promise((resolve) => {
         // Remove existing
         const existing = document.getElementById('customConfirmModal');
@@ -294,7 +302,9 @@ function showConfirm({ title, message, type = 'warning', confirmText = 'Confirm'
 
         modal.querySelector('.btn-cancel').onclick = () => closeIt(false);
         modal.querySelector('.btn-confirm').onclick = () => closeIt(true);
-        modal.onclick = (e) => { if (e.target === modal) closeIt(false); };
+        modal.onclick = (e) => {
+            if (e.target === modal) closeIt(false);
+        };
     });
 }
 
@@ -304,11 +314,11 @@ function showConfirm({ title, message, type = 'warning', confirmText = 'Confirm'
 // ================================
 
 const NOTIFICATION_KEY = 'ml_admin_notifications';
-const NOTIFICATION_POLL_INTERVAL = 3000; // 3 seconds
+const NOTIFICATION_POLL_INTERVAL = 10000; // Every 10s
 
 let notifications = [];
 let notificationPollTimer = null;
-let lastKnownStates = { jobs: {}, uploads: {} };
+let lastKnownStates = {jobs: {}, uploads: {}};
 
 // Initialize notifications on page load
 document.addEventListener('DOMContentLoaded', function () {
@@ -350,7 +360,8 @@ function loadNotifications() {
 function saveNotifications() {
     try {
         localStorage.setItem(NOTIFICATION_KEY, JSON.stringify(notifications));
-    } catch (e) { }
+    } catch (e) {
+    }
 }
 
 function initLastKnownStates() {
@@ -361,7 +372,8 @@ function initLastKnownStates() {
                 lastKnownStates.jobs[job.id] = job.status;
             });
         }
-    } catch (e) { }
+    } catch (e) {
+    }
 }
 
 // Add notification
@@ -477,7 +489,6 @@ function formatNotificationTime(timestamp) {
 
 // Polling
 function startNotificationPolling() {
-    setTimeout(checkNotificationUpdates, 2000);
     notificationPollTimer = setInterval(checkNotificationUpdates, NOTIFICATION_POLL_INTERVAL);
 }
 
@@ -509,6 +520,7 @@ async function checkNotificationUpdates() {
                     }
                     lastKnownStates.jobs[job.id] = job.status;
                 });
+                // Pass full data including running/pending counts
                 updateTrainingTable(jobsData.jobs);
             }
         }
@@ -606,25 +618,190 @@ function updateDatasetRows(uploads) {
     });
 }
 
-// Auto-update training page table
+// Auto-update training page table and banner
 function updateTrainingTable(jobs) {
-    const tbody = document.querySelector('.jobs-table tbody');
+    // Update stored jobsData for modal
+    const jobsDataScript = document.getElementById('jobsData');
+    if (jobsDataScript) {
+        try {
+            let storedJobs = JSON.parse(jobsDataScript.textContent);
+            jobs.forEach(apiJob => {
+                const stored = storedJobs.find(j => j.id === apiJob.id);
+                if (stored) {
+                    stored.status = apiJob.status;
+                    stored.progress_log = apiJob.progress_log || stored.progress_log;
+                    stored.completed_at = apiJob.completed_at;
+                }
+            });
+            jobsDataScript.textContent = JSON.stringify(storedJobs);
+        } catch (e) {
+        }
+    }
+
+    // Update job rows in the training jobs table
+    const tbody = document.querySelector('#trainingJobsTable tbody');
     if (!tbody) return;
 
     jobs.forEach(job => {
         const row = tbody.querySelector(`tr[data-job-id="${job.id}"]`);
         if (!row) return;
 
-        const badge = row.querySelector('.badge');
-        if (!badge || badge.textContent.trim() === job.status) return;
+        // Update duration for running jobs (always, regardless of status change)
+        if (job.status === 'RUNNING') {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 5) {
+                const durationCell = cells[4];
+                const elapsed = formatDuration(job.started_at, new Date().toISOString());
+                durationCell.innerHTML = `<span class="duration running"><i class="fas fa-clock"></i> ${elapsed}</span>`;
+            }
 
-        badge.className = `badge ${job.status.toLowerCase()}`;
-        const icon = job.status === 'COMPLETED' ? 'fa-check-circle' :
-            job.status === 'FAILED' ? 'fa-times-circle' :
-                job.status === 'RUNNING' ? 'fa-spinner fa-spin' : 'fa-clock';
+            // Update progress bar for any job with epoch data (cells[5])
+            if (cells.length >= 6 && job.total_epochs) {
+                const progressCell = cells[5];
+                const current = job.current_epoch || 0;
+                const pct = Math.round((current / job.total_epochs) * 100);
+                progressCell.innerHTML = `
+                    <div class="epoch-progress">
+                        <div class="epoch-bar">
+                            <div class="epoch-fill" style="width: ${pct}%"></div>
+                        </div>
+                        <span class="epoch-text">${current}/${job.total_epochs}</span>
+                    </div>
+                `;
+            }
+        }
+
+        const badge = row.querySelector('.badge');
+        if (!badge) return;
+
+        // Get current status from badge CSS class (more reliable than textContent)
+        const statusClasses = ['pending', 'running', 'completed', 'failed', 'cancelled'];
+        const currentStatus = statusClasses.find(s => badge.classList.contains(s));
+        const newStatus = job.status.toLowerCase();
+
+        // Skip if status hasn't changed
+        if (currentStatus === newStatus) return;
+
+        // Remove old status class and add new one
+        statusClasses.forEach(s => badge.classList.remove(s));
+        badge.classList.add(newStatus);
+
+        // Update badge icon and text
+        let icon = 'fa-clock';
+        if (job.status === 'COMPLETED') icon = 'fa-check';
+        else if (job.status === 'FAILED') icon = 'fa-times';
+        else if (job.status === 'CANCELLED') icon = 'fa-ban';
+        else if (job.status === 'RUNNING') icon = 'fa-spinner fa-spin';
+
         badge.innerHTML = `<i class="fas ${icon}"></i> ${job.status}`;
 
+        // Update f1 cscore column if job completed successfully
+        if (job.status === 'COMPLETED' && job.f1_score !== null) {
+            const cells = row.querySelectorAll('td');
+            // Accuracy is typically the 8th column (index 7)
+            if (cells.length >= 8) {
+                const accuracyCell = cells[7];
+                accuracyCell.innerHTML = `<span class="accuracy-value">${(job.f1_score * 100).toFixed(2)}%</span>`;
+            }
+        }
+
+        // Update accuracy column if job failed
+        if (job.status === 'FAILED' || job.status === 'CANCELLED') {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 8) {
+                const accuracyCell = cells[7];
+                accuracyCell.innerHTML = '<span class="text-danger">—</span>';
+            }
+        }
+
+        // Remove cancel button if job is no longer running/pending
+        if (job.status !== 'RUNNING' && job.status !== 'PENDING') {
+            const actionsCell = row.querySelector('.actions-cell');
+            if (actionsCell) {
+                const cancelBtn = actionsCell.querySelector('.btn-icon.danger');
+                if (cancelBtn) {
+                    cancelBtn.remove();
+                }
+            }
+        }
+
+        // Update duration column
+        if (job.completed_at) {
+            const cells = row.querySelectorAll('td');
+            // Duration is typically the 5th column (index 5)
+            if (cells.length >= 5) {
+                const durationCell = cells[4];
+                const duration = formatDuration(new Date(job.started_at), new Date(job.completed_at));
+                durationCell.innerHTML = `<span class="duration">${duration}</span>`;
+            }
+        }
+
+        // Add highlight animation
         row.classList.add('status-updated');
         setTimeout(() => row.classList.remove('status-updated'), 2000);
     });
+}
+
+/**
+ * Updates the "X training job(s) currently running" banner at the top of the training page.
+ * Only shows the banner on the training page (where #trainingJobsTable exists).
+ */
+function updateTrainingBanner(runningCount, pendingCount) {
+    // Only show banner on the training page
+    const trainingTable = document.querySelector('#trainingJobsTable');
+    if (!trainingTable) return;
+
+    const existingBanner = document.querySelector('.alert.info.training-banner');
+    const contentArea = document.querySelector('.content');
+
+    // Calculate total active jobs
+    const totalActive = (runningCount || 0) + (pendingCount || 0);
+
+    if (totalActive > 0) {
+        // Need to show or update the banner
+        const bannerText = totalActive === 1
+            ? `<strong>1</strong> training job currently ${runningCount > 0 ? 'running' : 'pending'}`
+            : `<strong>${totalActive}</strong> training job(s) currently active`;
+
+        if (existingBanner) {
+            // Update existing banner
+            existingBanner.querySelector('span').innerHTML = bannerText;
+        } else if (contentArea) {
+            // Create new banner at the top of content area
+            const banner = document.createElement('div');
+            banner.className = 'alert info training-banner';
+            banner.innerHTML = `
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>${bannerText}</span>
+            `;
+            contentArea.insertBefore(banner, contentArea.firstChild);
+        }
+    } else {
+        // No active jobs - remove the banner if it exists
+        if (existingBanner) {
+            existingBanner.style.transition = 'opacity 0.3s';
+            existingBanner.style.opacity = '0';
+            setTimeout(() => existingBanner.remove(), 300);
+        }
+    }
+}
+
+/**
+ * Formats duration between two dates in a human-readable format.
+ */
+function formatDuration(start, end) {
+    const startDate = typeof start === 'string' ? new Date(start) : start;
+    const endDate = typeof end === 'string' ? new Date(end) : end;
+    const diffMs = endDate - startDate;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+
+    if (diffHours > 0) {
+        const remainingMins = diffMins % 60;
+        if (remainingMins > 0) {
+            return `${diffHours} hour${diffHours !== 1 ? 's' : ''}, ${remainingMins} minute${remainingMins !== 1 ? 's' : ''}`;
+        }
+        return `${diffHours} hour${diffHours !== 1 ? 's' : ''}`;
+    }
+    return `${diffMins} minute${diffMins !== 1 ? 's' : ''}`;
 }

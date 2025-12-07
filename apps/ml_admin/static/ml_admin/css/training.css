@@ -443,7 +443,7 @@
     white-space: nowrap;
     z-index: 100;
     margin-bottom: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .param-hint[title]:hover::before {
@@ -535,10 +535,51 @@ select.param-input {
     animation: shake 0.3s ease;
 }
 
+/* Locked parameter styling */
+.param-item.readonly .param-input {
+    background: #e9ecef !important;
+    color: #868e96 !important;
+    cursor: not-allowed;
+    opacity: 0.75;
+    border-color: #ced4da !important;
+}
+
+.param-item.readonly .param-input:disabled {
+    background: #e9ecef !important;
+    color: #868e96 !important;
+}
+
+.param-item.readonly .param-label {
+    color: #868e96;
+}
+
+.param-item.readonly {
+    opacity: 0.7;
+}
+
+/* Disabled select specific styling */
+.param-item.readonly select.param-input:disabled {
+    background-color: #e9ecef !important;
+    color: #868e96 !important;
+
+}
+
+/* Disabled number input styling */
+.param-item.readonly input.param-input:disabled {
+    background-color: #e9ecef !important;
+    color: #868e96 !important;
+}
+
 @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-4px); }
-    75% { transform: translateX(4px); }
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-4px);
+    }
+    75% {
+        transform: translateX(4px);
+    }
 }
 
 /* Error message */
@@ -962,6 +1003,11 @@ select.param-input {
     color: #E74C3C;
 }
 
+.badge.cancelled {
+    background-color: #6c757d;
+    color: white;
+}
+
 .badge.running {
     background: rgba(243, 156, 18, 0.1);
     color: #F39C12;
@@ -970,6 +1016,38 @@ select.param-input {
 .badge.pending {
     background: rgba(149, 165, 166, 0.2);
     color: #7F8C8D;
+}
+
+.epoch-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.epoch-bar {
+    width: 60px;
+    height: 6px;
+    background: var(--gray-200);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.epoch-fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.3s ease;
+}
+
+.epoch-text {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+.duration.small {
+    font-size: 0.7rem;
+    display: block;
+    margin-top: 2px;
 }
 
 /* ================================
@@ -1028,6 +1106,18 @@ select.param-input {
     font-size: var(--font-xs);
     color: var(--gray-500);
     margin-top: 0.125rem;
+}
+
+.job-progress-log {
+    background: var(--gray-100);
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 0.5rem;
 }
 
 .job-error-box {
@@ -1170,4 +1260,58 @@ select.param-input {
     #paramsModal .modal-footer .btn {
         width: 100%;
     }
+}
+
+/* ================================
+   Job Parameters Display
+================================ */
+
+.job-params-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem;
+}
+
+.job-param-item {
+    display: flex;
+    flex-direction: column;
+    padding: 0.6rem 0.8rem;
+    background: var(--gray-50);
+    border-radius: 6px;
+    border: 1px solid var(--gray-200);
+}
+
+.job-param-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.25rem;
+}
+
+.job-param-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
+/* ================================
+   Cancel Button (Danger Icon Button)
+================================ */
+
+.btn-icon.danger {
+    color: var(--danger);
+}
+
+.btn-icon.danger:hover {
+    background: var(--danger);
+    color: white;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: flex-end;
 }

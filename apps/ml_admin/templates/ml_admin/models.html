@@ -1,4 +1,4 @@
-<!-- Author: Lian Shi-->
+<!-- Author: Lian Shi, Marcus Berggren-->
 <!-- Disclaimer: LLM has used to generate initial layout, and fine tuning was done manually to different elements -->
 
 <!--TODO : MODIFY TO REFELCT UPDATED DATABASE and methods IF NEEDED-->
@@ -6,6 +6,7 @@
 
 {% extends 'ml_admin/base_admin.html' %}
 {% load static %}
+{% load filters %}
 {% block title %}Models{% endblock %}
 {% block page_title %}Model Versions{% endblock %}
 {% block page_css %}<link rel="stylesheet" href="{% static 'ml_admin/css/models.css' %}">{% endblock %}
@@ -30,14 +31,14 @@
     <div class="stat-card">
         <div class="stat-icon purple"><i class="fas fa-bullseye"></i></div>
         <div class="stat-info">
-            <div class="stat-value">{% if active_model and active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}{% else %}—{% endif %}</div>
+            <div class="stat-value">{% if active_model and active_model.accuracy %}{{ active_model.accuracy|percentage }}{% else %}—{% endif %}</div>
             <div class="stat-label">Active Accuracy</div>
         </div>
     </div>
     <div class="stat-card">
         <div class="stat-icon coral"><i class="fas fa-chart-line"></i></div>
         <div class="stat-info">
-            <div class="stat-value">{% if active_model and active_model.f1_score %}{{ active_model.f1_score|floatformat:3 }}{% else %}—{% endif %}</div>
+            <div class="stat-value">{% if active_model and active_model.f1_score %}{{ active_model.f1_score|percentage }}{% else %}—{% endif %}</div>
             <div class="stat-label">Active F1</div>
         </div>
     </div>
@@ -48,8 +49,8 @@
 <div class="alert success" style="margin-bottom: 1.5rem;">
     <i class="fas fa-check-circle"></i>
     <span><strong>Active Model:</strong> {{ active_model.version_name }} ({{ active_model.get_model_type_display }})
-    {% if active_model.accuracy %}· Accuracy: {{ active_model.accuracy|floatformat:1 }}{% endif %}
-    {% if active_model.f1_score %}· F1: {{ active_model.f1_score|floatformat:3 }}{% endif %}</span>
+    {% if active_model.accuracy %}· Accuracy: {{ active_model.accuracy|percentage }}{% endif %}
+    {% if active_model.f1_score %}· F1: {{ active_model.f1_score|percentage }}{% endif %}</span>
 </div>
 {% else %}
 <div class="alert warning" style="margin-bottom: 1.5rem;">
@@ -142,30 +143,32 @@
                         <!-- Metrics -->
                         <td class="col-metric">
                             {% if item.model.accuracy %}
-                            <span class="metric-value-cell {% if item.model.accuracy >= 80 %}good{% elif item.model.accuracy >= 60 %}okay{% else %}low{% endif %}">
-                                {{ item.model.accuracy|floatformat:1 }}
-                            </span>
+                            <span class="metric-value-cell">{{ item.model.accuracy|percentage }}</span>
                             {% else %}
                             <span class="metric-empty">—</span>
                             {% endif %}
                         </td>
                         <td class="col-metric">
                             {% if item.model.precision %}
-                            <span class="metric-value-cell">{{ item.model.precision|floatformat:3 }}</span>
+                            <span class="metric-value-cell">{{ item.model.precision|percentage }}</span>
                             {% else %}
                             <span class="metric-empty">—</span>
                             {% endif %}
                         </td>
                         <td class="col-metric">
                             {% if item.model.recall %}
-                            <span class="metric-value-cell">{{ item.model.recall|floatformat:3 }}</span>
+                            <span class="metric-value-cell {% if item.model.recall >= 0.8 %}good{% elif item.model.recall >= 0.6 %}okay{% else %}low{% endif %}">
+                                {{ item.model.recall|percentage }}
+                            </span>
                             {% else %}
                             <span class="metric-empty">—</span>
                             {% endif %}
                         </td>
                         <td class="col-metric">
                             {% if item.model.f1_score %}
-                            <span class="metric-value-cell">{{ item.model.f1_score|floatformat:3 }}</span>
+                            <span class="metric-value-cell {% if item.model.f1_score >= 0.8 %}good{% elif item.model.f1_score >= 0.6 %}okay{% else %}low{% endif %}">
+                                {{ item.model.f1_score|percentage }}
+                            </span>
                             {% else %}
                             <span class="metric-empty">—</span>
                             {% endif %}
@@ -310,7 +313,7 @@
             plotsHtml = `
                 <div class="detail-section">
                     <h4><i class="fas fa-chart-area"></i> Performance Visualizations</h4>
-                    <div class="plots-grid">
+                    <div class="plots-grid vertical">
                         ${model.has_roc_plot ? `
                         <div class="plot-item">
                             <h5>ROC Curve</h5>

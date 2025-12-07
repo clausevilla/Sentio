@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 
 GCS_BUCKET = 'sentio-m_l-models' # Google Cloud Storage
 MODEL_DIR = './ml-models'
+USE_GCS = False
 
 INSTALLED_APPS = [
     'apps.accounts',
