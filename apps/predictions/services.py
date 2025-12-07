@@ -1,8 +1,7 @@
 # Author: Karl Byland, Claudia Sevilla
 
-import re
-
 import logging
+import re
 
 from django.conf import settings
 
@@ -193,7 +192,7 @@ def get_prediction_result(user, user_text):
     recommendations = get_recommendations(label, confidence, anxiety_level)
 
     if user:
-        save_prediction_to_database(user, user_text, label, confidence, model_version)
+        save_prediction_to_database(user, user_text, label, confidence, model_version, recommendations)
 
     confidence_percentage = round(confidence * 100)
 
