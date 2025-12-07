@@ -12,8 +12,7 @@ data:
   DEBUG: "False"
   SQL_ENGINE: "django.db.backends.postgresql"
   SQL_DATABASE: "sentio_db"
-  SQL_HOST: "postgres-service"
+  SQL_HOST: "127.0.0.1"
   SQL_PORT: "5432"
   ALLOWED_HOSTS: "*"
-
-
+  GCS_BUCKET: "sentio-m_l-models"

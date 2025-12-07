@@ -22,11 +22,22 @@ spec:
         component: web
     spec:
       serviceAccountName: sentio-sa
-      initContainers:
-        - name: wait-for-db
-          image: busybox:1.36
-          command: ['sh', '-c', 'until nc -z postgres-service 5432; do echo waiting for db; sleep 2; done;']
       containers:
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+          args:
+            - "--structured-logs"
+            - "--auto-iam-authn"
+            - "sentio1:europe-north2:sentio-db"
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
         - name: web
           image: europe-north2-docker.pkg.dev/sentio1/sentio/sentio-web:latest
           imagePullPolicy: Always
@@ -66,11 +77,6 @@ spec:
                 secretKeyRef:
                   name: sentio-secrets
                   key: DJANGO_SUPERUSER_PASSWORD
-          volumeMounts:
-            - name: static-files
-              mountPath: /app/staticfiles
-            - name: media-files
-              mountPath: /app/media
           resources:
             requests:
               memory: "512Mi"
@@ -78,13 +84,6 @@ spec:
             limits:
               memory: "2Gi"
               cpu: "1000m"
-      volumes:
-        - name: static-files
-          persistentVolumeClaim:
-            claimName: sentio-static-pvc
-        - name: media-files
-          persistentVolumeClaim:
-            claimName: sentio-media-pvc
 ---
 apiVersion: v1
 kind: Service

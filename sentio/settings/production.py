@@ -18,7 +18,7 @@ DATABASES = {
         'PORT': os.environ.get('SQL_PORT', '5432'),
     }
 }  # PostgreSQL database configuration
-GCS_BUCKET = os.environ.get('GCS_BUCKET', 'sentio-ml-models')  # Google Cloud Storage
+GCS_BUCKET = os.environ.get('GCS_BUCKET', 'sentio-m_l-models')  # Google Cloud Storage
 MODEL_DIR = '/app/media/ml-models'  # Points to internal Docker path
 LOGGING = {
     'version': 1,
