@@ -151,15 +151,18 @@ def clean_user_input(text):
 def preprocess_user_input(df, model_type):
     pipeline = DataPreprocessingPipeline()
     pipeline_version = ''
-    if model_type == 'lstm' or model_type == 'random_forest':
-        pipeline_version = 'rnn'
-    elif model_type == 'transformer':
-        pipeline_version = model_type
-    elif model_type == 'logistic_regression':
-        pipeline_version = 'traditional'
-    else:
+    model_to_pipeline = {
+        'lstm': 'rnn',
+        'random_forest': 'rnn',
+        'transformer': 'transformer',
+        'logistic_regression': 'traditional',
+    }
+
+    try:
+        pipeline_version = model_to_pipeline[model_type]
+    except KeyError:
         raise ValueError(
-            'Invalid model type. must be logistic_regression, lstm, transformer or random_forest '
+            f"Invalid model type '{model_type}'. Must be one of: {', '.join(model_to_pipeline.keys())}"
         )
 
     processed_tuple = pipeline.preprocess_dataframe(df, pipeline_version)
@@ -167,9 +170,9 @@ def preprocess_user_input(df, model_type):
 
 
 def get_prediction_result(user, user_text):
-    model_version = (
-        ModelVersion.objects.first()
-    )  # !!!Placeholder, just uses the first model in the database
+    model_version = ModelVersion.objects.filter(
+        is_active=True
+    ).first()  # Takes the active model
 
     df = clean_user_input(user_text)
     processed_text = preprocess_user_input(
