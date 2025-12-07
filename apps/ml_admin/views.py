@@ -708,12 +708,14 @@ def training_view(request):
     uploads_with_counts = []
     for upload in available_uploads:
         training_count = DatasetRecord.objects.filter(
-            data_upload=upload, dataset_type='train'
+            data_upload=upload, dataset_type__in=['train', 'increment']
         ).count()
 
         if training_count > 0:
             dist = list(
-                DatasetRecord.objects.filter(data_upload=upload, dataset_type='train')
+                DatasetRecord.objects.filter(
+                    data_upload=upload, dataset_type__in=['train', 'increment']
+                )
                 .values('label')
                 .annotate(count=Count('id'))
             )
@@ -820,7 +822,7 @@ def start_training_api(request):
 
         # Check for training data in selected uploads
         train_count = DatasetRecord.objects.filter(
-            dataset_type='train', data_upload_id__in=upload_ids
+            dataset_type__in=['train', 'increment'], data_upload_id__in=upload_ids
         ).count()
         if train_count == 0:
             return JsonResponse(
