@@ -1,0 +1,101 @@
+# Author: Lian Shi
+# This file is created under the help of LLM and tailerd to our own project need.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentio-web
+  namespace: sentio
+  labels:
+    app: sentio
+    component: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sentio
+      component: web
+  template:
+    metadata:
+      labels:
+        app: sentio
+        component: web
+    spec:
+      serviceAccountName: sentio-sa
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z postgres-service 5432; do echo waiting for db; sleep 2; done;']
+      containers:
+        - name: web
+          image: europe-north2-docker.pkg.dev/sentio1/sentio/sentio-web:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: sentio-config
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sentio-secrets
+                  key: SECRET_KEY
+            - name: SQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sentio-secrets
+                  key: SQL_USER
+            - name: SQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sentio-secrets
+                  key: SQL_PASSWORD
+            - name: DJANGO_SUPERUSER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: sentio-secrets
+                  key: DJANGO_SUPERUSER_USERNAME
+            - name: DJANGO_SUPERUSER_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: sentio-secrets
+                  key: DJANGO_SUPERUSER_EMAIL
+            - name: DJANGO_SUPERUSER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sentio-secrets
+                  key: DJANGO_SUPERUSER_PASSWORD
+          volumeMounts:
+            - name: static-files
+              mountPath: /app/staticfiles
+            - name: media-files
+              mountPath: /app/media
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+      volumes:
+        - name: static-files
+          persistentVolumeClaim:
+            claimName: sentio-static-pvc
+        - name: media-files
+          persistentVolumeClaim:
+            claimName: sentio-media-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+  namespace: sentio
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+  selector:
+    app: sentio
+    component: web

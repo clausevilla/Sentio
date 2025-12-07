@@ -1,0 +1,94 @@
+# Author: Lian Shi
+
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: sentio
+data:
+  nginx.conf: |
+    upstream sentio_app {
+        server web-service:8000;
+    }
+    server {
+        listen 80;
+        server_name _;
+        client_max_body_size 100M;
+        location /static/ {
+            alias /app/staticfiles/;
+        }
+        location /media/ {
+            alias /app/media/;
+        }
+        location / {
+            proxy_pass http://sentio_app;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host $http_host;
+            proxy_redirect off;
+            proxy_read_timeout 300s;
+        }
+        location /nginx-health {
+            return 200 "healthy\n";
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: sentio
+  labels:
+    app: sentio
+    component: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sentio
+      component: nginx
+  template:
+    metadata:
+      labels:
+        app: sentio
+        component: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: nginx.conf
+            - name: static-files
+              mountPath: /app/staticfiles
+              readOnly: true
+            - name: media-files
+              mountPath: /app/media
+              readOnly: true
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+        - name: static-files
+          persistentVolumeClaim:
+            claimName: sentio-static-pvc
+        - name: media-files
+          persistentVolumeClaim:
+            claimName: sentio-media-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  namespace: sentio
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: sentio
+    component: nginx

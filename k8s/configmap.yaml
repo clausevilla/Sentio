@@ -1,0 +1,19 @@
+
+# Author: Lian Shi
+
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sentio-config
+  namespace: sentio
+data:
+  DJANGO_SETTINGS_MODULE: "sentio.settings.production"
+  DEBUG: "False"
+  SQL_ENGINE: "django.db.backends.postgresql"
+  SQL_DATABASE: "sentio_db"
+  SQL_HOST: "postgres-service"
+  SQL_PORT: "5432"
+  ALLOWED_HOSTS: "*"
+
+
