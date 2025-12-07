@@ -1235,8 +1235,8 @@ def get_jobs_status_api(request):
                     'completed_at': job.completed_at.isoformat()
                     if job.completed_at
                     else None,
-                    'accuracy': float(job.resulting_model.accuracy)
-                    if job.resulting_model and job.resulting_model.accuracy
+                    'f1_score': float(job.resulting_model.f1_score)
+                    if job.resulting_model and job.resulting_model.f1_score
                     else None,
                     'error_message': job.error_message
                     if hasattr(job, 'error_message')

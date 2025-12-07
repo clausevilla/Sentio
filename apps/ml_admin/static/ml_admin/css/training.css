@@ -443,7 +443,7 @@
     white-space: nowrap;
     z-index: 100;
     margin-bottom: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .param-hint[title]:hover::before {
@@ -569,10 +569,17 @@ select.param-input {
     background-color: #e9ecef !important;
     color: #868e96 !important;
 }
+
 @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-4px); }
-    75% { transform: translateX(4px); }
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-4px);
+    }
+    75% {
+        transform: translateX(4px);
+    }
 }
 
 /* Error message */
@@ -996,6 +1003,11 @@ select.param-input {
     color: #E74C3C;
 }
 
+.badge.cancelled {
+    background-color: #6c757d;
+    color: white;
+}
+
 .badge.running {
     background: rgba(243, 156, 18, 0.1);
     color: #F39C12;
@@ -1205,6 +1217,7 @@ select.param-input {
         width: 100%;
     }
 }
+
 /* ================================
    Job Parameters Display
 ================================ */

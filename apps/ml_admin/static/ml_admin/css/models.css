@@ -2,7 +2,6 @@
 /* Disclaimer: LLM has used to generate initial style, and fine tuning was done manually to different elements */
 
 
-
 /* Stats Row */
 .stats-row {
     display: grid;
@@ -21,7 +20,9 @@
     gap: 1rem;
 }
 
-.stat-info { flex: 1; }
+.stat-info {
+    flex: 1;
+}
 
 .stat-value {
     font-size: 1.5rem;
@@ -111,13 +112,36 @@
 }
 
 /* Column widths */
-.col-checkbox { width: 50px; text-align: center; }
-.col-name { min-width: 180px; }
-.col-type { min-width: 120px; }
-.col-status { min-width: 90px; }
-.col-metric { min-width: 80px; text-align: center; }
-.col-info { min-width: 110px; }
-.col-actions { min-width: 110px; text-align: right; }
+.col-checkbox {
+    width: 50px;
+    text-align: center;
+}
+
+.col-name {
+    min-width: 180px;
+}
+
+.col-type {
+    min-width: 120px;
+}
+
+.col-status {
+    min-width: 90px;
+}
+
+.col-metric {
+    min-width: 80px;
+    text-align: center;
+}
+
+.col-info {
+    min-width: 110px;
+}
+
+.col-actions {
+    min-width: 110px;
+    text-align: right;
+}
 
 .models-table th.col-metric,
 .models-table td.col-metric,
@@ -274,10 +298,21 @@
     font-size: 0.9rem;
 }
 
-.metric-value-cell.good { color: var(--success); }
-.metric-value-cell.okay { color: var(--warning); }
-.metric-value-cell.low { color: var(--danger); }
-.metric-empty { color: var(--gray-400); }
+.metric-value-cell.good {
+    color: var(--success);
+}
+
+.metric-value-cell.okay {
+    color: var(--warning);
+}
+
+.metric-value-cell.low {
+    color: var(--danger);
+}
+
+.metric-empty {
+    color: var(--gray-400);
+}
 
 .info-cell {
     display: inline-flex;
@@ -292,7 +327,9 @@
     color: var(--gray-400);
 }
 
-.info-empty { color: var(--gray-400); }
+.info-empty {
+    color: var(--gray-400);
+}
 
 /* Action Buttons */
 .action-buttons {
@@ -374,9 +411,17 @@
    Modal Sizes
    ======================================== */
 
-.modal-md { max-width: 500px; }
-.modal-lg { max-width: 700px; }
-.modal-xl { max-width: 900px; }
+.modal-md {
+    max-width: 500px;
+}
+
+.modal-lg {
+    max-width: 700px;
+}
+
+.modal-xl {
+    max-width: 900px;
+}
 
 /* Modal Status */
 
@@ -514,10 +559,10 @@
 
 /* Plots Grid (ROC & Confusion Matrix) */
 
-.plots-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+.plots-grid.vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
 .plot-item {
@@ -720,7 +765,7 @@
     background: var(--gray-100);
     font-size: 1rem;
     font-weight: 600;
-    color:var(--gray-800);
+    color: var(--gray-800);
 }
 
 .compare-table th .th-color {
