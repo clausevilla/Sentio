@@ -405,6 +405,24 @@ def get_training_data(
     return X_train, y_train, X_test, y_test
 
 
+def _create_progress_callback(job_id: int):
+    """Create a callback that updates job progress in the database."""
+
+    def callback(epoch: int, total_epochs: int, loss: float, val_accuracy: float):
+        job = TrainingJob.objects.get(id=job_id)
+
+        if job.status == 'CANCELLED':
+            raise InterruptedError('Job was cancelled')
+
+        log_line = f'Epoch {epoch}/{total_epochs} - Loss: {loss:.4f}, Val Acc: {val_accuracy:.4f}'
+        job.progress_log = (
+            (job.progress_log + '\n' + log_line) if job.progress_log else log_line
+        )
+        job.save(update_fields=['progress_log'])
+
+    return callback
+
+
 def _run_training(
     job_id: int,
     model_name: str,
@@ -446,6 +464,7 @@ def _run_training(
             data=(X_train, y_train, X_test, y_test),
             config=config,
             job_id=str(job_id),
+            progress_callback=_create_progress_callback(job.id),
         )
 
         # Check if cancelled before creating model version
@@ -479,7 +498,11 @@ def _run_training(
     except Exception as e:
         job.status = 'FAILED'
         job.completed_at = timezone.now()
-        job.error_message = str(e)
+        # Append to possible training log instead of overwriting
+        error_msg = f'\n\nERROR: {str(e)}'
+        job.progress_log = (
+            (job.progress_log + error_msg) if job.progress_log else str(e)
+        )
         job.save()
 
 
@@ -568,7 +591,7 @@ def get_job_status(job_id: int) -> Dict[str, Any]:
             'accuracy': job.resulting_model.accuracy,
         }
     elif job.status == 'FAILED':
-        result['error'] = job.error_message
+        result['error'] = job.progress_log
 
     return result
 

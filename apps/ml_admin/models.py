@@ -153,7 +153,7 @@ class TrainingJob(models.Model):
     resulting_model = models.OneToOneField(
         ModelVersion, on_delete=models.SET_NULL, null=True
     )
-    error_message = models.TextField(null=True, blank=True)
+    progress_log = models.TextField(null=True, blank=True)
     initiated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     data_uploads = models.ManyToManyField(DataUpload, related_name='training_jobs')
 

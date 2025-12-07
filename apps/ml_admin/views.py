@@ -1238,8 +1238,8 @@ def get_jobs_status_api(request):
                     'f1_score': float(job.resulting_model.f1_score)
                     if job.resulting_model and job.resulting_model.f1_score
                     else None,
-                    'error_message': job.error_message
-                    if hasattr(job, 'error_message')
+                    'progress_log': job.progress_log
+                    if hasattr(job, 'progress_log')
                     else None,
                 }
                 for job in jobs
