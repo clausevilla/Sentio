@@ -1,4 +1,4 @@
-/* Author: Lian Shi */
+/* Author: Lian Shi, Marcus Berggren */
 /* Disclaimer: LLM has used to help with implement training page functionalities to fit our database */
 
 // State
@@ -450,7 +450,7 @@ function updateJobRowCancelled(jobId) {
             }
             jobsDataScript.textContent = JSON.stringify(storedJobs);
         } catch (e) {
-}
+        }
     }
 }
 

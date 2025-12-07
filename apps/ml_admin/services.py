@@ -416,7 +416,9 @@ def _create_progress_callback(job_id: int):
 
         # Add info to progress_log, current_epoch and total_epochs
         log_line = f'Epoch {epoch}/{total_epochs} - Loss: {loss:.4f}, Val Acc: {val_accuracy:.4f}'
-        job.progress_log = ((job.progress_log + '\n' + log_line) if job.progress_log else log_line)
+        job.progress_log = (
+            (job.progress_log + '\n' + log_line) if job.progress_log else log_line
+        )
         job.current_epoch = epoch
         job.total_epochs = total_epochs
         job.save(update_fields=['progress_log', 'current_epoch', 'total_epochs'])

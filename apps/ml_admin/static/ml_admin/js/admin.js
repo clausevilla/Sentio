@@ -619,9 +619,24 @@ function updateDatasetRows(uploads) {
 }
 
 // Auto-update training page table and banner
-function updateTrainingTable(data) {
-    // Update the running/pending jobs banner
-    updateTrainingBanner(data.running_count, data.pending_count);
+function updateTrainingTable(jobs) {
+    // Update stored jobsData for modal
+    const jobsDataScript = document.getElementById('jobsData');
+    if (jobsDataScript) {
+        try {
+            let storedJobs = JSON.parse(jobsDataScript.textContent);
+            jobs.forEach(apiJob => {
+                const stored = storedJobs.find(j => j.id === apiJob.id);
+                if (stored) {
+                    stored.status = apiJob.status;
+                    stored.progress_log = apiJob.progress_log || stored.progress_log;
+                    stored.completed_at = apiJob.completed_at;
+                }
+            });
+            jobsDataScript.textContent = JSON.stringify(storedJobs);
+        } catch (e) {
+        }
+    }
 
     // Update job rows in the training jobs table
     const tbody = document.querySelector('#trainingJobsTable tbody');

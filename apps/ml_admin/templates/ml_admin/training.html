@@ -274,6 +274,7 @@
                     <th>Datasets</th>
                     <th>Started</th>
                     <th>Duration</th>
+                    <th>Progress</th>
                     <th>Status</th>
                     <th>F1 Score</th>
                     <th></th>
@@ -305,6 +306,20 @@
                         {% elif job.status == 'RUNNING' %}
                             <span class="duration running"><i class="fas fa-clock"></i> {{ job.started_at|timesince }}</span>
                         {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if job.total_epochs %}
+                            <div class="epoch-progress">
+                                <div class="epoch-bar">
+                                    <div class="epoch-fill" style="width: {% widthratio job.current_epoch|default:0 job.total_epochs 100 %}%"></div>
+                                </div>
+                                <span class="epoch-text">{{ job.current_epoch|default:0 }}/{{ job.total_epochs }}</span>
+                            </div>
+                        {% elif job.model_type == 'lstm' or job.model_type == 'transformer' %}
+                            <span class="text-muted">—</span>
+                        {% else %}
+                            <span class="text-muted">N/A</span>
+                        {% endif %}
                     </td>
                     <td>
                         <span class="badge {{ job.status|lower }}">
@@ -394,7 +409,7 @@
     "completed_at": "{{ job.completed_at|date:'M d, Y H:i'|default:'' }}",
     "initiated_by": "{{ job.initiated_by.username|default:'-' }}",
     "datasets": "{% for u in job.data_uploads.all %}{{ u.file_name }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}",
-    "error_message": "{{ job.error_message|default:''|escapejs }}",
+    "progress_log": "{{ job.progress_log|default:''|escapejs }}",
     {% if job.resulting_model %}
     "model": {
         "name": "{{ job.resulting_model.version_name }}",

@@ -47,7 +47,12 @@ class ModelTrainer:
         logger.info(f'Initialized ModelTrainer with device: {self.device}')
 
     def train(
-        self, model_name: str, data: Tuple, config: Dict[str, Any], job_id: str
+        self,
+        model_name: str,
+        data: Tuple,
+        config: Dict[str, Any],
+        job_id: str,
+        progress_callback=None,
     ) -> Dict[str, Any]:
         """
         Train a model and return results with metrics.
@@ -57,6 +62,7 @@ class ModelTrainer:
             data: Tuple of (X_train, y_train, X_test, y_test)
             config: Model-specific configuration overrides
             job_id: Unique identifier for logging and file naming
+            progress_callback: Optional function that takes no arguments
 
         Returns:
             Dict with status, job_id, model_path, metrics, model_type
@@ -74,7 +80,9 @@ class ModelTrainer:
         if model_name in self.SKLEARN_MODELS:
             return self._train_sklearn_model(model_name, data, config, job_id)
         elif model_name in self.PYTORCH_MODELS:
-            return self._train_neural_model(model_name, data, config, job_id)
+            return self._train_neural_model(
+                model_name, data, config, job_id, progress_callback
+            )
         else:
             raise ValueError(f'Unknown model: {model_name}')
 
@@ -165,6 +173,7 @@ class ModelTrainer:
         data: Tuple,
         config: Dict[str, Any],
         job_id: str,
+        progress_callback=None,
     ) -> Dict[str, Any]:
         """
         Train PyTorch-based models (LSTM, Transformer).
@@ -325,6 +334,10 @@ class ModelTrainer:
                 f'Val Accuracy: {val_accuracy:.4f}',
                 extra={'job_id': job_id},
             )
+
+            # Call progress callback
+            if progress_callback:
+                progress_callback(epoch + 1, epochs, avg_loss, val_accuracy)
 
             # Early stopping check
             if val_accuracy > best_accuracy + min_delta:
