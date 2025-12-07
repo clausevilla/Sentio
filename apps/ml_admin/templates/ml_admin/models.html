@@ -143,9 +143,7 @@
                         <!-- Metrics -->
                         <td class="col-metric">
                             {% if item.model.accuracy %}
-                            <span class="metric-value-cell {% if item.model.accuracy >= 0.8 %}good{% elif item.model.accuracy >= 0.6 %}okay{% else %}low{% endif %}">
-                                {{ item.model.accuracy|percentage }}
-                            </span>
+                            <span class="metric-value-cell">{{ item.model.accuracy|percentage }}</span>
                             {% else %}
                             <span class="metric-empty">—</span>
                             {% endif %}
@@ -159,14 +157,18 @@
                         </td>
                         <td class="col-metric">
                             {% if item.model.recall %}
-                            <span class="metric-value-cell">{{ item.model.recall|percentage }}</span>
+                            <span class="metric-value-cell {% if item.model.recall >= 0.8 %}good{% elif item.model.recall >= 0.6 %}okay{% else %}low{% endif %}">
+                                {{ item.model.recall|percentage }}
+                            </span>
                             {% else %}
                             <span class="metric-empty">—</span>
                             {% endif %}
                         </td>
                         <td class="col-metric">
                             {% if item.model.f1_score %}
-                            <span class="metric-value-cell">{{ item.model.f1_score|percentage }}</span>
+                            <span class="metric-value-cell {% if item.model.f1_score >= 0.8 %}good{% elif item.model.f1_score >= 0.6 %}okay{% else %}low{% endif %}">
+                                {{ item.model.f1_score|percentage }}
+                            </span>
                             {% else %}
                             <span class="metric-empty">—</span>
                             {% endif %}

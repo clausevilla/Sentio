@@ -608,23 +608,63 @@ function updateDatasetRows(uploads) {
 
 // Auto-update training page table
 function updateTrainingTable(jobs) {
-    const tbody = document.querySelector('.jobs-table tbody');
+    const tbody = document.querySelector('.data-table tbody');
     if (!tbody) return;
 
+    let runningCount = 0;
+
     jobs.forEach(job => {
+        if (job.status === 'RUNNING') runningCount++;
+
         const row = tbody.querySelector(`tr[data-job-id="${job.id}"]`);
         if (!row) return;
 
-        const badge = row.querySelector('.badge');
-        if (!badge || badge.textContent.trim() === job.status) return;
+        const durationCell = row.cells[4];
+        const statusCell = row.cells[5];
+
+        // Update duration for running jobs
+        if (job.status === 'RUNNING' && durationCell) {
+            const elapsed = formatDuration(job.started_at, new Date().toISOString());
+            durationCell.innerHTML = `<span class="duration running"><i class="fas fa-clock"></i> ${elapsed}</span>`;
+        }
+
+        // Update duration for completed jobs
+        if (job.status !== 'RUNNING' && job.completed_at && durationCell) {
+            durationCell.innerHTML = `<span class="duration">${formatDuration(job.started_at, job.completed_at)}</span>`;
+        }
+
+        if (!statusCell) return;
+
+        const badge = statusCell.querySelector('.badge');
+        if (!badge) return;
+
+        if (badge.textContent.trim().includes(job.status)) return;
 
         badge.className = `badge ${job.status.toLowerCase()}`;
-        const icon = job.status === 'COMPLETED' ? 'fa-check-circle' :
-            job.status === 'FAILED' ? 'fa-times-circle' :
-                job.status === 'RUNNING' ? 'fa-spinner fa-spin' : 'fa-clock';
-        badge.innerHTML = `<i class="fas ${icon}"></i> ${job.status}`;
+
+        let icon = '';
+        if (job.status === 'COMPLETED') icon = '<i class="fas fa-check"></i> ';
+        else if (job.status === 'FAILED') icon = '<i class="fas fa-times"></i> ';
+        else if (job.status === 'RUNNING') icon = '<i class="fas fa-spinner fa-spin"></i> ';
+        else if (job.status === 'PENDING') icon = '<i class="fas fa-clock"></i> ';
+
+        badge.innerHTML = icon + job.status;
+
+        if (job.status === 'COMPLETED') {
+            setTimeout(() => location.reload(), 1000);
+        }
 
         row.classList.add('status-updated');
         setTimeout(() => row.classList.remove('status-updated'), 2000);
     });
+
+    const alertInfo = document.querySelector('.alert.info');
+    if (runningCount > 0) {
+        if (alertInfo) {
+            const strong = alertInfo.querySelector('strong');
+            if (strong) strong.textContent = runningCount;
+        }
+    } else if (alertInfo) {
+        alertInfo.remove();
+    }
 }

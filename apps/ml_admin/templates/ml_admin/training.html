@@ -264,11 +264,10 @@
                     <th>Job</th>
                     <th>Algorithm</th>
                     <th>Datasets</th>
-                    <th>Records</th>
                     <th>Started</th>
                     <th>Duration</th>
                     <th>Status</th>
-                    <th>Accuracy</th>
+                    <th>F1 Score</th>
                     <th></th>
                 </tr>
             </thead>
@@ -309,8 +308,10 @@
                         </span>
                     </td>
                     <td>
-                        {% if job.resulting_model and job.resulting_model.accuracy %}
-                        <span class="accuracy-value">{{ job.resulting_model.accuracy|percentage }}</span>
+                        {% if job.resulting_model and job.resulting_model.f1_score %}
+                        <span class="metric-value-cell {% if job.resulting_model.f1_score >= 0.8 %}good{% elif job.resulting_model.f1_score >= 0.6 %}okay{% else %}low{% endif %}">
+                            {{ job.resulting_model.f1_score|percentage }}
+                        </span>
                         {% elif job.status == 'FAILED' %}
                         <span class="text-danger">—</span>
                         {% else %}—{% endif %}

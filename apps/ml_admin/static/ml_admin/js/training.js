@@ -1050,3 +1050,59 @@ function hasCustomParams(algoKey) {
         return String(params[p.key]) !== String(defaultVal);
     });
 }
+
+function updateJobsUI(jobs) {
+    const runningJobs = jobs.filter(j => j.status === 'RUNNING');
+
+    // Update running count banner
+    const alertInfo = document.querySelector('.alert.info');
+    if (runningJobs.length > 0) {
+        if (alertInfo) {
+            alertInfo.querySelector('span strong').textContent = runningJobs.length;
+        }
+    } else if (alertInfo) {
+        alertInfo.remove();
+    }
+
+    // Update job rows in table
+    jobs.forEach(job => {
+        const row = document.querySelector(`tr[data-job-id="${job.id}"]`);
+        if (!row) return;
+
+        const statusCell = row.querySelector('.badge');
+        if (statusCell) {
+            statusCell.className = `badge ${job.status.toLowerCase()}`;
+
+            let icon = '';
+            if (job.status === 'RUNNING') icon = '<i class="fas fa-spinner fa-spin"></i> ';
+            else if (job.status === 'COMPLETED') icon = '<i class="fas fa-check"></i> ';
+            else if (job.status === 'FAILED') icon = '<i class="fas fa-times"></i> ';
+            else if (job.status === 'PENDING') icon = '<i class="fas fa-clock"></i> ';
+
+            statusCell.innerHTML = icon + job.status;
+        }
+
+        // Update duration cell for completed jobs
+        if (job.status !== 'RUNNING' && job.completed_at) {
+            const durationCell = row.cells[5];
+            if (durationCell) {
+                const duration = durationCell.querySelector('.duration');
+                if (duration) {
+                    duration.classList.remove('running');
+                    duration.innerHTML = formatDuration(job.started_at, job.completed_at);
+                }
+            }
+        }
+    });
+}
+
+function formatDuration(start, end) {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const diffMs = endDate - startDate;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffSecs = Math.floor((diffMs % 60000) / 1000);
+
+    if (diffMins > 0) return `${diffMins}m ${diffSecs}s`;
+    return `${diffSecs}s`;
+}
