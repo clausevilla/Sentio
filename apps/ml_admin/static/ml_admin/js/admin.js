@@ -314,7 +314,7 @@ function showConfirm({
 // ================================
 
 const NOTIFICATION_KEY = 'ml_admin_notifications';
-const NOTIFICATION_POLL_INTERVAL = 5000; // Every 5s
+const NOTIFICATION_POLL_INTERVAL = 10000; // Every 10s
 
 let notifications = [];
 let notificationPollTimer = null;
