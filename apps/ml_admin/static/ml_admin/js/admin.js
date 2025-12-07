@@ -521,7 +521,7 @@ async function checkNotificationUpdates() {
                     lastKnownStates.jobs[job.id] = job.status;
                 });
                 // Pass full data including running/pending counts
-                updateTrainingTable(jobsData);
+                updateTrainingTable(jobsData.jobs);
             }
         }
 
@@ -627,11 +627,34 @@ function updateTrainingTable(data) {
     const tbody = document.querySelector('#trainingJobsTable tbody');
     if (!tbody) return;
 
-    const jobs = data.jobs || [];
-
     jobs.forEach(job => {
         const row = tbody.querySelector(`tr[data-job-id="${job.id}"]`);
         if (!row) return;
+
+        // Update duration for running jobs (always, regardless of status change)
+        if (job.status === 'RUNNING') {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 5) {
+                const durationCell = cells[4];
+                const elapsed = formatDuration(job.started_at, new Date().toISOString());
+                durationCell.innerHTML = `<span class="duration running"><i class="fas fa-clock"></i> ${elapsed}</span>`;
+            }
+
+            // Update progress bar for any job with epoch data (cells[5])
+            if (cells.length >= 6 && job.total_epochs) {
+                const progressCell = cells[5];
+                const current = job.current_epoch || 0;
+                const pct = Math.round((current / job.total_epochs) * 100);
+                progressCell.innerHTML = `
+                    <div class="epoch-progress">
+                        <div class="epoch-bar">
+                            <div class="epoch-fill" style="width: ${pct}%"></div>
+                        </div>
+                        <span class="epoch-text">${current}/${job.total_epochs}</span>
+                    </div>
+                `;
+            }
+        }
 
         const badge = row.querySelector('.badge');
         if (!badge) return;
@@ -660,9 +683,9 @@ function updateTrainingTable(data) {
         // Update f1 cscore column if job completed successfully
         if (job.status === 'COMPLETED' && job.f1_score !== null) {
             const cells = row.querySelectorAll('td');
-            // Accuracy is typically the 7th column (index 6)
-            if (cells.length >= 7) {
-                const accuracyCell = cells[6];
+            // Accuracy is typically the 8th column (index 7)
+            if (cells.length >= 8) {
+                const accuracyCell = cells[7];
                 accuracyCell.innerHTML = `<span class="accuracy-value">${(job.f1_score * 100).toFixed(2)}%</span>`;
             }
         }
@@ -670,8 +693,8 @@ function updateTrainingTable(data) {
         // Update accuracy column if job failed
         if (job.status === 'FAILED' || job.status === 'CANCELLED') {
             const cells = row.querySelectorAll('td');
-            if (cells.length >= 7) {
-                const accuracyCell = cells[6];
+            if (cells.length >= 8) {
+                const accuracyCell = cells[7];
                 accuracyCell.innerHTML = '<span class="text-danger">—</span>';
             }
         }

@@ -501,7 +501,18 @@ def _run_training(
         job.resulting_model = model_version
         job.save()
 
+    except InterruptedError:
+        # Job was cancelled - don't overwrite the CANCELLED status
+        job.refresh_from_db()
+        if job.status != 'CANCELLED':
+            job.status = 'CANCELLED'
+            job.completed_at = timezone.now()
+            job.save()
+
     except Exception as e:
+        job.refresh_from_db()
+        if job.status == 'CANCELLED':
+            return  # Don't overwrite cancelled status
         job.status = 'FAILED'
         job.completed_at = timezone.now()
         # Append to possible training log instead of overwriting

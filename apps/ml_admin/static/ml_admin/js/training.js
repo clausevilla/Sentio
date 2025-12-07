@@ -410,8 +410,8 @@ async function cancelJob(jobId) {
 
         if (data.success) {
             toast('Training job cancelled', 'success');
-            // Remove the row from the table
-            removeJobRow(jobId);
+            // Update the row instaed of removing it
+            updateJobRowCancelled(jobId);
         } else {
             toast(data.error || 'Failed to cancel job', 'error');
         }
@@ -421,36 +421,39 @@ async function cancelJob(jobId) {
     }
 }
 
-/**
- * Removes a job row from the table with animation.
- * Also updates the banner count.
- */
-function removeJobRow(jobId) {
+
+function updateJobRowCancelled(jobId) {
     const row = document.querySelector(`tr[data-job-id="${jobId}"]`);
     if (!row) return;
 
-    // Animate out
-    row.style.transition = 'opacity 0.3s, transform 0.3s';
-    row.style.opacity = '0';
-    row.style.transform = 'translateX(-20px)';
+    // Update status badge
+    const badge = row.querySelector('.badge');
+    if (badge) {
+        badge.className = 'badge cancelled';
+        badge.innerHTML = 'CANCELLED';
+    }
 
-    setTimeout(() => {
-        row.remove();
+    // Remove cancel button
+    const cancelBtn = row.querySelector('.btn-icon.danger');
+    if (cancelBtn) {
+        cancelBtn.remove();
+    }
 
-        // Check if table is now empty
-        const tbody = document.querySelector('#trainingJobsTable tbody');
-        if (tbody && tbody.children.length === 0) {
-            // Replace table with empty state
-            const tableWrap = document.querySelector('#trainingJobsTable');
-            if (tableWrap) {
-                tableWrap.outerHTML = '<div class="empty-state small"><p>No training jobs yet</p></div>';
+    // Update stored jobsData
+    const jobsDataScript = document.getElementById('jobsData');
+    if (jobsDataScript) {
+        try {
+            let storedJobs = JSON.parse(jobsDataScript.textContent);
+            const job = storedJobs.find(j => j.id === jobId);
+            if (job) {
+                job.status = 'CANCELLED';
             }
-        }
-
-        // Update the banner
-        updateTrainingBannerAfterCancel();
-    }, 300);
+            jobsDataScript.textContent = JSON.stringify(storedJobs);
+        } catch (e) {
 }
+    }
+}
+
 
 /**
  * Updates the training banner after a job is cancelled.
@@ -539,10 +542,6 @@ function showJobDetails(jobId) {
                 <div class="job-detail-label">Datasets</div>
                 <div class="job-detail-value">${job.datasets}</div>
             </div>
-            <div class="job-detail-section">
-                <div class="job-detail-label">Records</div>
-                <div class="job-detail-value">${job.records ? formatNumber(job.records) : '—'}</div>
-            </div>
         </div>
     `;
 
@@ -585,14 +584,29 @@ function showJobDetails(jobId) {
         }
     }
 
-    if (job.status === 'FAILED' && job.error_message) {
+    // Show progress log if we have epoch data
+    if (job.progress_log && job.progress_log.includes('Epoch')) {
+        html += `
+            <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--gray-200);">
+            <div class="job-detail-section">
+                <div class="job-detail-label">Training Progress</div>
+                <pre class="job-progress-log">${job.progress_log.split('ERROR:')[0].trim()}</pre>
+            </div>
+        `;
+    }
+
+    // Show error message if failed
+    if (job.status === 'FAILED' && job.progress_log) {
+        const errorPart = job.progress_log.includes('ERROR:')
+            ? job.progress_log.split('ERROR:')[1].trim()
+            : job.progress_log;
         html += `
             <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--gray-200);">
             <div class="job-error-box">
                 <div class="job-error-title">
                     <i class="fas fa-exclamation-triangle"></i> Error Message
                 </div>
-                <div class="job-error-message">${job.error_message}</div>
+                <div class="job-error-message">${errorPart}</div>
             </div>
         `;
     }
@@ -1566,51 +1580,5 @@ function hasCustomParams(algoKey) {
         const defaultVal = isRetrain && FINETUNE_DEFAULTS[p.key] !== undefined ?
             FINETUNE_DEFAULTS[p.key] : p.default;
         return String(params[p.key]) !== String(defaultVal);
-    });
-}
-
-function updateJobsUI(jobs) {
-    const runningJobs = jobs.filter(j => j.status === 'RUNNING');
-
-    // Update running count banner
-    const alertInfo = document.querySelector('.alert.info');
-    if (runningJobs.length > 0) {
-        if (alertInfo) {
-            alertInfo.querySelector('span strong').textContent = runningJobs.length;
-        }
-    } else if (alertInfo) {
-        alertInfo.remove();
-    }
-
-    // Update job rows in table
-    jobs.forEach(job => {
-        const row = document.querySelector(`tr[data-job-id="${job.id}"]`);
-        if (!row) return;
-
-        const statusCell = row.querySelector('.badge');
-        if (statusCell) {
-            statusCell.className = `badge ${job.status.toLowerCase()}`;
-
-            let icon = '';
-            if (job.status === 'COMPLETED') icon = '<i class="fas fa-check"></i> ';
-            else if (job.status === 'FAILED') icon = '<i class="fas fa-times"></i> ';
-            else if (job.status === 'CANCELLED') icon = '<i class="fas fa-ban"></i> ';
-            else if (job.status === 'RUNNING') icon = '<i class="fas fa-spinner fa-spin"></i> ';
-            else if (job.status === 'PENDING') icon = '<i class="fas fa-clock"></i> ';
-
-            statusCell.innerHTML = icon + job.status;
-        }
-
-        // Update duration cell for completed jobs
-        if (job.status !== 'RUNNING' && job.completed_at) {
-            const durationCell = row.cells[4];
-            if (durationCell) {
-                const duration = durationCell.querySelector('.duration');
-                if (duration) {
-                    duration.classList.remove('running');
-                    duration.innerHTML = formatDuration(job.started_at, job.completed_at);
-                }
-            }
-        }
     });
 }
