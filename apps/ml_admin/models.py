@@ -144,6 +144,7 @@ class TrainingJob(models.Model):
         'RUNNING': 'Running',
         'COMPLETED': 'Completed',
         'FAILED': 'Failed',
+        'CANCELLED': 'Cancelled',
     }
     model_type = models.CharField(max_length=30, choices=MODEL_TYPES)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')

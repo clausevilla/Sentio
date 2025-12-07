@@ -922,35 +922,24 @@ def start_training_api(request):
 @staff_member_required
 @require_http_methods(['POST'])
 def cancel_training_api(request, job_id):
-    """
-    Cancel a running or pending training job by deleting it.
-    """
+    """Cancel a running or pending training job."""
     try:
-        job = get_object_or_404(TrainingJob, id=job_id)
+        job = TrainingJob.objects.get(id=job_id)
 
-        # Only allow cancelling PENDING or RUNNING jobs
-        if job.status not in ['PENDING', 'RUNNING']:
+        if job.status not in ['RUNNING', 'PENDING']:
             return JsonResponse(
-                {
-                    'success': False,
-                    'error': f'Cannot cancel job with status {job.status}',
-                },
+                {'success': False, 'error': 'Can only cancel running or pending jobs'},
                 status=400,
             )
 
-        # Delete the job
-        job.delete()
+        job.status = 'CANCELLED'
+        job.completed_at = timezone.now()
+        job.save()
 
-        return JsonResponse(
-            {
-                'success': True,
-                'message': f'Training job #{job_id} has been cancelled and removed',
-                'job_id': job_id,
-            }
-        )
+        return JsonResponse({'success': True})
 
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    except TrainingJob.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Job not found'}, status=404)
 
 
 # ============================================

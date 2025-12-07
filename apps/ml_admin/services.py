@@ -448,6 +448,12 @@ def _run_training(
             job_id=str(job_id),
         )
 
+        # Check if cancelled before creating model version
+        job.refresh_from_db()
+        if job.status == 'CANCELLED':
+            logger.info(f'Job {job_id} was cancelled, skipping model creation')
+            return
+
         model_version = ModelVersion.objects.create(
             model_type=model_name,
             version_name=version_name,
