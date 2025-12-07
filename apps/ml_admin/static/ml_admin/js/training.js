@@ -378,6 +378,112 @@ async function startTraining(mode) {
 }
 
 // ================================
+// Cancel Training Job
+// ================================
+
+/**
+ * Cancels a running or pending training job.
+ * Shows a confirmation dialog before cancelling and removing.
+ */
+async function cancelJob(jobId) {
+    const confirmed = await showConfirm({
+        title: 'Cancel Training Job',
+        message: `Are you sure you want to cancel and remove training job <strong>#${jobId}</strong>? This action cannot be undone.`,
+        type: 'warning',
+        confirmText: 'Cancel Job',
+        cancelText: 'Keep Running',
+        danger: true
+    });
+
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`/management/api/training/${jobId}/cancel/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRF()
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            toast('Training job cancelled', 'success');
+            // Remove the row from the table
+            removeJobRow(jobId);
+        } else {
+            toast(data.error || 'Failed to cancel job', 'error');
+        }
+    } catch (error) {
+        console.error('Cancel error:', error);
+        toast('Failed to cancel job', 'error');
+    }
+}
+
+/**
+ * Removes a job row from the table with animation.
+ * Also updates the banner count.
+ */
+function removeJobRow(jobId) {
+    const row = document.querySelector(`tr[data-job-id="${jobId}"]`);
+    if (!row) return;
+
+    // Animate out
+    row.style.transition = 'opacity 0.3s, transform 0.3s';
+    row.style.opacity = '0';
+    row.style.transform = 'translateX(-20px)';
+
+    setTimeout(() => {
+        row.remove();
+
+        // Check if table is now empty
+        const tbody = document.querySelector('#trainingJobsTable tbody');
+        if (tbody && tbody.children.length === 0) {
+            // Replace table with empty state
+            const tableWrap = document.querySelector('#trainingJobsTable');
+            if (tableWrap) {
+                tableWrap.outerHTML = '<div class="empty-state small"><p>No training jobs yet</p></div>';
+            }
+        }
+
+        // Update the banner
+        updateTrainingBannerAfterCancel();
+    }, 300);
+}
+
+/**
+ * Updates the training banner after a job is cancelled.
+ */
+function updateTrainingBannerAfterCancel() {
+    const banner = document.querySelector('.alert.info.training-banner');
+    if (!banner) return;
+
+    const spanEl = banner.querySelector('span');
+    if (!spanEl) return;
+
+    // Parse current count
+    const match = spanEl.innerHTML.match(/<strong>(\d+)<\/strong>/);
+    if (match) {
+        const currentCount = parseInt(match[1]);
+        const newCount = currentCount - 1;
+
+        if (newCount <= 0) {
+            // Remove the banner
+            banner.style.transition = 'opacity 0.3s';
+            banner.style.opacity = '0';
+            setTimeout(() => banner.remove(), 300);
+        } else {
+            // Update the count
+            const text = newCount === 1
+                ? '<strong>1</strong> training job currently running'
+                : `<strong>${newCount}</strong> training job(s) currently active`;
+            spanEl.innerHTML = text;
+        }
+    }
+}
+
+// ================================
 // Job Details Modal
 // ================================
 
@@ -409,6 +515,12 @@ function showJobDetails(jobId) {
                 <div class="job-detail-label">Status</div>
                 <div class="job-detail-value">
                     <span class="badge ${job.status.toLowerCase()}">${job.status}</span>
+                </div>
+            </div>
+            <div class="job-detail-section">
+                <div class="job-detail-label">Algorithm</div>
+                <div class="job-detail-value">
+                    <span class="model-type-tag">${getAlgorithmDisplayName(job.model_type)}</span>
                 </div>
             </div>
             <div class="job-detail-section">
@@ -466,6 +578,11 @@ function showJobDetails(jobId) {
                 </div>
             </div>
         `;
+
+        // Show parameters if available
+        if (job.model.parameters) {
+            html += renderJobParameters(job.model_type || job.model.model_type, job.model.parameters);
+        }
     }
 
     if (job.status === 'FAILED' && job.error_message) {
@@ -483,6 +600,123 @@ function showJobDetails(jobId) {
     document.getElementById('jobModalBody').innerHTML = html;
     openModal('jobDetailsModal');
 }
+
+/**
+ * Gets the display name for an algorithm type.
+ */
+function getAlgorithmDisplayName(modelType) {
+    const names = {
+        'logistic_regression': 'Logistic Regression',
+        'random_forest': 'Random Forest',
+        'lstm': 'LSTM',
+        'transformer': 'Transformer'
+    };
+    return names[modelType] || modelType || '—';
+}
+
+/**
+ * Renders the parameters section for a job based on model type.
+ * Only shows parameters relevant to the specific algorithm.
+ */
+function renderJobParameters(modelType, params) {
+    if (!params) return '';
+
+    // Define which parameters to show for each model type with their display labels
+    const paramConfig = {
+        logistic_regression: [
+            { key: 'max_iter', label: 'Max Iterations' },
+            { key: 'regularization_strength', label: 'Regularization (C)' },
+            { key: 'solver', label: 'Solver' },
+            { key: 'ngram_range_min', label: 'N-gram Min' },
+            { key: 'ngram_range_max', label: 'N-gram Max' },
+            { key: 'min_df', label: 'Min Doc Frequency' },
+            { key: 'max_df', label: 'Max Doc Frequency' },
+            { key: 'tfidf_max_features', label: 'Max TF-IDF Features' }
+        ],
+        random_forest: [
+            { key: 'n_estimators', label: 'Number of Trees' },
+            { key: 'max_depth', label: 'Max Depth' },
+            { key: 'min_samples_split', label: 'Min Samples Split' },
+            { key: 'min_samples_leaf', label: 'Min Samples Leaf' },
+            { key: 'rf_max_features', label: 'Max Features' },
+            { key: 'n_jobs', label: 'Parallel Jobs' },
+            { key: 'ngram_range_min', label: 'N-gram Min' },
+            { key: 'ngram_range_max', label: 'N-gram Max' },
+            { key: 'min_df', label: 'Min Doc Frequency' },
+            { key: 'max_df', label: 'Max Doc Frequency' },
+            { key: 'tfidf_max_features', label: 'Max TF-IDF Features' }
+        ],
+        lstm: [
+            { key: 'embed_dim', label: 'Embedding Dimension' },
+            { key: 'hidden_dim', label: 'Hidden Dimension' },
+            { key: 'num_layers', label: 'Number of Layers' },
+            { key: 'dropout', label: 'Dropout' },
+            { key: 'max_seq_length', label: 'Max Sequence Length' },
+            { key: 'vocab_size', label: 'Vocabulary Size' },
+            { key: 'learning_rate', label: 'Learning Rate' },
+            { key: 'batch_size', label: 'Batch Size' },
+            { key: 'epochs', label: 'Epochs' }
+        ],
+        transformer: [
+            { key: 'd_model', label: 'Model Dimension' },
+            { key: 'n_head', label: 'Attention Heads' },
+            { key: 'dim_feedforward', label: 'Feedforward Dimension' },
+            { key: 'num_layers', label: 'Number of Layers' },
+            { key: 'dropout', label: 'Dropout' },
+            { key: 'max_seq_length', label: 'Max Sequence Length' },
+            { key: 'vocab_size', label: 'Vocabulary Size' },
+            { key: 'learning_rate', label: 'Learning Rate' },
+            { key: 'batch_size', label: 'Batch Size' },
+            { key: 'epochs', label: 'Epochs' }
+        ]
+    };
+
+    const config = paramConfig[modelType];
+    if (!config) return '';
+
+    // Filter to only parameters that have values
+    const validParams = config.filter(p => params[p.key] !== null && params[p.key] !== undefined);
+
+    if (validParams.length === 0) return '';
+
+    let html = `
+        <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--gray-200);">
+        <div class="job-detail-section">
+            <div class="job-detail-label"><i class="fas fa-sliders-h"></i> Training Parameters</div>
+            <div class="job-params-grid" style="margin-top: 0.75rem;">
+    `;
+
+    validParams.forEach(p => {
+        let value = params[p.key];
+        // Format the value for display
+        if (typeof value === 'number') {
+            // Format small decimals nicely
+            if (value < 0.01 && value > 0) {
+                value = value.toExponential(2);
+            } else if (!Number.isInteger(value)) {
+                value = value.toFixed(4).replace(/\.?0+$/, '');
+            }
+        }
+        if (value === null || value === 'None') {
+            value = 'None';
+        }
+
+        html += `
+            <div class="job-param-item">
+                <span class="job-param-label">${p.label}</span>
+                <span class="job-param-value">${value}</span>
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+        </div>
+    `;
+
+    return html;
+}
+
 
 /* ================================
    Algorithm Parameters Modal

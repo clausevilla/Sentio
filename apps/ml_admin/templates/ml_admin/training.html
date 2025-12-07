@@ -9,10 +9,18 @@
 {% block page_css %}<link rel="stylesheet" href="{% static 'ml_admin/css/training.css' %}">{% endblock %}
 
 {% block content %}
-{% if running_count > 0 %}
-<div class="alert info">
+{% if running_count > 0 or pending_count > 0 %}
+<div class="alert info training-banner">
     <i class="fas fa-spinner fa-spin"></i>
-    <span><strong>{{ running_count }}</strong> training job(s) currently running</span>
+    <span>
+        {% if running_count > 0 and pending_count > 0 %}
+            <strong>{{ running_count }}</strong> running, <strong>{{ pending_count }}</strong> pending
+        {% elif running_count > 0 %}
+            <strong>{{ running_count }}</strong> training job{{ running_count|pluralize }} currently running
+        {% else %}
+            <strong>{{ pending_count }}</strong> training job{{ pending_count|pluralize }} pending
+        {% endif %}
+    </span>
 </div>
 {% endif %}
 
@@ -258,7 +266,7 @@
     </div>
     <div class="card-body no-pad">
         {% if jobs %}
-        <table class="data-table">
+        <table class="data-table" id="trainingJobsTable">
             <thead>
                 <tr>
                     <th>Job</th>
@@ -316,10 +324,15 @@
                         <span class="text-danger">—</span>
                         {% else %}—{% endif %}
                     </td>
-                    <td>
+                    <td class="actions-cell">
                         <button class="btn-icon" onclick="showJobDetails({{ job.id }})" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
+                        {% if job.status == 'RUNNING' or job.status == 'PENDING' %}
+                        <button class="btn-icon danger" onclick="cancelJob({{ job.id }})" title="Cancel Job">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -388,7 +401,38 @@
         "accuracy": {{ job.resulting_model.accuracy|default:'null' }},
         "precision": {{ job.resulting_model.precision|default:'null' }},
         "recall": {{ job.resulting_model.recall|default:'null' }},
-        "f1_score": {{ job.resulting_model.f1_score|default:'null' }}
+        "f1_score": {{ job.resulting_model.f1_score|default:'null' }},
+        "model_type": "{{ job.resulting_model.model_type|default:'' }}"
+        {% if job.resulting_model.parameter %}
+        ,"parameters": {
+            "max_iter": {{ job.resulting_model.parameter.max_iter|default:'null' }},
+            "regularization_strength": {{ job.resulting_model.parameter.regularization_strength|default:'null' }},
+            "solver": {% if job.resulting_model.parameter.solver %}"{{ job.resulting_model.parameter.solver }}"{% else %}null{% endif %},
+            "n_estimators": {{ job.resulting_model.parameter.n_estimators|default:'null' }},
+            "max_depth": {{ job.resulting_model.parameter.max_depth|default:'null' }},
+            "min_samples_split": {{ job.resulting_model.parameter.min_samples_split|default:'null' }},
+            "min_samples_leaf": {{ job.resulting_model.parameter.min_samples_leaf|default:'null' }},
+            "rf_max_features": {% if job.resulting_model.parameter.rf_max_features %}"{{ job.resulting_model.parameter.rf_max_features }}"{% else %}null{% endif %},
+            "n_jobs": {{ job.resulting_model.parameter.n_jobs|default:'null' }},
+            "ngram_range_min": {{ job.resulting_model.parameter.ngram_range_min|default:'null' }},
+            "ngram_range_max": {{ job.resulting_model.parameter.ngram_range_max|default:'null' }},
+            "min_df": {{ job.resulting_model.parameter.min_df|default:'null' }},
+            "max_df": {{ job.resulting_model.parameter.max_df|default:'null' }},
+            "tfidf_max_features": {{ job.resulting_model.parameter.tfidf_max_features|default:'null' }},
+            "embed_dim": {{ job.resulting_model.parameter.embed_dim|default:'null' }},
+            "hidden_dim": {{ job.resulting_model.parameter.hidden_dim|default:'null' }},
+            "d_model": {{ job.resulting_model.parameter.d_model|default:'null' }},
+            "n_head": {{ job.resulting_model.parameter.n_head|default:'null' }},
+            "dim_feedforward": {{ job.resulting_model.parameter.dim_feedforward|default:'null' }},
+            "num_layers": {{ job.resulting_model.parameter.num_layers|default:'null' }},
+            "dropout": {{ job.resulting_model.parameter.dropout|default:'null' }},
+            "max_seq_length": {{ job.resulting_model.parameter.max_seq_length|default:'null' }},
+            "vocab_size": {{ job.resulting_model.parameter.vocab_size|default:'null' }},
+            "learning_rate": {{ job.resulting_model.parameter.learning_rate|default:'null' }},
+            "batch_size": {{ job.resulting_model.parameter.batch_size|default:'null' }},
+            "epochs": {{ job.resulting_model.parameter.epochs|default:'null' }}
+        }
+        {% endif %}
     }
     {% else %}
     "model": null

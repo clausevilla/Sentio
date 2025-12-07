@@ -304,7 +304,7 @@ function showConfirm({ title, message, type = 'warning', confirmText = 'Confirm'
 // ================================
 
 const NOTIFICATION_KEY = 'ml_admin_notifications';
-const NOTIFICATION_POLL_INTERVAL = 3000; // 3 seconds
+const NOTIFICATION_POLL_INTERVAL = 1000; // 1 second
 
 let notifications = [];
 let notificationPollTimer = null;
@@ -509,7 +509,8 @@ async function checkNotificationUpdates() {
                     }
                     lastKnownStates.jobs[job.id] = job.status;
                 });
-                updateTrainingTable(jobsData.jobs);
+                // Pass full data including running/pending counts
+                updateTrainingTable(jobsData);
             }
         }
 
@@ -606,65 +607,149 @@ function updateDatasetRows(uploads) {
     });
 }
 
-// Auto-update training page table
-function updateTrainingTable(jobs) {
-    const tbody = document.querySelector('.data-table tbody');
+// Auto-update training page table and banner
+function updateTrainingTable(data) {
+    // Update the running/pending jobs banner
+    updateTrainingBanner(data.running_count, data.pending_count);
+
+    // Update job rows in the training jobs table
+    const tbody = document.querySelector('#trainingJobsTable tbody');
     if (!tbody) return;
 
-    let runningCount = 0;
+    const jobs = data.jobs || [];
 
     jobs.forEach(job => {
-        if (job.status === 'RUNNING') runningCount++;
-
         const row = tbody.querySelector(`tr[data-job-id="${job.id}"]`);
         if (!row) return;
 
-        const durationCell = row.cells[4];
-        const statusCell = row.cells[5];
-
-        // Update duration for running jobs
-        if (job.status === 'RUNNING' && durationCell) {
-            const elapsed = formatDuration(job.started_at, new Date().toISOString());
-            durationCell.innerHTML = `<span class="duration running"><i class="fas fa-clock"></i> ${elapsed}</span>`;
-        }
-
-        // Update duration for completed jobs
-        if (job.status !== 'RUNNING' && job.completed_at && durationCell) {
-            durationCell.innerHTML = `<span class="duration">${formatDuration(job.started_at, job.completed_at)}</span>`;
-        }
-
-        if (!statusCell) return;
-
-        const badge = statusCell.querySelector('.badge');
+        const badge = row.querySelector('.badge');
         if (!badge) return;
 
-        if (badge.textContent.trim().includes(job.status)) return;
+        // Get current status from badge CSS class (more reliable than textContent)
+        const statusClasses = ['pending', 'running', 'completed', 'failed'];
+        const currentStatus = statusClasses.find(s => badge.classList.contains(s));
+        const newStatus = job.status.toLowerCase();
 
-        badge.className = `badge ${job.status.toLowerCase()}`;
+        // Skip if status hasn't changed
+        if (currentStatus === newStatus) return;
 
-        let icon = '';
-        if (job.status === 'COMPLETED') icon = '<i class="fas fa-check"></i> ';
-        else if (job.status === 'FAILED') icon = '<i class="fas fa-times"></i> ';
-        else if (job.status === 'RUNNING') icon = '<i class="fas fa-spinner fa-spin"></i> ';
-        else if (job.status === 'PENDING') icon = '<i class="fas fa-clock"></i> ';
+        // Remove old status class and add new one
+        statusClasses.forEach(s => badge.classList.remove(s));
+        badge.classList.add(newStatus);
 
-        badge.innerHTML = icon + job.status;
+        // Update badge icon and text
+        const icon = job.status === 'COMPLETED' ? 'fa-check' :
+            job.status === 'FAILED' ? 'fa-times' :
+                job.status === 'RUNNING' ? 'fa-spinner fa-spin' : 'fa-clock';
+        badge.innerHTML = `<i class="fas ${icon}"></i> ${job.status}`;
 
-        if (job.status === 'COMPLETED') {
-            setTimeout(() => location.reload(), 1000);
+        // Update accuracy column if job completed successfully
+        if (job.status === 'COMPLETED' && job.accuracy !== null) {
+            const cells = row.querySelectorAll('td');
+            // Accuracy is typically the 8th column (index 7)
+            if (cells.length >= 8) {
+                const accuracyCell = cells[7];
+                accuracyCell.innerHTML = `<span class="accuracy-value">${job.accuracy.toFixed(1)}%</span>`;
+            }
         }
 
+        // Update accuracy column if job failed
+        if (job.status === 'FAILED') {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 8) {
+                const accuracyCell = cells[7];
+                accuracyCell.innerHTML = '<span class="text-danger">—</span>';
+            }
+        }
+
+        // Remove cancel button if job is no longer running/pending
+        if (job.status !== 'RUNNING' && job.status !== 'PENDING') {
+            const actionsCell = row.querySelector('.actions-cell');
+            if (actionsCell) {
+                const cancelBtn = actionsCell.querySelector('.btn-icon.danger');
+                if (cancelBtn) {
+                    cancelBtn.remove();
+                }
+            }
+        }
+
+        // Update duration column
+        if (job.completed_at) {
+            const cells = row.querySelectorAll('td');
+            // Duration is typically the 6th column (index 5)
+            if (cells.length >= 6) {
+                const durationCell = cells[5];
+                const duration = formatDuration(new Date(job.started_at), new Date(job.completed_at));
+                durationCell.innerHTML = `<span class="duration">${duration}</span>`;
+            }
+        }
+
+        // Add highlight animation
         row.classList.add('status-updated');
         setTimeout(() => row.classList.remove('status-updated'), 2000);
     });
+}
 
-    const alertInfo = document.querySelector('.alert.info');
-    if (runningCount > 0) {
-        if (alertInfo) {
-            const strong = alertInfo.querySelector('strong');
-            if (strong) strong.textContent = runningCount;
+/**
+ * Updates the "X training job(s) currently running" banner at the top of the training page.
+ * Only shows the banner on the training page (where #trainingJobsTable exists).
+ */
+function updateTrainingBanner(runningCount, pendingCount) {
+    // Only show banner on the training page
+    const trainingTable = document.querySelector('#trainingJobsTable');
+    if (!trainingTable) return;
+
+    const existingBanner = document.querySelector('.alert.info.training-banner');
+    const contentArea = document.querySelector('.content');
+
+    // Calculate total active jobs
+    const totalActive = (runningCount || 0) + (pendingCount || 0);
+
+    if (totalActive > 0) {
+        // Need to show or update the banner
+        const bannerText = totalActive === 1
+            ? `<strong>1</strong> training job currently ${runningCount > 0 ? 'running' : 'pending'}`
+            : `<strong>${totalActive}</strong> training job(s) currently active`;
+
+        if (existingBanner) {
+            // Update existing banner
+            existingBanner.querySelector('span').innerHTML = bannerText;
+        } else if (contentArea) {
+            // Create new banner at the top of content area
+            const banner = document.createElement('div');
+            banner.className = 'alert info training-banner';
+            banner.innerHTML = `
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>${bannerText}</span>
+            `;
+            contentArea.insertBefore(banner, contentArea.firstChild);
         }
-    } else if (alertInfo) {
-        alertInfo.remove();
+    } else {
+        // No active jobs - remove the banner if it exists
+        if (existingBanner) {
+            existingBanner.style.transition = 'opacity 0.3s';
+            existingBanner.style.opacity = '0';
+            setTimeout(() => existingBanner.remove(), 300);
+        }
+    }
+}
+
+/**
+ * Formats duration between two dates in a human-readable format.
+ */
+function formatDuration(start, end) {
+    const diffMs = end - start;
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+
+    if (diffHours > 0) {
+        const mins = diffMinutes % 60;
+        return `${diffHours}h ${mins}m`;
+    } else if (diffMinutes > 0) {
+        const secs = diffSeconds % 60;
+        return `${diffMinutes}m ${secs}s`;
+    } else {
+        return `${diffSeconds}s`;
     }
 }

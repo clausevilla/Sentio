@@ -1205,3 +1205,56 @@ select.param-input {
         width: 100%;
     }
 }
+/* ================================
+   Job Parameters Display
+================================ */
+
+.job-params-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem;
+}
+
+.job-param-item {
+    display: flex;
+    flex-direction: column;
+    padding: 0.6rem 0.8rem;
+    background: var(--gray-50);
+    border-radius: 6px;
+    border: 1px solid var(--gray-200);
+}
+
+.job-param-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.25rem;
+}
+
+.job-param-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
+/* ================================
+   Cancel Button (Danger Icon Button)
+================================ */
+
+.btn-icon.danger {
+    color: var(--danger);
+}
+
+.btn-icon.danger:hover {
+    background: var(--danger);
+    color: white;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: flex-end;
+}

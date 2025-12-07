@@ -344,6 +344,20 @@ def upload_csv_api(request):
             pipeline_type=pipeline_type,
         )
 
+        # Prepare complete upload data for dynamic row creation in the frontend
+        upload_data = {
+            'id': upload.id,
+            'file_name': upload.file_name,
+            'uploaded_at': upload.uploaded_at.strftime('%b %d, %Y %H:%M'),
+            'uploaded_by': request.user.username,
+            'row_count': 0,
+            'status': upload.status,
+            'is_validated': upload.is_validated,
+            'pipeline_type': upload.pipeline_type,
+            'training_count': 0,
+            'test_count': 0,
+        }
+
         if PIPELINE_AVAILABLE:
             trigger_full_pipeline_in_background(upload.id, dataset_type, pipeline_type)
             return JsonResponse(
@@ -351,6 +365,7 @@ def upload_csv_api(request):
                     'success': True,
                     'message': 'Upload started. Processing in background...',
                     'upload_id': upload.id,
+                    'upload': upload_data,  # Include full upload data
                 }
             )
         else:
@@ -359,6 +374,7 @@ def upload_csv_api(request):
                     'success': True,
                     'message': 'Uploaded (pipeline not available)',
                     'upload_id': upload.id,
+                    'upload': upload_data,  # Include full upload data
                 }
             )
 
@@ -760,12 +776,17 @@ def training_view(request):
             'version_name': model.version_name,
             'accuracy': float(model.accuracy) if model.accuracy else None,
             'f1_score': float(model.f1_score) if model.f1_score else None,
-            'created_at': model.created_at.strftime('%Y-%m-%d'),
+            'created_at': model.created_at.strftime('%Y-%m-%d')
+            if model.created_at
+            else None,
             'is_active': model.is_active,
             'algorithm': model.model_type or 'unknown',
             'saved_params': saved_params,  # Include saved training params
         }
         retrainable_models.append(model_info)
+
+    running_count = TrainingJob.objects.filter(status='RUNNING').count()
+    pending_count = TrainingJob.objects.filter(status='PENDING').count()
 
     return render(
         request,
@@ -775,7 +796,8 @@ def training_view(request):
             'uploads': uploads_with_counts,
             'algorithms': ML_ALGORITHMS,
             'active_model': active_model,
-            'running_count': TrainingJob.objects.filter(status='RUNNING').count(),
+            'running_count': running_count,
+            'pending_count': pending_count,
             'test_set_info': test_set_info,
             'test_set_json': json.dumps(test_set_info['distribution']),
             'training_totals': training_totals,
@@ -894,6 +916,40 @@ def start_training_api(request):
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         logger.exception(f'Training API error: {e}')
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@staff_member_required
+@require_http_methods(['POST'])
+def cancel_training_api(request, job_id):
+    """
+    Cancel a running or pending training job by deleting it.
+    """
+    try:
+        job = get_object_or_404(TrainingJob, id=job_id)
+
+        # Only allow cancelling PENDING or RUNNING jobs
+        if job.status not in ['PENDING', 'RUNNING']:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': f'Cannot cancel job with status {job.status}',
+                },
+                status=400,
+            )
+
+        # Delete the job
+        job.delete()
+
+        return JsonResponse(
+            {
+                'success': True,
+                'message': f'Training job #{job_id} has been cancelled and removed',
+                'job_id': job_id,
+            }
+        )
+
+    except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
@@ -1172,9 +1228,15 @@ def get_jobs_status_api(request):
         :20
     ]
 
+    # Count running and pending jobs for the banner update
+    running_count = TrainingJob.objects.filter(status='RUNNING').count()
+    pending_count = TrainingJob.objects.filter(status='PENDING').count()
+
     return JsonResponse(
         {
             'success': True,
+            'running_count': running_count,
+            'pending_count': pending_count,
             'jobs': [
                 {
                     'id': job.id,
@@ -1183,6 +1245,12 @@ def get_jobs_status_api(request):
                     'started_at': job.started_at.isoformat(),
                     'completed_at': job.completed_at.isoformat()
                     if job.completed_at
+                    else None,
+                    'accuracy': float(job.resulting_model.accuracy)
+                    if job.resulting_model and job.resulting_model.accuracy
+                    else None,
+                    'error_message': job.error_message
+                    if hasattr(job, 'error_message')
                     else None,
                 }
                 for job in jobs
