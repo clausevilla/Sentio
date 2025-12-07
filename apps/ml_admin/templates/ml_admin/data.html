@@ -185,7 +185,7 @@
                     <div class="dataset-info">
                         <div class="dataset-name">{{ item.upload.file_name }}</div>
                         <div class="dataset-meta">
-                            <span><i class="fas fa-calendar"></i> {{ item.upload.uploaded_at|date:"M d, Y" }}</span>
+                            <span><i class="fas fa-calendar"></i> {{ item.upload.uploaded_at|date:"M d, Y H:i" }}</span>
                             <span><i class="fas fa-user"></i> {{ item.upload.uploaded_by.username|default:"—" }}</span>
                             <span><i class="fas fa-table"></i> {{ item.upload.row_count|default:0 }} rows</span>
                             <!-- TODO: Pipeline Badge (CHECK NAME LATER TO MATCH) -->

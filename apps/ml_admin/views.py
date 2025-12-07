@@ -38,6 +38,9 @@ try:
 except ImportError:
     PREDICTIONS_AVAILABLE = False
 
+# Neural network model types (only these can be retrained)
+NEURAL_NETWORK_TYPES = ['lstm', 'transformer', 'rnn']
+
 ML_ALGORITHMS = {
     'logistic_regression': {
         'name': 'Logistic Regression',
@@ -49,13 +52,13 @@ ML_ALGORITHMS = {
         'description': 'Ensemble of decision trees',
         'icon': 'fa-tree',
     },
-    'rnn': {
-        'name': 'RNN/LSTM',
+    'lstm': {
+        'name': 'LSTM (RNN)',
         'description': 'Recurrent neural network',
         'icon': 'fa-network-wired',
     },
     'transformer': {
-        'name': 'Custom Transformer',
+        'name': 'Transformer',
         'description': 'Custom architecture',
         'icon': 'fa-microchip',
     },
@@ -260,6 +263,20 @@ def upload_csv_api(request):
             pipeline_type=pipeline_type,
         )
 
+        # Prepare complete upload data for dynamic row creation in the frontend
+        upload_data = {
+            'id': upload.id,
+            'file_name': upload.file_name,
+            'uploaded_at': upload.uploaded_at.strftime('%b %d, %Y %H:%M'),
+            'uploaded_by': request.user.username,
+            'row_count': 0,
+            'status': upload.status,
+            'is_validated': upload.is_validated,
+            'pipeline_type': upload.pipeline_type,
+            'training_count': 0,
+            'test_count': 0,
+        }
+
         if PIPELINE_AVAILABLE:
             trigger_full_pipeline_in_background(upload.id, dataset_type, pipeline_type)
             return JsonResponse(
@@ -267,6 +284,7 @@ def upload_csv_api(request):
                     'success': True,
                     'message': 'Upload started. Processing in background...',
                     'upload_id': upload.id,
+                    'upload': upload_data,  # Include full upload data
                 }
             )
         else:
@@ -275,6 +293,7 @@ def upload_csv_api(request):
                     'success': True,
                     'message': 'Uploaded (pipeline not available)',
                     'upload_id': upload.id,
+                    'upload': upload_data,  # Include full upload data
                 }
             )
 
@@ -565,6 +584,54 @@ def get_dataset_distribution_api(request, upload_id):
 # ============================================
 
 
+def _get_model_training_params(model):
+    """
+    Get saved training parameters for a model.
+    Returns params dict from TrainingConfig if available, else None.
+    """
+    try:
+        job = TrainingJob.objects.filter(resulting_model=model).first()
+        if job and hasattr(job, 'config'):
+            config = job.config
+            # Build params dict from config fields
+            params = {}
+
+            # Neural network params
+            if config.embed_dim:
+                params['embed_dim'] = config.embed_dim
+            if config.hidden_dim:
+                params['hidden_dim'] = config.hidden_dim
+            if config.num_layers:
+                params['num_layers'] = config.num_layers
+            if config.dropout is not None:
+                params['dropout'] = float(config.dropout)
+            if config.max_seq_length:
+                params['max_seq_length'] = config.max_seq_length
+            if config.vocab_size:
+                params['vocab_size'] = config.vocab_size
+            if config.learning_rate:
+                params['learning_rate'] = float(config.learning_rate)
+            if config.batch_size:
+                params['batch_size'] = config.batch_size
+            if config.epochs:
+                params['epochs'] = config.epochs
+            if config.patience:
+                params['patience'] = config.patience
+
+            # Transformer specific
+            if config.d_model:
+                params['d_model'] = config.d_model
+            if config.n_head:
+                params['n_head'] = config.n_head
+            if config.dim_feedforward:
+                params['dim_feedforward'] = config.dim_feedforward
+
+            return params if params else None
+    except Exception as e:
+        logger.warning(f'Failed to get training params for model {model.id}: {e}')
+    return None
+
+
 @staff_member_required
 def training_view(request):
     jobs = TrainingJob.objects.order_by('-started_at')[:20]
@@ -608,19 +675,35 @@ def training_view(request):
         'uploads': len(uploads_with_counts),
     }
 
+    # All models for new training comparison
     all_models = ModelVersion.objects.order_by('-created_at')
+
+    # Only neural network models can be retrained (fine-tuned)
+    neural_network_models = ModelVersion.objects.filter(
+        model_type__in=NEURAL_NETWORK_TYPES
+    ).order_by('-created_at')
+
     retrainable_models = []
-    for model in all_models:
+    for model in neural_network_models:
+        # Get saved training params if available
+        saved_params = _get_model_training_params(model)
+
         model_info = {
             'id': model.id,
             'version_name': model.version_name,
             'accuracy': float(model.accuracy) if model.accuracy else None,
             'f1_score': float(model.f1_score) if model.f1_score else None,
-            'created_at': model.created_at.strftime('%Y-%m-%d'),
+            'created_at': model.created_at.strftime('%Y-%m-%d')
+            if model.created_at
+            else None,
             'is_active': model.is_active,
-            'algorithm': getattr(model, 'algorithm', 'unknown'),
+            'algorithm': model.model_type or 'unknown',
+            'saved_params': saved_params,  # Include saved training params
         }
         retrainable_models.append(model_info)
+
+    running_count = TrainingJob.objects.filter(status='RUNNING').count()
+    pending_count = TrainingJob.objects.filter(status='PENDING').count()
 
     return render(
         request,
@@ -630,11 +713,13 @@ def training_view(request):
             'uploads': uploads_with_counts,
             'algorithms': ML_ALGORITHMS,
             'active_model': active_model,
-            'running_count': TrainingJob.objects.filter(status='RUNNING').count(),
+            'running_count': running_count,
+            'pending_count': pending_count,
             'test_set_info': test_set_info,
             'test_set_json': json.dumps(test_set_info['distribution']),
             'training_totals': training_totals,
             'all_models': all_models,
+            'neural_network_models': neural_network_models,  # For template display
             'retrainable_models_json': json.dumps(retrainable_models),
         },
     )
@@ -675,7 +760,7 @@ def start_training_api(request):
                 {'success': False, 'error': 'Invalid algorithm'}, status=400
             )
 
-        # For retrain, validate base model and get its algorithm
+        # For retrain, validate base model and ensure it's a neural network
         base_model = None
         if mode == 'retrain':
             if not base_model_id:
@@ -688,6 +773,15 @@ def start_training_api(request):
                 )
             try:
                 base_model = ModelVersion.objects.get(id=base_model_id)
+                # Verify it's a neural network model
+                if base_model.model_type not in NEURAL_NETWORK_TYPES:
+                    return JsonResponse(
+                        {
+                            'success': False,
+                            'error': 'Only neural network models (LSTM, Transformer) can be fine-tuned',
+                        },
+                        status=400,
+                    )
                 # Use the base model's algorithm for retrain
                 algorithm = base_model.model_type
             except ModelVersion.DoesNotExist:
@@ -766,6 +860,40 @@ def start_training_api(request):
 
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@staff_member_required
+@require_http_methods(['POST'])
+def cancel_training_api(request, job_id):
+    """
+    Cancel a running or pending training job by deleting it.
+    """
+    try:
+        job = get_object_or_404(TrainingJob, id=job_id)
+
+        # Only allow cancelling PENDING or RUNNING jobs
+        if job.status not in ['PENDING', 'RUNNING']:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': f'Cannot cancel job with status {job.status}',
+                },
+                status=400,
+            )
+
+        # Delete the job
+        job.delete()
+
+        return JsonResponse(
+            {
+                'success': True,
+                'message': f'Training job #{job_id} has been cancelled and removed',
+                'job_id': job_id,
+            }
+        )
+
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
@@ -1044,9 +1172,15 @@ def get_jobs_status_api(request):
         :20
     ]
 
+    # Count running and pending jobs for the banner update
+    running_count = TrainingJob.objects.filter(status='RUNNING').count()
+    pending_count = TrainingJob.objects.filter(status='PENDING').count()
+
     return JsonResponse(
         {
             'success': True,
+            'running_count': running_count,
+            'pending_count': pending_count,
             'jobs': [
                 {
                     'id': job.id,
@@ -1055,6 +1189,12 @@ def get_jobs_status_api(request):
                     'started_at': job.started_at.isoformat(),
                     'completed_at': job.completed_at.isoformat()
                     if job.completed_at
+                    else None,
+                    'accuracy': float(job.resulting_model.accuracy)
+                    if job.resulting_model and job.resulting_model.accuracy
+                    else None,
+                    'error_message': job.error_message
+                    if hasattr(job, 'error_message')
                     else None,
                 }
                 for job in jobs

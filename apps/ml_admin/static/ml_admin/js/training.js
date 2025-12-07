@@ -8,6 +8,8 @@ let datasetDistributions = {};
 let selectedModelId = null;
 let selectedModelName = null;
 let selectedModelType = null;
+// Store model's saved params
+let selectedModelSavedParams = null;
 let distChart = null;
 let testSetChart = null;
 
@@ -72,6 +74,15 @@ function selectModel(element, modelId, modelType, modelName) {
     selectedModelId = modelId;
     selectedModelType = modelType;
     selectedModelName = modelName;
+
+    // Get saved params from retrainableModelsData
+    selectedModelSavedParams = null;
+    if (typeof retrainableModelsData !== 'undefined' && retrainableModelsData) {
+        const modelData = retrainableModelsData.find(m => m.id === modelId);
+        if (modelData && modelData.saved_params) {
+            selectedModelSavedParams = modelData.saved_params;
+        }
+    }
 
     // Set algorithm for params
     currentParamsAlgorithm = modelType;
@@ -313,11 +324,11 @@ async function startTraining(mode) {
 
     if (mode === 'retrain') {
         if (!selectedModelId) {
-            toast('Select a model to retrain', 'error');
+            toast('Select a model', 'error');
             return;
         }
         btn = document.getElementById('retrainBtn');
-        confirmMsg = `Retrain ${selectedModelName} with ${ids.length} dataset(s)?`;
+        confirmMsg = `Fine-tune ${selectedModelName} with ${ids.length} dataset(s)?`;
         payload = {
             upload_ids: ids,
             mode: 'retrain',
@@ -340,7 +351,7 @@ async function startTraining(mode) {
     }
 
     const confirmed = await showConfirm({
-        title: 'Start Training',
+        title: mode === 'retrain' ? 'Start Fine-tuning' : 'Start Training',
         message: confirmMsg,
         type: 'warning',
         confirmText: 'Confirm'
@@ -363,6 +374,112 @@ async function startTraining(mode) {
         toast(data.error || 'Failed to start training', 'error');
         btn.disabled = false;
         btn.innerHTML = originalText;
+    }
+}
+
+// ================================
+// Cancel Training Job
+// ================================
+
+/**
+ * Cancels a running or pending training job.
+ * Shows a confirmation dialog before cancelling and removing.
+ */
+async function cancelJob(jobId) {
+    const confirmed = await showConfirm({
+        title: 'Cancel Training Job',
+        message: `Are you sure you want to cancel and remove training job <strong>#${jobId}</strong>? This action cannot be undone.`,
+        type: 'warning',
+        confirmText: 'Cancel Job',
+        cancelText: 'Keep Running',
+        danger: true
+    });
+
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`/management/api/training/${jobId}/cancel/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRF()
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            toast('Training job cancelled', 'success');
+            // Remove the row from the table
+            removeJobRow(jobId);
+        } else {
+            toast(data.error || 'Failed to cancel job', 'error');
+        }
+    } catch (error) {
+        console.error('Cancel error:', error);
+        toast('Failed to cancel job', 'error');
+    }
+}
+
+/**
+ * Removes a job row from the table with animation.
+ * Also updates the banner count.
+ */
+function removeJobRow(jobId) {
+    const row = document.querySelector(`tr[data-job-id="${jobId}"]`);
+    if (!row) return;
+
+    // Animate out
+    row.style.transition = 'opacity 0.3s, transform 0.3s';
+    row.style.opacity = '0';
+    row.style.transform = 'translateX(-20px)';
+
+    setTimeout(() => {
+        row.remove();
+
+        // Check if table is now empty
+        const tbody = document.querySelector('#trainingJobsTable tbody');
+        if (tbody && tbody.children.length === 0) {
+            // Replace table with empty state
+            const tableWrap = document.querySelector('#trainingJobsTable');
+            if (tableWrap) {
+                tableWrap.outerHTML = '<div class="empty-state small"><p>No training jobs yet</p></div>';
+            }
+        }
+
+        // Update the banner
+        updateTrainingBannerAfterCancel();
+    }, 300);
+}
+
+/**
+ * Updates the training banner after a job is cancelled.
+ */
+function updateTrainingBannerAfterCancel() {
+    const banner = document.querySelector('.alert.info.training-banner');
+    if (!banner) return;
+
+    const spanEl = banner.querySelector('span');
+    if (!spanEl) return;
+
+    // Parse current count
+    const match = spanEl.innerHTML.match(/<strong>(\d+)<\/strong>/);
+    if (match) {
+        const currentCount = parseInt(match[1]);
+        const newCount = currentCount - 1;
+
+        if (newCount <= 0) {
+            // Remove the banner
+            banner.style.transition = 'opacity 0.3s';
+            banner.style.opacity = '0';
+            setTimeout(() => banner.remove(), 300);
+        } else {
+            // Update the count
+            const text = newCount === 1
+                ? '<strong>1</strong> training job currently running'
+                : `<strong>${newCount}</strong> training job(s) currently active`;
+            spanEl.innerHTML = text;
+        }
     }
 }
 
@@ -398,6 +515,12 @@ function showJobDetails(jobId) {
                 <div class="job-detail-label">Status</div>
                 <div class="job-detail-value">
                     <span class="badge ${job.status.toLowerCase()}">${job.status}</span>
+                </div>
+            </div>
+            <div class="job-detail-section">
+                <div class="job-detail-label">Algorithm</div>
+                <div class="job-detail-value">
+                    <span class="model-type-tag">${getAlgorithmDisplayName(job.model_type)}</span>
                 </div>
             </div>
             <div class="job-detail-section">
@@ -455,6 +578,11 @@ function showJobDetails(jobId) {
                 </div>
             </div>
         `;
+
+        // Show parameters if available
+        if (job.model.parameters) {
+            html += renderJobParameters(job.model_type || job.model.model_type, job.model.parameters);
+        }
     }
 
     if (job.status === 'FAILED' && job.error_message) {
@@ -473,9 +601,129 @@ function showJobDetails(jobId) {
     openModal('jobDetailsModal');
 }
 
+/**
+ * Gets the display name for an algorithm type.
+ */
+function getAlgorithmDisplayName(modelType) {
+    const names = {
+        'logistic_regression': 'Logistic Regression',
+        'random_forest': 'Random Forest',
+        'lstm': 'LSTM',
+        'transformer': 'Transformer'
+    };
+    return names[modelType] || modelType || '—';
+}
+
+/**
+ * Renders the parameters section for a job based on model type.
+ * Only shows parameters relevant to the specific algorithm.
+ */
+function renderJobParameters(modelType, params) {
+    if (!params) return '';
+
+    // Define which parameters to show for each model type with their display labels
+    const paramConfig = {
+        logistic_regression: [
+            { key: 'max_iter', label: 'Max Iterations' },
+            { key: 'regularization_strength', label: 'Regularization (C)' },
+            { key: 'solver', label: 'Solver' },
+            { key: 'ngram_range_min', label: 'N-gram Min' },
+            { key: 'ngram_range_max', label: 'N-gram Max' },
+            { key: 'min_df', label: 'Min Doc Frequency' },
+            { key: 'max_df', label: 'Max Doc Frequency' },
+            { key: 'tfidf_max_features', label: 'Max TF-IDF Features' }
+        ],
+        random_forest: [
+            { key: 'n_estimators', label: 'Number of Trees' },
+            { key: 'max_depth', label: 'Max Depth' },
+            { key: 'min_samples_split', label: 'Min Samples Split' },
+            { key: 'min_samples_leaf', label: 'Min Samples Leaf' },
+            { key: 'rf_max_features', label: 'Max Features' },
+            { key: 'n_jobs', label: 'Parallel Jobs' },
+            { key: 'ngram_range_min', label: 'N-gram Min' },
+            { key: 'ngram_range_max', label: 'N-gram Max' },
+            { key: 'min_df', label: 'Min Doc Frequency' },
+            { key: 'max_df', label: 'Max Doc Frequency' },
+            { key: 'tfidf_max_features', label: 'Max TF-IDF Features' }
+        ],
+        lstm: [
+            { key: 'embed_dim', label: 'Embedding Dimension' },
+            { key: 'hidden_dim', label: 'Hidden Dimension' },
+            { key: 'num_layers', label: 'Number of Layers' },
+            { key: 'dropout', label: 'Dropout' },
+            { key: 'max_seq_length', label: 'Max Sequence Length' },
+            { key: 'vocab_size', label: 'Vocabulary Size' },
+            { key: 'learning_rate', label: 'Learning Rate' },
+            { key: 'batch_size', label: 'Batch Size' },
+            { key: 'epochs', label: 'Epochs' }
+        ],
+        transformer: [
+            { key: 'd_model', label: 'Model Dimension' },
+            { key: 'n_head', label: 'Attention Heads' },
+            { key: 'dim_feedforward', label: 'Feedforward Dimension' },
+            { key: 'num_layers', label: 'Number of Layers' },
+            { key: 'dropout', label: 'Dropout' },
+            { key: 'max_seq_length', label: 'Max Sequence Length' },
+            { key: 'vocab_size', label: 'Vocabulary Size' },
+            { key: 'learning_rate', label: 'Learning Rate' },
+            { key: 'batch_size', label: 'Batch Size' },
+            { key: 'epochs', label: 'Epochs' }
+        ]
+    };
+
+    const config = paramConfig[modelType];
+    if (!config) return '';
+
+    // Filter to only parameters that have values
+    const validParams = config.filter(p => params[p.key] !== null && params[p.key] !== undefined);
+
+    if (validParams.length === 0) return '';
+
+    let html = `
+        <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--gray-200);">
+        <div class="job-detail-section">
+            <div class="job-detail-label"><i class="fas fa-sliders-h"></i> Training Parameters</div>
+            <div class="job-params-grid" style="margin-top: 0.75rem;">
+    `;
+
+    validParams.forEach(p => {
+        let value = params[p.key];
+        // Format the value for display
+        if (typeof value === 'number') {
+            // Format small decimals nicely
+            if (value < 0.01 && value > 0) {
+                value = value.toExponential(2);
+            } else if (!Number.isInteger(value)) {
+                value = value.toFixed(4).replace(/\.?0+$/, '');
+            }
+        }
+        if (value === null || value === 'None') {
+            value = 'None';
+        }
+
+        html += `
+            <div class="job-param-item">
+                <span class="job-param-label">${p.label}</span>
+                <span class="job-param-value">${value}</span>
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+        </div>
+    `;
+
+    return html;
+}
+
+
 /* ================================
    Algorithm Parameters Modal
 ================================ */
+
+// Parameters that can be fine-tuned during retraining
+const FINETUNE_PARAMS = ['learning_rate', 'epochs', 'patience', 'batch_size', 'max_seq_length', 'vocab_size'];
 
 // Algorithm parameter definitions
 // type: 'select' = dropdown, 'number' = custom input field
@@ -519,52 +767,50 @@ const ALGORITHM_PARAMS = {
         name: 'LSTM (RNN)',
         icon: 'fa-network-wired',
         params: [
-            // LSTM specific
+            // LSTM specific - architecture params (not fine-tunable)
             { key: 'embed_dim', label: 'Embedding Dim', type: 'select', default: 64, options: [32, 64, 128, 256], hint: 'Word embedding dimensions' },
             { key: 'hidden_dim', label: 'Hidden Dim', type: 'select', default: 64, options: [32, 64, 128, 256], hint: 'LSTM hidden state size' },
-            // Shared neural networks
             { key: 'num_layers', label: 'Number of Layers', type: 'select', default: 2, options: [1, 2, 3, 4, 6], hint: 'Stacked LSTM layers' },
             { key: 'dropout', label: 'Dropout', type: 'select', default: 0.1, options: [0.0, 0.1, 0.2, 0.3, 0.5], hint: 'Dropout rate for regularization' },
-            { key: 'max_seq_length', label: 'Max Sequence Length', type: 'select', default: 512, options: [128, 256, 512, 1024], hint: 'Maximum input text length' },
+            // Fine-tunable params
+            { key: 'max_seq_length', label: 'Max Sequence Length', type: 'select', default: 256, options: [128, 256, 512, 1024], hint: 'Maximum input text length' },
             { key: 'vocab_size', label: 'Vocabulary Size', type: 'select', default: 30000, options: [10000, 20000, 30000, 50000], hint: 'Maximum vocabulary size' },
-            // Learning rate - custom number input (user can type or use arrows)
-            { key: 'learning_rate', label: 'Learning Rate', type: 'number', default: 0.00001, min: 0.000001, max: 1, step: 0.00001, hint: 'Optimizer learning rate (e.g., 0.0001)' },
+            { key: 'learning_rate', label: 'Learning Rate', type: 'number', default: 0.00001, min: 0.000001, max: 1, step: 0.00001, hint: 'Optimizer learning rate (e.g., 0.00001)' },
             { key: 'batch_size', label: 'Batch Size', type: 'select', default: 32, options: [8, 16, 32, 64, 128], hint: 'Training batch size' },
-            { key: 'epochs', label: 'Epochs', type: 'select', default: 10, options: [5, 10, 20, 50], hint: 'Training epochs' },
-            { key: 'patience', label: 'Early Stop Patience', type: 'select', default: 5, options: [2, 3, 5, 10], hint: 'Epochs to wait before early stopping' },
+            { key: 'epochs', label: 'Epochs', type: 'select', default: 5, options: [3, 5, 10, 20], hint: 'Training epochs' },
+            { key: 'patience', label: 'Early Stop Patience', type: 'select', default: 3, options: [2, 3, 5, 10], hint: 'Epochs to wait before early stopping' },
         ]
     },
     transformer: {
         name: 'Transformer',
         icon: 'fa-microchip',
         params: [
-            // Transformer specific
+            // Transformer specific - architecture params (not fine-tunable)
             { key: 'd_model', label: 'Model Dimension', type: 'select', default: 128, options: [64, 128, 256, 512], hint: 'Transformer dimension (must be divisible by n_head)' },
             { key: 'n_head', label: 'Attention Heads', type: 'select', default: 4, options: [2, 4, 8], hint: 'Number of attention heads' },
             { key: 'dim_feedforward', label: 'Feedforward Dim', type: 'select', default: 256, options: [128, 256, 512, 1024], hint: 'Feedforward network dimension' },
-            // Shared neural networks
             { key: 'num_layers', label: 'Number of Layers', type: 'select', default: 2, options: [1, 2, 3, 4, 6], hint: 'Transformer encoder layers' },
             { key: 'dropout', label: 'Dropout', type: 'select', default: 0.1, options: [0.0, 0.1, 0.2, 0.3, 0.5], hint: 'Dropout rate' },
-            { key: 'max_seq_length', label: 'Max Sequence Length', type: 'select', default: 512, options: [128, 256, 512, 1024], hint: 'Maximum input length' },
+            // Fine-tunable params
+            { key: 'max_seq_length', label: 'Max Sequence Length', type: 'select', default: 256, options: [128, 256, 512, 1024], hint: 'Maximum input length' },
             { key: 'vocab_size', label: 'Vocabulary Size', type: 'select', default: 30000, options: [10000, 20000, 30000, 50000], hint: 'Maximum vocabulary size' },
-            // Learning rate - custom number input (user can type or use arrows)
-            { key: 'learning_rate', label: 'Learning Rate', type: 'number', default: 0.00001, min: 0.000001, max: 1, step: 0.00001, hint: 'Optimizer learning rate (e.g., 0.0001)' },
+            { key: 'learning_rate', label: 'Learning Rate', type: 'number', default: 0.00001, min: 0.000001, max: 1, step: 0.00001, hint: 'Optimizer learning rate (e.g., 0.00001)' },
             { key: 'batch_size', label: 'Batch Size', type: 'select', default: 32, options: [8, 16, 32, 64, 128], hint: 'Training batch size' },
-            { key: 'epochs', label: 'Epochs', type: 'select', default: 10, options: [5, 10, 20, 50], hint: 'Training epochs' },
-            { key: 'patience', label: 'Early Stop Patience', type: 'select', default: 5, options: [2, 3, 5, 10], hint: 'Epochs to wait before early stopping' },
+            { key: 'epochs', label: 'Epochs', type: 'select', default: 5, options: [3, 5, 10, 20], hint: 'Training epochs' },
+            { key: 'patience', label: 'Early Stop Patience', type: 'select', default: 3, options: [2, 3, 5, 10], hint: 'Epochs to wait before early stopping' },
         ]
     }
 };
 
-// Incremental/Retrain defaults - override these when in retrain mode (neural networks only)
-const INCREMENTAL_DEFAULTS = {
-    learning_rate: 0.00001,   // 10x lower than full (0.0001)
-    epochs: 5,                // Half of full (10)
-    patience: 3,              // Lower than full (5)
+// Fine-tuning defaults (used when retraining)
+const FINETUNE_DEFAULTS = {
+    learning_rate: 0.00001,
+    epochs: 5,
+    patience: 3,
+    batch_size: 32,
+    max_seq_length: 256,
+    vocab_size: 30000,
 };
-
-// Which algorithms are neural networks (use incremental NN defaults)
-const NEURAL_NETWORK_ALGOS = ['lstm', 'transformer', 'rnn'];
 
 // Alias for different naming conventions
 ALGORITHM_PARAMS['rnn'] = ALGORITHM_PARAMS['lstm'];
@@ -573,10 +819,9 @@ ALGORITHM_PARAMS['RNN'] = ALGORITHM_PARAMS['lstm'];
 ALGORITHM_PARAMS['Transformer'] = ALGORITHM_PARAMS['transformer'];
 
 // Current parameter values - stored per mode+algorithm
-// Key format: 'new_logistic_regression' or 'retrain_lstm'
 let currentParams = {};
 let currentParamsAlgorithm = null;
-let currentParamsMode = null;  // 'new' or 'retrain'
+let currentParamsMode = null;
 
 // ================================
 // Open Parameters Modal
@@ -594,31 +839,43 @@ function openParamsModal(algoKey) {
 
     currentParamsAlgorithm = normalizedKey;
 
-    // Check if we're in retrain mode (retrain tab is active)
-    const isIncremental = currentTab === 'retrain';
-    currentParamsMode = isIncremental ? 'retrain' : 'new';
+    // Check if we're in retrain mode
+    const isRetrain = currentTab === 'retrain';
+    currentParamsMode = isRetrain ? 'retrain' : 'new';
 
     // Create unique key for this mode+algorithm combination
     const paramsKey = `${currentParamsMode}_${normalizedKey}`;
 
-    // Initialize params with mode-specific defaults if not already set
+    // Initialize params
     if (!currentParams[paramsKey]) {
         currentParams[paramsKey] = {};
         algo.params.forEach(p => {
-            currentParams[paramsKey][p.key] = getDefaultValue(normalizedKey, p.key, isIncremental);
+            if (isRetrain) {
+                // For retrain: use saved model params or defaults
+                if (selectedModelSavedParams && selectedModelSavedParams[p.key] !== undefined) {
+                    currentParams[paramsKey][p.key] = selectedModelSavedParams[p.key];
+                } else if (FINETUNE_PARAMS.includes(p.key) && FINETUNE_DEFAULTS[p.key] !== undefined) {
+                    currentParams[paramsKey][p.key] = FINETUNE_DEFAULTS[p.key];
+                } else {
+                    currentParams[paramsKey][p.key] = p.default;
+                }
+            } else {
+                // For new training: use defaults
+                currentParams[paramsKey][p.key] = p.default;
+            }
         });
     }
 
     // Store mode info on modal
     const modal = document.getElementById('paramsModal');
     if (modal) {
-        modal.dataset.isIncremental = isIncremental;
+        modal.dataset.isRetrain = isRetrain;
         modal.dataset.paramsKey = paramsKey;
         modal.dataset.algorithm = normalizedKey;
     }
 
     // Update modal title with mode indicator
-    const modeLabel = isIncremental ? ' <span class="mode-badge retrain"><i class="fas fa-sync-alt"></i> Fine-tuning</span>' : '';
+    const modeLabel = isRetrain ? ' <span class="mode-badge retrain"><i class="fas fa-sync-alt"></i> Fine-tuning</span>' : '';
     document.getElementById('paramsModalTitle').innerHTML = `
         <i class="fas ${algo.icon}"></i> ${algo.name} Parameters${modeLabel}
     `;
@@ -626,8 +883,8 @@ function openParamsModal(algoKey) {
     // Update info text based on mode
     const infoEl = document.querySelector('.params-info');
     if (infoEl) {
-        if (isIncremental) {
-            infoEl.innerHTML = `<i class="fas fa-info-circle"></i> <strong>Fine-tuning mode:</strong> Lower learning rate and fewer epochs by default for incremental training.`;
+        if (isRetrain) {
+            infoEl.innerHTML = `<i class="fas fa-info-circle"></i> <strong>Fine-tuning mode:</strong> Architecture parameters are locked. Only training parameters (highlighted) can be adjusted.`;
             infoEl.classList.add('retrain-info');
         } else {
             infoEl.innerHTML = `<i class="fas fa-info-circle"></i> Adjust training parameters below or use defaults. Hover over <i class="fas fa-question-circle"></i> for hints.`;
@@ -641,17 +898,21 @@ function openParamsModal(algoKey) {
 
     algo.params.forEach(param => {
         const value = currentParams[paramsKey][param.key];
-        const defaultVal = getDefaultValue(normalizedKey, param.key, isIncremental);
+        const defaultVal = isRetrain ?
+            (FINETUNE_DEFAULTS[param.key] !== undefined ? FINETUNE_DEFAULTS[param.key] : param.default) :
+            param.default;
         const isModified = String(value) !== String(defaultVal);
-        html += renderParamInput(param, value, isModified);
+        const isEditable = !isRetrain || FINETUNE_PARAMS.includes(param.key);
+
+        html += renderParamInput(param, value, isModified, isEditable, isRetrain);
     });
 
     grid.innerHTML = html;
 
-    // Add event listeners for validation and change tracking
-    grid.querySelectorAll('.param-input').forEach(input => {
+    // Add event listeners for editable inputs only
+    grid.querySelectorAll('.param-input:not([disabled])').forEach(input => {
         input.addEventListener('change', handleParamChange);
-        input.addEventListener('input', handleParamChange);  // For number inputs
+        input.addEventListener('input', handleParamChange);
     });
 
     // Show modal
@@ -669,34 +930,6 @@ function normalizeAlgoKey(algoKey) {
 }
 
 // ================================
-// Check if Neural Network
-// ================================
-function isNeuralNetwork(algoKey) {
-    const normalized = normalizeAlgoKey(algoKey);
-    return NEURAL_NETWORK_ALGOS.includes(normalized);
-}
-
-// ================================
-// Get Default Value
-// ================================
-function getDefaultValue(algoKey, paramKey, isIncremental = false) {
-    const normalizedKey = normalizeAlgoKey(algoKey);
-    const algoConfig = ALGORITHM_PARAMS[normalizedKey];
-
-    if (!algoConfig) return null;
-
-    const param = algoConfig.params.find(p => p.key === paramKey);
-    if (!param) return null;
-
-    // Check incremental defaults for neural networks
-    if (isIncremental && isNeuralNetwork(normalizedKey) && INCREMENTAL_DEFAULTS[paramKey] !== undefined) {
-        return INCREMENTAL_DEFAULTS[paramKey];
-    }
-
-    return param.default;
-}
-
-// ================================
 // Handle Parameter Change
 // ================================
 function handleParamChange(e) {
@@ -706,13 +939,13 @@ function handleParamChange(e) {
     // For number inputs, parse the value
     if (e.target.type === 'number') {
         value = parseFloat(value);
-        if (isNaN(value)) return;  // Don't update if invalid
+        if (isNaN(value)) return;
     }
 
     const modal = document.getElementById('paramsModal');
     const paramsKey = modal?.dataset.paramsKey;
     const algoKey = modal?.dataset.algorithm;
-    const isIncremental = modal?.dataset.isIncremental === 'true';
+    const isRetrain = modal?.dataset.isRetrain === 'true';
 
     if (!paramsKey || !algoKey) return;
 
@@ -720,7 +953,9 @@ function handleParamChange(e) {
     currentParams[paramsKey][key] = value;
 
     // Update modified state
-    const defaultVal = getDefaultValue(algoKey, key, isIncremental);
+    const defaultVal = isRetrain ?
+        (FINETUNE_DEFAULTS[key] !== undefined ? FINETUNE_DEFAULTS[key] : getParamDefault(algoKey, key)) :
+        getParamDefault(algoKey, key);
     const isModified = String(value) !== String(defaultVal);
     const paramItem = e.target.closest('.param-item');
     if (paramItem) {
@@ -729,6 +964,16 @@ function handleParamChange(e) {
 
     // Cross-field validation
     validateParams(algoKey);
+}
+
+// ================================
+// Get Parameter Default
+// ================================
+function getParamDefault(algoKey, paramKey) {
+    const algo = ALGORITHM_PARAMS[algoKey];
+    if (!algo) return null;
+    const param = algo.params.find(p => p.key === paramKey);
+    return param ? param.default : null;
 }
 
 // ================================
@@ -802,15 +1047,15 @@ function validateParams(algoKey, showLearningRateError = false) {
 // ================================
 // Render Parameter Input
 // ================================
-function renderParamInput(param, value, isModified = false) {
+function renderParamInput(param, value, isModified = false, isEditable = true, isRetrain = false) {
     const modifiedClass = isModified ? 'modified' : '';
+    const readonlyClass = !isEditable ? 'readonly' : '';
+    const editableClass = isRetrain && isEditable ? 'finetune-editable' : '';
     const type = param.type || 'select';
 
     let inputHtml = '';
 
     if (type === 'number') {
-        // Number input for custom values (like learning rate)
-        // lang="en" forces dot as decimal separator instead of comma
         inputHtml = `
             <input type="number"
                    class="param-input"
@@ -820,10 +1065,10 @@ function renderParamInput(param, value, isModified = false) {
                    max="${param.max || 1}"
                    step="${param.step || 0.00001}"
                    lang="en"
-                   placeholder="${param.default}">
+                   placeholder="${param.default}"
+                   ${!isEditable ? 'disabled' : ''}>
         `;
     } else {
-        // Select dropdown (default)
         const options = param.options.map(opt => {
             const optStr = String(opt);
             const valStr = String(value);
@@ -832,16 +1077,23 @@ function renderParamInput(param, value, isModified = false) {
         }).join('');
 
         inputHtml = `
-            <select class="param-input" data-key="${param.key}">
+            <select class="param-input" data-key="${param.key}" ${!isEditable ? 'disabled' : ''}>
                 ${options}
             </select>
         `;
     }
 
+    // Build label with lock icon for readonly params in retrain mode
+    let labelExtra = '';
+    if (isRetrain && !isEditable) {
+        labelExtra = '<i class="fas fa-lock param-lock" title="Architecture parameter - cannot be changed during fine-tuning"></i>';
+    }
+
     return `
-        <div class="param-item ${modifiedClass}">
+        <div class="param-item ${modifiedClass} ${readonlyClass} ${editableClass}">
             <label class="param-label">
                 ${param.label}
+                ${labelExtra}
                 <span class="param-hint" title="${param.hint}">
                     <i class="fas fa-question-circle"></i>
                 </span>
@@ -855,12 +1107,11 @@ function renderParamInput(param, value, isModified = false) {
 // Close Modal
 // ================================
 function closeParamsModal() {
-    // Validate before closing
     const modal = document.getElementById('paramsModal');
     const algoKey = modal?.dataset.algorithm;
 
     if (algoKey) {
-        const validation = validateParams(algoKey, true);  // true = show learning rate error
+        const validation = validateParams(algoKey, true);
         if (!validation.valid) {
             toast('Please fix validation errors', 'error');
             return;
@@ -868,8 +1119,6 @@ function closeParamsModal() {
     }
 
     closeModal('paramsModal');
-
-    // Update the config button to show modified indicator
     updateConfigButtonState();
 }
 
@@ -906,20 +1155,33 @@ function resetParamsToDefaults() {
     const algo = ALGORITHM_PARAMS[currentParamsAlgorithm];
     if (!algo) return;
 
-    // Get mode from modal
     const modal = document.getElementById('paramsModal');
-    const isIncremental = modal?.dataset.isIncremental === 'true';
-    const paramsKey = modal?.dataset.paramsKey || `${isIncremental ? 'retrain' : 'new'}_${currentParamsAlgorithm}`;
+    const isRetrain = modal?.dataset.isRetrain === 'true';
+    const paramsKey = modal?.dataset.paramsKey || `${isRetrain ? 'retrain' : 'new'}_${currentParamsAlgorithm}`;
 
-    // Reset values with mode-specific defaults
+    // Reset values
     currentParams[paramsKey] = {};
     algo.params.forEach(param => {
-        const defaultVal = getDefaultValue(currentParamsAlgorithm, param.key, isIncremental);
+        const isEditable = !isRetrain || FINETUNE_PARAMS.includes(param.key);
+
+        let defaultVal;
+        if (isRetrain) {
+            if (isEditable && FINETUNE_DEFAULTS[param.key] !== undefined) {
+                defaultVal = FINETUNE_DEFAULTS[param.key];
+            } else if (selectedModelSavedParams && selectedModelSavedParams[param.key] !== undefined) {
+                defaultVal = selectedModelSavedParams[param.key];
+            } else {
+                defaultVal = param.default;
+            }
+        } else {
+            defaultVal = param.default;
+        }
+
         currentParams[paramsKey][param.key] = defaultVal;
 
-        // Update input
+        // Update input (only if editable)
         const input = document.querySelector(`[data-key="${param.key}"]`);
-        if (input) {
+        if (input && !input.disabled) {
             input.value = defaultVal;
         }
 
@@ -934,7 +1196,7 @@ function resetParamsToDefaults() {
     document.querySelectorAll('.param-error').forEach(el => el.remove());
     document.querySelectorAll('.param-item.error').forEach(el => el.classList.remove('error'));
 
-    const modeText = isIncremental ? 'fine-tuning' : 'training';
+    const modeText = isRetrain ? 'fine-tuning' : 'training';
     toast(`Parameters reset to ${modeText} defaults`);
 }
 
@@ -943,8 +1205,8 @@ function resetParamsToDefaults() {
 // ================================
 function getCurrentParams() {
     const algoKey = currentParamsAlgorithm || getSelectedAlgorithm();
-    const isIncremental = currentTab === 'retrain';
-    const paramsKey = `${isIncremental ? 'retrain' : 'new'}_${algoKey}`;
+    const isRetrain = currentTab === 'retrain';
+    const paramsKey = `${isRetrain ? 'retrain' : 'new'}_${algoKey}`;
 
     let params = currentParams[paramsKey];
 
@@ -952,24 +1214,34 @@ function getCurrentParams() {
     if (!params) {
         const algo = ALGORITHM_PARAMS[algoKey];
         if (!algo) {
-            // Still add training_mode even if no algo config
-            return { training_mode: isIncremental ? 'incremental' : 'full' };
+            return { training_mode: isRetrain ? 'incremental' : 'full' };
         }
 
         params = {};
         algo.params.forEach(p => {
-            params[p.key] = getDefaultValue(algoKey, p.key, isIncremental);
+            if (isRetrain) {
+                // Use saved params or fine-tune defaults
+                if (selectedModelSavedParams && selectedModelSavedParams[p.key] !== undefined) {
+                    params[p.key] = selectedModelSavedParams[p.key];
+                } else if (FINETUNE_PARAMS.includes(p.key) && FINETUNE_DEFAULTS[p.key] !== undefined) {
+                    params[p.key] = FINETUNE_DEFAULTS[p.key];
+                } else {
+                    params[p.key] = p.default;
+                }
+            } else {
+                params[p.key] = p.default;
+            }
         });
     }
 
-    // Always add training_mode based on current tab (not user-selectable)
+    // Always add training_mode
     const result = {
         ...params,
-        training_mode: isIncremental ? 'incremental' : 'full'
+        training_mode: isRetrain ? 'incremental' : 'full'
     };
 
-    // Add expand_vocab only for neural networks in retrain mode
-    if (isIncremental && isNeuralNetwork(algoKey)) {
+    // Add expand_vocab for retrain mode
+    if (isRetrain) {
         result.expand_vocab = 'True';
     }
 
@@ -980,12 +1252,10 @@ function getCurrentParams() {
 // Get Selected Algorithm
 // ================================
 function getSelectedAlgorithm() {
-    // For retrain - use stored model type
     if (currentTab === 'retrain' && selectedModelType) {
         return normalizeAlgoKey(selectedModelType);
     }
 
-    // For new training - check radio button
     const radio = document.querySelector('input[name="algorithm"]:checked');
     if (radio) return radio.value;
 
@@ -999,14 +1269,18 @@ function hasCustomParams(algoKey) {
     const algo = ALGORITHM_PARAMS[algoKey];
     if (!algo) return false;
 
-    const isIncremental = currentTab === 'retrain';
-    const paramsKey = `${isIncremental ? 'retrain' : 'new'}_${algoKey}`;
+    const isRetrain = currentTab === 'retrain';
+    const paramsKey = `${isRetrain ? 'retrain' : 'new'}_${algoKey}`;
     const params = currentParams[paramsKey];
 
     if (!params) return false;
 
     return algo.params.some(p => {
-        const defaultVal = getDefaultValue(algoKey, p.key, isIncremental);
+        // Only check editable params for retrain mode
+        if (isRetrain && !FINETUNE_PARAMS.includes(p.key)) return false;
+
+        const defaultVal = isRetrain && FINETUNE_DEFAULTS[p.key] !== undefined ?
+            FINETUNE_DEFAULTS[p.key] : p.default;
         return String(params[p.key]) !== String(defaultVal);
     });
 }
