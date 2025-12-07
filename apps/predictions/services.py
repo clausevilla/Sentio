@@ -192,7 +192,9 @@ def get_prediction_result(user, user_text):
     recommendations = get_recommendations(label, confidence, anxiety_level)
 
     if user:
-        save_prediction_to_database(user, user_text, label, confidence, model_version, recommendations)
+        save_prediction_to_database(
+            user, user_text, label, confidence, model_version, recommendations
+        )
 
     confidence_percentage = round(confidence * 100)
 
