@@ -412,6 +412,12 @@ function showJobDetails(jobId) {
                 </div>
             </div>
             <div class="job-detail-section">
+                <div class="job-detail-label">Algorithm</div>
+                <div class="job-detail-value">
+                    <span class="model-type-tag">${getAlgorithmDisplayName(job.model_type)}</span>
+                </div>
+            </div>
+            <div class="job-detail-section">
                 <div class="job-detail-label">Initiated By</div>
                 <div class="job-detail-value">${job.initiated_by}</div>
             </div>
@@ -466,6 +472,11 @@ function showJobDetails(jobId) {
                 </div>
             </div>
         `;
+
+        // Show parameters if available
+        if (job.model.parameters) {
+            html += renderJobParameters(job.model_type || job.model.model_type, job.model.parameters);
+        }
     }
 
     if (job.status === 'FAILED' && job.error_message) {
@@ -483,6 +494,123 @@ function showJobDetails(jobId) {
     document.getElementById('jobModalBody').innerHTML = html;
     openModal('jobDetailsModal');
 }
+
+/**
+ * Gets the display name for an algorithm type.
+ */
+function getAlgorithmDisplayName(modelType) {
+    const names = {
+        'logistic_regression': 'Logistic Regression',
+        'random_forest': 'Random Forest',
+        'lstm': 'LSTM',
+        'transformer': 'Transformer'
+    };
+    return names[modelType] || modelType || '—';
+}
+
+/**
+ * Renders the parameters section for a job based on model type.
+ * Only shows parameters relevant to the specific algorithm.
+ */
+function renderJobParameters(modelType, params) {
+    if (!params) return '';
+
+    // Define which parameters to show for each model type with their display labels
+    const paramConfig = {
+        logistic_regression: [
+            { key: 'max_iter', label: 'Max Iterations' },
+            { key: 'regularization_strength', label: 'Regularization (C)' },
+            { key: 'solver', label: 'Solver' },
+            { key: 'ngram_range_min', label: 'N-gram Min' },
+            { key: 'ngram_range_max', label: 'N-gram Max' },
+            { key: 'min_df', label: 'Min Doc Frequency' },
+            { key: 'max_df', label: 'Max Doc Frequency' },
+            { key: 'tfidf_max_features', label: 'Max TF-IDF Features' }
+        ],
+        random_forest: [
+            { key: 'n_estimators', label: 'Number of Trees' },
+            { key: 'max_depth', label: 'Max Depth' },
+            { key: 'min_samples_split', label: 'Min Samples Split' },
+            { key: 'min_samples_leaf', label: 'Min Samples Leaf' },
+            { key: 'rf_max_features', label: 'Max Features' },
+            { key: 'n_jobs', label: 'Parallel Jobs' },
+            { key: 'ngram_range_min', label: 'N-gram Min' },
+            { key: 'ngram_range_max', label: 'N-gram Max' },
+            { key: 'min_df', label: 'Min Doc Frequency' },
+            { key: 'max_df', label: 'Max Doc Frequency' },
+            { key: 'tfidf_max_features', label: 'Max TF-IDF Features' }
+        ],
+        lstm: [
+            { key: 'embed_dim', label: 'Embedding Dimension' },
+            { key: 'hidden_dim', label: 'Hidden Dimension' },
+            { key: 'num_layers', label: 'Number of Layers' },
+            { key: 'dropout', label: 'Dropout' },
+            { key: 'max_seq_length', label: 'Max Sequence Length' },
+            { key: 'vocab_size', label: 'Vocabulary Size' },
+            { key: 'learning_rate', label: 'Learning Rate' },
+            { key: 'batch_size', label: 'Batch Size' },
+            { key: 'epochs', label: 'Epochs' }
+        ],
+        transformer: [
+            { key: 'd_model', label: 'Model Dimension' },
+            { key: 'n_head', label: 'Attention Heads' },
+            { key: 'dim_feedforward', label: 'Feedforward Dimension' },
+            { key: 'num_layers', label: 'Number of Layers' },
+            { key: 'dropout', label: 'Dropout' },
+            { key: 'max_seq_length', label: 'Max Sequence Length' },
+            { key: 'vocab_size', label: 'Vocabulary Size' },
+            { key: 'learning_rate', label: 'Learning Rate' },
+            { key: 'batch_size', label: 'Batch Size' },
+            { key: 'epochs', label: 'Epochs' }
+        ]
+    };
+
+    const config = paramConfig[modelType];
+    if (!config) return '';
+
+    // Filter to only parameters that have values
+    const validParams = config.filter(p => params[p.key] !== null && params[p.key] !== undefined);
+
+    if (validParams.length === 0) return '';
+
+    let html = `
+        <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--gray-200);">
+        <div class="job-detail-section">
+            <div class="job-detail-label"><i class="fas fa-sliders-h"></i> Training Parameters</div>
+            <div class="job-params-grid" style="margin-top: 0.75rem;">
+    `;
+
+    validParams.forEach(p => {
+        let value = params[p.key];
+        // Format the value for display
+        if (typeof value === 'number') {
+            // Format small decimals nicely
+            if (value < 0.01 && value > 0) {
+                value = value.toExponential(2);
+            } else if (!Number.isInteger(value)) {
+                value = value.toFixed(4).replace(/\.?0+$/, '');
+            }
+        }
+        if (value === null || value === 'None') {
+            value = 'None';
+        }
+
+        html += `
+            <div class="job-param-item">
+                <span class="job-param-label">${p.label}</span>
+                <span class="job-param-value">${value}</span>
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+        </div>
+    `;
+
+    return html;
+}
+
 
 /* ================================
    Algorithm Parameters Modal
