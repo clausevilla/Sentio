@@ -150,7 +150,18 @@
                             <div class="dataset-info">
                                 <span class="dataset-name">{{ item.upload.file_name }}</span>
                                 <span class="dataset-meta">
-                                    {{ item.upload.uploaded_at|date:"M d" }} · {{ item.count }} training
+                                    {{ item.upload.uploaded_at|date:"M d" }} · {{ item.count }} records ·
+                                    {% if item.upload.pipeline_type %}
+                                    <span class="pipeline-badge {{ item.upload.pipeline_type }}">
+                                        {% if item.upload.pipeline_type == 'raw' %}
+                                        <i class="fas fa-feather"></i> Raw
+                                        {% elif item.upload.pipeline_type == 'partial' %}
+                                        <i class="fas fa-adjust"></i> Partial
+                                        {% else %}
+                                        <i class="fas fa-broom"></i> Full
+                                        {% endif %}
+                                    </span>
+                                    {% endif %}
                                 </span>
                             </div>
                         </div>
