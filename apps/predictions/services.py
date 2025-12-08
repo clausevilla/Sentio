@@ -3,15 +3,14 @@
 import logging
 import re
 
-import joblib
 import pandas as pd
 from django.conf import settings
 
 from apps.ml_admin.models import ModelVersion
 from apps.predictions.models import PredictionResult, TextSubmission
 from ml_pipeline.data_cleaning.cleaner import DataCleaningPipeline
-from ml_pipeline.preprocessing.preprocessor import DataPreprocessingPipeline
 from ml_pipeline.inference.predictor import Predictor
+from ml_pipeline.preprocessing.preprocessor import DataPreprocessingPipeline
 from ml_pipeline.storage.handler import StorageHandler
 
 logger = logging.getLogger(__name__)
@@ -160,12 +159,14 @@ def get_predictor(active_model):
 
     return _predictor
 
+
 def clean_user_input(text):
     data = {'text': [text]}
     df = pd.DataFrame(data)
     pipeline = DataCleaningPipeline()
     df = pipeline.fix_encoding(df)
     return df
+
 
 def analyze_text(text, model_version):
     """
@@ -179,12 +180,13 @@ def analyze_text(text, model_version):
 
     return result['label'], result['confidence']
 
+
 def preprocess_user_input(df, model_type):
     pipeline = DataPreprocessingPipeline()
     pipeline_version = ''
     model_to_pipeline = {
         'lstm': 'rnn',
-        'random_forest': 'rnn',
+        'random_forest': 'traditional',
         'transformer': 'transformer',
         'logistic_regression': 'traditional',
     }
@@ -199,6 +201,7 @@ def preprocess_user_input(df, model_type):
     processed_tuple = pipeline.preprocess_dataframe(df, pipeline_version)
     return processed_tuple[0]['text_preprocessed']
 
+
 def get_prediction_result(user, user_text):
     """
     Get prediction and optionally save to database.
@@ -212,9 +215,9 @@ def get_prediction_result(user, user_text):
     ).first()  # First and only available model
 
     df = clean_user_input(user_text)
-    processed_text = preprocess_user_input(df, model_version)
+    processed_text = preprocess_user_input(df, model_version.model_type)
 
-    label, confidence = analyze_text(processed_text.iloc[0])
+    label, confidence = analyze_text(processed_text.iloc[0], model_version)
 
     # Calculate metrics
     anxiety_level, negativity_level, emotional_intensity, word_count, char_count = (
