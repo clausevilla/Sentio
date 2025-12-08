@@ -166,6 +166,11 @@ def dashboard_view(request):
         'records': DatasetRecord.objects.count(),
         'users': User.objects.count(),
         'predictions': 0,
+        'full': DatasetRecord.objects.filter(data_upload__pipeline_type='full').count(),
+        'partial': DatasetRecord.objects.filter(
+            data_upload__pipeline_type='partial'
+        ).count(),
+        'raw': DatasetRecord.objects.filter(data_upload__pipeline_type='raw').count(),
     }
 
     if PREDICTIONS_AVAILABLE:
@@ -778,6 +783,17 @@ def training_view(request):
             .values('label')
             .annotate(count=Count('id'))
         ),
+        'by_pipeline': {
+            'full': DatasetRecord.objects.filter(
+                dataset_type='test', data_upload__pipeline_type='full'
+            ).count(),
+            'partial': DatasetRecord.objects.filter(
+                dataset_type='test', data_upload__pipeline_type='partial'
+            ).count(),
+            'raw': DatasetRecord.objects.filter(
+                dataset_type='test', data_upload__pipeline_type='raw'
+            ).count(),
+        },
     }
 
     training_totals = {

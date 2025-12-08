@@ -30,11 +30,12 @@
     <div class="test-set-icon"><i class="fas fa-flask"></i></div>
     <div class="test-set-info">
         <strong>Fixed Test Set</strong>
-        <span>{{ test_set_info.total }} records · Used for all evaluations</span>
+        <span class="test-set-breakdown">
+            <span class="test-pipeline full"><i class="fas fa-broom"></i> {{ test_set_info.by_pipeline.full }}</span>
+            <span class="test-pipeline partial"><i class="fas fa-adjust"></i> {{ test_set_info.by_pipeline.partial }}</span>
+            <span class="test-pipeline raw"><i class="fas fa-feather"></i> {{ test_set_info.by_pipeline.raw }}</span>
+        </span>
     </div>
-    <button class="btn btn-sm btn-secondary" onclick="openModal('testSetModal')">
-        <i class="fas fa-eye"></i> View
-    </button>
 </div>
 {% else %}
 <div class="alert warning">
@@ -132,7 +133,6 @@
                 <div class="col-header">
                     <div class="col-tab active static">
                         <i class="fas fa-database"></i> Select Training Data
-                        <span class="header-hint">({{ training_totals.records }} total)</span>
                     </div>
                 </div>
 
@@ -247,27 +247,26 @@
 <div class="card" style="margin-bottom: 1.5rem;">
     <div class="card-header">
         <h3><i class="fas fa-chart-bar"></i> Current Baseline</h3>
-        <span class="badge success"><i class="fas fa-check"></i> Active</span>
     </div>
     <div class="card-body">
         <div class="baseline-row">
             <div class="baseline-name">{{ active_model.version_name }}</div>
             <div class="baseline-metrics">
                 <div class="metric">
-                    <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|percentage }}{% else %}—{% endif %}</span>
                     <span class="metric-lbl">Accuracy</span>
+                    <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|percentage }}{% else %}—{% endif %}</span>
                 </div>
                 <div class="metric">
-                    <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|percentage }}{% else %}—{% endif %}</span>
                     <span class="metric-lbl">F1</span>
+                    <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|percentage }}{% else %}—{% endif %}</span>
                 </div>
                 <div class="metric">
-                    <span class="metric-val">{% if active_model.precision %}{{ active_model.precision|percentage }}{% else %}—{% endif %}</span>
                     <span class="metric-lbl">Precision</span>
+                    <span class="metric-val">{% if active_model.precision %}{{ active_model.precision|percentage }}{% else %}—{% endif %}</span>
                 </div>
                 <div class="metric">
-                    <span class="metric-val">{% if active_model.recall %}{{ active_model.recall|percentage }}{% else %}—{% endif %}</span>
                     <span class="metric-lbl">Recall</span>
+                    <span class="metric-val">{% if active_model.recall %}{{ active_model.recall|percentage }}{% else %}—{% endif %}</span>
                 </div>
             </div>
         </div>
