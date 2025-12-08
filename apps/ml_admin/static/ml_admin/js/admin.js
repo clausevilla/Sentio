@@ -630,7 +630,6 @@ function updateTrainingTable(jobs) {
                 if (stored) {
                     stored.status = apiJob.status;
                     stored.progress_log = apiJob.progress_log || stored.progress_log;
-                    stored.completed_at = apiJob.completed_at;
                 }
             });
             jobsDataScript.textContent = JSON.stringify(storedJobs);
@@ -646,9 +645,10 @@ function updateTrainingTable(jobs) {
         const row = tbody.querySelector(`tr[data-job-id="${job.id}"]`);
         if (!row) return;
 
+        const cells = row.querySelectorAll('td');
+
         // Update duration for running jobs (always, regardless of status change)
         if (job.status === 'RUNNING') {
-            const cells = row.querySelectorAll('td');
             if (cells.length >= 5) {
                 const durationCell = cells[4];
                 const elapsed = formatDuration(job.started_at, new Date().toISOString());
@@ -668,6 +668,15 @@ function updateTrainingTable(jobs) {
                         <span class="epoch-text">${current}/${job.total_epochs}</span>
                     </div>
                 `;
+            }
+        }
+
+        // Update duration for completed jobs (before status check so it always runs)
+        if (job.completed_at && job.status !== 'RUNNING') {
+            if (cells.length >= 5) {
+                const durationCell = cells[4];
+                const duration = formatDuration(job.started_at, job.completed_at);
+                durationCell.innerHTML = `<span class="duration">${duration}</span>`;
             }
         }
 
@@ -725,21 +734,15 @@ function updateTrainingTable(jobs) {
             }
         }
 
-        // Update duration column
-        if (job.completed_at) {
-            const cells = row.querySelectorAll('td');
-            // Duration is typically the 5th column (index 5)
-            if (cells.length >= 5) {
-                const durationCell = cells[4];
-                const duration = formatDuration(new Date(job.started_at), new Date(job.completed_at));
-                durationCell.innerHTML = `<span class="duration">${duration}</span>`;
-            }
-        }
-
         // Add highlight animation
         row.classList.add('status-updated');
         setTimeout(() => row.classList.remove('status-updated'), 2000);
     });
+
+    // Update the banner based on current job statuses
+    const runningCount = jobs.filter(j => j.status === 'RUNNING').length;
+    const pendingCount = jobs.filter(j => j.status === 'PENDING').length;
+    updateTrainingBanner(runningCount, pendingCount);
 }
 
 /**

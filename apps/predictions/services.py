@@ -3,11 +3,14 @@
 import logging
 import re
 
+import pandas as pd
 from django.conf import settings
 
 from apps.ml_admin.models import ModelVersion
 from apps.predictions.models import PredictionResult, TextSubmission
+from ml_pipeline.data_cleaning.cleaner import DataCleaningPipeline
 from ml_pipeline.inference.predictor import Predictor
+from ml_pipeline.preprocessing.preprocessor import DataPreprocessingPipeline
 from ml_pipeline.storage.handler import StorageHandler
 
 logger = logging.getLogger(__name__)
@@ -130,7 +133,7 @@ NEGATIVE_WORDS = [
 ]
 
 
-def get_predictor():
+def get_predictor(active_model):
     """
     Get or create predictor with the active model loaded.
 
@@ -138,10 +141,6 @@ def get_predictor():
     Reloads if the active model changes.
     """
     global _predictor, _loaded_model_id
-
-    active_model = ModelVersion.objects.filter(
-        is_active=True
-    ).first()  # First and only available model
 
     if active_model is None:
         raise RuntimeError('No active model configured')
@@ -158,20 +157,49 @@ def get_predictor():
         _loaded_model_id = active_model.id
         logger.info(f'Loaded model: {active_model.version_name}')
 
-    return _predictor, active_model
+    return _predictor
 
 
-def analyze_text(text):
+def clean_user_input(text):
+    data = {'text': [text]}
+    df = pd.DataFrame(data)
+    pipeline = DataCleaningPipeline()
+    df = pipeline.fix_encoding(df)
+    return df
+
+
+def analyze_text(text, model_version):
     """
     Analyze text and return prediction results.
 
     Returns:
         Tuple of (label, confidence, model_version)
     """
-    predictor, model_version = get_predictor()
+    predictor = get_predictor(model_version)
     result = predictor.predict(text)
 
-    return result['label'], result['confidence'], model_version
+    return result['label'], result['confidence']
+
+
+def preprocess_user_input(df, model_type):
+    pipeline = DataPreprocessingPipeline()
+    pipeline_version = ''
+    model_to_pipeline = {
+        'lstm': 'rnn',
+        'random_forest': 'traditional',
+        'transformer': 'transformer',
+        'logistic_regression': 'traditional',
+    }
+
+    try:
+        pipeline_version = model_to_pipeline[model_type]
+    except KeyError:
+        raise ValueError(
+            f"Invalid model type '{model_type}'. Must be one of: {', '.join(model_to_pipeline.keys())}"
+        )
+
+    processed_tuple = pipeline.preprocess_dataframe(df, pipeline_version)
+    return processed_tuple[0]['text_preprocessed']
 
 
 def get_prediction_result(user, user_text):
@@ -181,7 +209,15 @@ def get_prediction_result(user, user_text):
     Returns:
         Tuple of (prediction_label, confidence_percentage)
     """
-    label, confidence, model_version = analyze_text(user_text)
+
+    model_version = ModelVersion.objects.filter(
+        is_active=True
+    ).first()  # First and only available model
+
+    df = clean_user_input(user_text)
+    processed_text = preprocess_user_input(df, model_version.model_type)
+
+    label, confidence = analyze_text(processed_text.iloc[0], model_version)
 
     # Calculate metrics
     anxiety_level, negativity_level, emotional_intensity, word_count, char_count = (

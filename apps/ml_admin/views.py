@@ -728,6 +728,14 @@ def training_view(request):
         ).count()
 
         if training_count > 0:
+            # Get counts by dataset_type
+            train_count = DatasetRecord.objects.filter(
+                data_upload=upload, dataset_type='train'
+            ).count()
+            increment_count = DatasetRecord.objects.filter(
+                data_upload=upload, dataset_type='increment'
+            ).count()
+
             dist = list(
                 DatasetRecord.objects.filter(
                     data_upload=upload, dataset_type__in=['train', 'increment']
@@ -741,6 +749,9 @@ def training_view(request):
                     'count': training_count,
                     'distribution': dist,
                     'distribution_json': json.dumps(dist),
+                    'pipeline_type': upload.pipeline_type,
+                    'train_count': train_count,
+                    'increment_count': increment_count,
                 }
             )
 

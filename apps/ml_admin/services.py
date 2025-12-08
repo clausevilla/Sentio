@@ -1,4 +1,4 @@
-# Authors: Julia McCall, Claudia Sevilla, Marcus Berggren
+# Authors: Julia McCall, Claudia Sevilla Eslava, Marcus Berggren
 import csv
 import logging
 import threading
@@ -462,10 +462,12 @@ def _run_training(
         if not X_test:
             raise ValueError('No test data found. Split your dataset first.')
 
-        job.progress_log = f'Initializing {model_name} training...'
-        job.current_epoch = 0
-        job.total_epochs = config.get('epochs', 10)
-        job.save(update_fields=['progress_log', 'current_epoch', 'total_epochs'])
+        # Set initial progress for neural network models only
+        if model_name in ('lstm', 'transformer'):
+            job.progress_log = f'Initializing {model_name} training...'
+            job.current_epoch = 0
+            job.total_epochs = config.get('epochs', 10)
+            job.save(update_fields=['progress_log', 'current_epoch', 'total_epochs'])
 
         result = trainer.train(
             model_name=model_name,

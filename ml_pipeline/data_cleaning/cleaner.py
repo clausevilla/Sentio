@@ -119,7 +119,7 @@ class DataCleaningPipeline:
             df = self._trim_long_text(df)
             df = self._combine_anxiety_stress(df)
             df = self._remove_invalid_labels(df)
-            df = self._fix_encoding(df)
+            df = self.fix_encoding(df)
             df = self._remove_duplicates(df)
             df = df.reset_index(drop=True)
 
@@ -197,7 +197,7 @@ class DataCleaningPipeline:
         logger.info(f'Removed {removed:,} rows with invalid labels')
         return df
 
-    def _fix_encoding(self, df: pd.DataFrame) -> pd.DataFrame:
+    def fix_encoding(self, df: pd.DataFrame) -> pd.DataFrame:
         issues_count = 0
         for bad_char, good_char in self.encoding_fixes.items():
             count = df['text'].str.contains(bad_char, regex=False).sum()

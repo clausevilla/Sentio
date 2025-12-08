@@ -140,7 +140,12 @@
                     <!-- Dataset List -->
                     <div class="dataset-list">
                         {% for item in uploads %}
-                        <div class="dataset-option" onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }}, event)" data-distribution='{{ item.distribution_json|safe }}'>
+                        <div class="dataset-option"
+                             onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }}, event)"
+                             data-distribution='{{ item.distribution_json|safe }}'
+                             data-pipeline-type="{{ item.pipeline_type }}"
+                             data-train-count="{{ item.train_count }}"
+                             data-increment-count="{{ item.increment_count }}">
                             <input type="checkbox" data-id="{{ item.upload.id }}" data-count="{{ item.count }}">
                             <div class="dataset-info">
                                 <span class="dataset-name">{{ item.upload.file_name }}</span>

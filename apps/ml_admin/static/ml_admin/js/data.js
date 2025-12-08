@@ -1204,10 +1204,10 @@ async function loadSplitInfo(id, name) {
                 <div class="split-quick-actions">
                     <label>Quick Actions:</label>
                     <button class="btn btn-secondary btn-block" onclick="applySplit('all_training')">
-                        <i class="fas fa-graduation-cap"></i> All --> Training
+                        <i class="fas fa-graduation-cap"></i> All -> Training
                     </button>
                     <button class="btn btn-secondary btn-block" onclick="applySplit('all_test')">
-                        <i class="fas fa-flask"></i> All --> Test
+                        <i class="fas fa-flask"></i> All -> Test
                     </button>
                 </div>
             </div>

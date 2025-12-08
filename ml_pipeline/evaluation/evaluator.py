@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 
 import matplotlib
 
-matplotlib.use('Agg')  # Non-interactive backend, no window
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch

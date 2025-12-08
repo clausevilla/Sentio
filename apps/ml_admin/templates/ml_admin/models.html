@@ -275,7 +275,7 @@
             created_by: '{{ item.model.created_by.username|default:"-"|escapejs }}',
             file_path: '{{ item.model.model_file_path|default:"-"|escapejs }}',
             is_active: {{ item.model.is_active|yesno:"true,false" }},
-            job_dataset: '{% if item.job %}{{ item.job.data_upload.file_name|default:"-"|escapejs }}{% else %}-{% endif %}',
+            job_dataset: '{{ item.model.training_datasets|default:"-"|escapejs }}',
             has_roc_plot: {{ item.model.roc_plot_base64|yesno:"true,false" }},
             has_confusion_matrix: {{ item.model.confusion_matrix_base64|yesno:"true,false" }},
             roc_plot: '{{ item.model.roc_plot_base64|default:""|escapejs }}',
@@ -354,7 +354,7 @@
                         <span class="detail-value">${model.created_by}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label"><i class="fas fa-database"></i> Training Dataset</span>
+                        <span class="detail-label"><i class="fas fa-database"></i> Training Datasets</span>
                         <span class="detail-value">${model.job_dataset}</span>
                     </div>
                     <div class="detail-row">
