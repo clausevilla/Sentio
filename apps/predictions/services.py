@@ -3,9 +3,12 @@
 import re
 
 import joblib
+import pandas as pd
 
 from apps.ml_admin.models import ModelVersion
 from apps.predictions.models import PredictionResult, TextSubmission
+from ml_pipeline.data_cleaning.cleaner import DataCleaningPipeline
+from ml_pipeline.preprocessing.preprocessor import DataPreprocessingPipeline
 
 NEGATIVE_WORDS = [
     # Sadness / Depression
@@ -128,20 +131,54 @@ MODEL = joblib.load(MODEL_PATH)
 
 
 def analyze_text(analyzed_text):
-    prediction = MODEL.predict([analyzed_text])
+    predictions = MODEL.predict([analyzed_text])
 
-    label = prediction[0]
+    prediction = predictions[0]
     proba = MODEL.predict_proba([analyzed_text])[0]
     confidence = max(proba)
-    model_version = ModelVersion.objects.filter(
-        is_active=True
-    ).first()  # Placeholder, just uses the first model in the database
 
-    return (label, confidence, model_version)
+    return (prediction, confidence)
+
+
+def clean_user_input(text):
+    data = {'text': [text]}
+    df = pd.DataFrame(data)
+    pipeline = DataCleaningPipeline()
+    df = pipeline.fix_encoding(df)
+    return df
+
+
+def preprocess_user_input(df, model_type):
+    pipeline = DataPreprocessingPipeline()
+    pipeline_version = ''
+    model_to_pipeline = {
+        'lstm': 'rnn',
+        'random_forest': 'rnn',
+        'transformer': 'transformer',
+        'logistic_regression': 'traditional',
+    }
+
+    try:
+        pipeline_version = model_to_pipeline[model_type]
+    except KeyError:
+        raise ValueError(
+            f"Invalid model type '{model_type}'. Must be one of: {', '.join(model_to_pipeline.keys())}"
+        )
+
+    processed_tuple = pipeline.preprocess_dataframe(df, pipeline_version)
+    return processed_tuple[0]['text_preprocessed']
 
 
 def get_prediction_result(user, user_text):
-    prediction, confidence, model_version = analyze_text(user_text)
+    model_version = ModelVersion.objects.filter(
+        is_active=True
+    ).first()  # Takes the active model
+
+    df = clean_user_input(user_text)
+    processed_text = preprocess_user_input(
+        df, model_version.model_type
+    )  #!!! Placerholder
+    prediction, confidence = analyze_text(processed_text.iloc[0])
 
     # Calculate metrics
     anxiety_level, negativity_level, emotional_intensity, word_count, char_count = (
