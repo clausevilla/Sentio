@@ -13,11 +13,43 @@ let selectedModelSavedParams = null;
 let distChart = null;
 let testSetChart = null;
 
+// Pipeline type mapping for model types
+const MODEL_PIPELINE_MAP = {
+    'logistic_regression': 'full',
+    'random_forest': 'full',
+    'lstm': 'partial',
+    'transformer': 'raw'
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     initAlgorithmListeners();
     initTestSetModal();
     updateSummary();
 });
+
+// ================================
+// Dataset Filtering
+// ================================
+
+function filterDatasets() {
+    const algo = currentTab === 'train'
+        ? document.querySelector('input[name="algorithm"]:checked')?.value
+        : selectedModelType;
+    const pipeline = MODEL_PIPELINE_MAP[algo];
+    const dataType = currentTab === 'train' ? 'trainCount' : 'incrementCount';
+
+    document.querySelectorAll('.dataset-option').forEach(el => {
+        const show = el.dataset.pipelineType === pipeline && parseInt(el.dataset[dataType]) > 0;
+        el.style.display = show ? '' : 'none';
+        if (!show && el.classList.contains('selected')) {
+            el.querySelector('input').checked = false;
+            el.classList.remove('selected');
+            delete selectedDatasets[el.querySelector('input').dataset.id];
+        }
+    });
+    updateDistribution();
+    updateSummary();
+}
 
 // ================================
 // Tab Switching
@@ -43,7 +75,8 @@ function switchTab(tab) {
     document.getElementById('trainBtn').style.display = (tab === 'train') ? 'inline-flex' : 'none';
     document.getElementById('retrainBtn').style.display = (tab === 'retrain') ? 'inline-flex' : 'none';
 
-    updateSummary();
+    // Filter datasets for new tab
+    filterDatasets();
 }
 
 // ================================
@@ -52,8 +85,12 @@ function switchTab(tab) {
 
 function initAlgorithmListeners() {
     document.querySelectorAll('input[name="algorithm"]').forEach(radio => {
-        radio.addEventListener('change', updateSummary);
+        radio.addEventListener('change', function () {
+            filterDatasets();
+            updateSummary();
+        });
     });
+    filterDatasets(); // Call once on init
 }
 
 // ================================
@@ -87,7 +124,8 @@ function selectModel(element, modelId, modelType, modelName) {
     // Set algorithm for params
     currentParamsAlgorithm = modelType;
 
-    updateRetrainSummary();
+    // Filter datasets based on selected model type
+    filterDatasets();
 }
 
 // ================================
@@ -151,10 +189,6 @@ function updateSummary() {
         // Enable/disable button (need both model and datasets)
         document.getElementById('retrainBtn').disabled = !selectedModelId || datasetCount === 0;
     }
-}
-
-function updateRetrainSummary() {
-    updateSummary();
 }
 
 // ================================
