@@ -1,4 +1,4 @@
-# Authors: Julia McCall, Claudia Sevilla, Marcus Berggren
+# Authors: Julia McCall, Claudia Sevilla Eslava, Marcus Berggren
 import csv
 import logging
 import threading
