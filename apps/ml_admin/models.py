@@ -33,6 +33,14 @@ class ModelVersion(models.Model):
     is_active = models.BooleanField(default=False)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
+    @property
+    def training_datasets(self):
+        """Get dataset names from the training job that created this model."""
+        try:
+            return ', '.join([u.file_name for u in self.trainingjob.data_uploads.all()])
+        except TrainingJob.DoesNotExist:
+            return None
+
 
 class DataUpload(models.Model):
     """
