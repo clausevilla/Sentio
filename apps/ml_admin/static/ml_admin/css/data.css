@@ -351,9 +351,17 @@
     color: var(--gray-500);
 }
 
-.task-status.processing { color: var(--info); }
-.task-status.success { color: var(--success); }
-.task-status.error { color: var(--danger); }
+.task-status.processing {
+    color: var(--info);
+}
+
+.task-status.success {
+    color: var(--success);
+}
+
+.task-status.error {
+    color: var(--danger);
+}
 
 .task-stages {
     display: flex;
@@ -405,8 +413,13 @@
     font-weight: 500;
 }
 
-.stage-item.active .stage-name { color: var(--info); }
-.stage-item.done .stage-name { color: var(--success); }
+.stage-item.active .stage-name {
+    color: var(--info);
+}
+
+.stage-item.done .stage-name {
+    color: var(--success);
+}
 
 .task-progress {
     width: 100%;
@@ -426,14 +439,24 @@
 }
 
 @keyframes progress-shimmer {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
 }
 
 .task-type-badge {
@@ -489,9 +512,17 @@
     transition: width 0.3s;
 }
 
-.label-stat-row:nth-child(2) .label-bar { background: var(--coral); }
-.label-stat-row:nth-child(3) .label-bar { background: var(--purple); }
-.label-stat-row:nth-child(4) .label-bar { background: var(--secondary); }
+.label-stat-row:nth-child(2) .label-bar {
+    background: var(--coral);
+}
+
+.label-stat-row:nth-child(3) .label-bar {
+    background: var(--purple);
+}
+
+.label-stat-row:nth-child(4) .label-bar {
+    background: var(--secondary);
+}
 
 .label-stat-row .label-count {
     width: 60px;
@@ -574,9 +605,17 @@
     color: var(--gray-500);
 }
 
-.split-stat.training .split-count { color: var(--success); }
-.split-stat.test .split-count { color: var(--purple); }
-.split-stat.unlabeled .split-count { color: var(--warning); }
+.split-stat.training .split-count {
+    color: var(--success);
+}
+
+.split-stat.test .split-count {
+    color: var(--purple);
+}
+
+.split-stat.unlabeled .split-count {
+    color: var(--warning);
+}
 
 .split-bar {
     display: flex;
@@ -808,6 +847,69 @@
 
 .pipeline-badge i {
     font-size: 0.6rem;
+}
+
+.pipeline-stats-grid {
+    display: grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem
+}
+
+.pipeline-stat-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
+    overflow: hidden
+}
+
+.pipeline-stat-header {
+    padding: .75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-weight: 600
+}
+
+.pipeline-stat-card.full .pipeline-stat-header {
+    background: rgba(74, 124, 89, 0.1);
+    color: var(--primary);
+}
+
+.pipeline-stat-card.partial .pipeline-stat-header {
+    background: rgba(243, 156, 18, 0.1);
+    color: #D68910;
+}
+
+.pipeline-stat-card.raw .pipeline-stat-header {
+    background: rgba(142, 68, 173, 0.1);
+    color: #8E44AD;
+}
+
+.pipeline-stat-body {
+    padding: .75rem 1rem
+}
+
+.pipeline-stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: .35rem 0;
+    font-size: .85rem
+}
+
+.pipeline-stat-row:not(:last-child) {
+    border-bottom: 1px solid #f3f4f6
+}
+
+.pipeline-stat-row span:first-child {
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: .4rem
+}
+
+.pipeline-stat-row span:last-child {
+    font-weight: 600
 }
 
 /* Task Pipeline Badge */
@@ -1061,7 +1163,7 @@
 .text-cell {
     line-height: 1.5;
     word-break: break-word;
-    min-width:500pt;
+    min-width: 500pt;
 }
 
 .text-cell::after {
@@ -1110,10 +1212,25 @@
     text-transform: capitalize;
 }
 
-.label-badge.normal { background: rgba(39, 174, 96, 0.15); color: #1E8449; }
-.label-badge.depression { background: rgba(40, 116, 166, 0.15); color: #1A5276; }
-.label-badge.stress { background: rgba(231, 76, 60, 0.15); color: #C0392B; }
-.label-badge.suicidal { background: rgba(125, 60, 152, 0.15); color: #6C3483; }
+.label-badge.normal {
+    background: rgba(39, 174, 96, 0.15);
+    color: #1E8449;
+}
+
+.label-badge.depression {
+    background: rgba(40, 116, 166, 0.15);
+    color: #1A5276;
+}
+
+.label-badge.stress {
+    background: rgba(231, 76, 60, 0.15);
+    color: #C0392B;
+}
+
+.label-badge.suicidal {
+    background: rgba(125, 60, 152, 0.15);
+    color: #6C3483;
+}
 
 
 /* Smooth loading transition */
@@ -1237,10 +1354,10 @@
     }
 
     .text-cell {
-    line-height: 1.5;
-    word-break: break-word;
-    min-width:200pt;
-}
+        line-height: 1.5;
+        word-break: break-word;
+        min-width: 200pt;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1293,8 +1410,8 @@
     }
 
     .text-cell {
-    line-height: 1.5;
-    word-break: break-word;
-    min-width:100pt;
-}
+        line-height: 1.5;
+        word-break: break-word;
+        min-width: 100pt;
+    }
 }
