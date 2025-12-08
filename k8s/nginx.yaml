@@ -15,12 +15,11 @@ data:
         listen 80;
         server_name _;
         client_max_body_size 100M;
-        location /static/ {
-            alias /app/staticfiles/;
-        }
-        location /media/ {
-            alias /app/media/;
-        }
+
+        # All requests go to Django
+        # Static files: served by WhiteNoise
+        # Media files: served by GCS
+
         location / {
             proxy_pass http://sentio_app;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -62,22 +61,10 @@ spec:
             - name: nginx-config
               mountPath: /etc/nginx/conf.d/default.conf
               subPath: nginx.conf
-            - name: static-files
-              mountPath: /app/staticfiles
-              readOnly: true
-            - name: media-files
-              mountPath: /app/media
-              readOnly: true
       volumes:
         - name: nginx-config
           configMap:
             name: nginx-config
-        - name: static-files
-          persistentVolumeClaim:
-            claimName: sentio-static-pvc
-        - name: media-files
-          persistentVolumeClaim:
-            claimName: sentio-media-pvc
 ---
 apiVersion: v1
 kind: Service

@@ -37,7 +37,11 @@ USE_GCS = True
 
 STORAGES = {
     'default': {
-        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'BACKEND': 'storages.backends.gcloud.GoogleCloudStorage',
+        'OPTIONS': {
+            'bucket_name': 'sentio-m_l-models',
+            'location': 'uploads',  # gs://sentio-m_l-models/uploads/
+        },
     },
     'staticfiles': {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
