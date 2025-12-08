@@ -110,7 +110,7 @@
                             <div class="model-name-cell">
                                 <div class="model-icon {% if item.model.is_active %}active{% endif %}">
                                     {% if item.model.model_type == 'lstm' or item.model.model_type == 'transformer' %}
-                                    <i class="fas fa-brain"></i>
+                                    <i class="fas fa-microchip"></i>
                                     {% elif item.model.model_type == 'random_forest' %}
                                     <i class="fas fa-tree"></i>
                                     {% else %}
@@ -293,7 +293,7 @@
         switch(type) {
             case 'lstm':
             case 'transformer':
-                return 'fa-brain';
+                return 'fa-microchip';
             case 'random_forest':
                 return 'fa-tree';
             default:

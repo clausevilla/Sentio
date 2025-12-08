@@ -635,15 +635,16 @@ def _load_model_metadata(model_file_path: str) -> Dict[str, Any]:
     """
     Extract metadata from a model file.
 
-    Returns dict with model_type and metrics (if available).
+    Returns dict with model_type, metrics, and config (if available).
     """
-    metadata = {'model_type': None, 'metrics': {}}
+    metadata = {'model_type': None, 'metrics': {}, 'config': {}}
 
     if model_file_path.endswith('.pt'):
         storage = StorageHandler(model_dir=settings.MODEL_DIR)
         checkpoint = storage.load_neural_model(model_file_path)
         metadata['model_type'] = checkpoint.get('model_type')
         metadata['metrics'] = checkpoint.get('metrics') or {}
+        metadata['config'] = checkpoint.get('config') or {}
 
     return metadata
 
