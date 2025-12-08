@@ -645,9 +645,10 @@ function updateTrainingTable(jobs) {
         const row = tbody.querySelector(`tr[data-job-id="${job.id}"]`);
         if (!row) return;
 
+        const cells = row.querySelectorAll('td');
+
         // Update duration for running jobs (always, regardless of status change)
         if (job.status === 'RUNNING') {
-            const cells = row.querySelectorAll('td');
             if (cells.length >= 5) {
                 const durationCell = cells[4];
                 const elapsed = formatDuration(job.started_at, new Date().toISOString());
