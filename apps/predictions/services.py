@@ -1,4 +1,4 @@
-# Author: Karl Byland, Claudia Sevilla
+# Author: Karl Byland, Claudia Sevilla, Lian Shi
 
 import logging
 import re
@@ -207,7 +207,9 @@ def get_prediction_result(user, user_text):
     Get prediction and optionally save to database.
 
     Returns:
-        Tuple of (prediction_label, confidence_percentage)
+        Tuple of (prediction_label, confidence_percentage, recommendations,
+                  anxiety_level, negativity_level, emotional_intensity,
+                  word_count, char_count)
     """
 
     model_version = ModelVersion.objects.filter(
@@ -229,7 +231,15 @@ def get_prediction_result(user, user_text):
 
     if user:
         save_prediction_to_database(
-            user, user_text, label, confidence, model_version, recommendations
+            user=user,
+            user_text=user_text,
+            prediction=label,
+            confidence=confidence,
+            model_version=model_version,
+            recommendations=recommendations,
+            anxiety_level=anxiety_level,
+            negativity_level=negativity_level,
+            emotional_intensity=emotional_intensity,
         )
 
     confidence_percentage = round(confidence * 100)
@@ -357,8 +367,33 @@ def calculate_metrics(text: str):
 
 
 def save_prediction_to_database(
-    user, user_text, prediction, confidence, model_version, recommendations
+    user,
+    user_text,
+    prediction,
+    confidence,
+    model_version,
+    recommendations,
+    anxiety_level=None,
+    negativity_level=None,
+    emotional_intensity=None,
 ):
+    """
+    Save the prediction result and associated metrics to the database.
+
+    Excludes template/example texts from being saved to avoid cluttering
+    the user's history with demonstration data.
+
+    Args:
+        user: The authenticated user making the prediction
+        user_text: The original text submitted for analysis
+        prediction: The predicted mental state label
+        confidence: Model confidence score (0-1)
+        model_version: The ModelVersion instance used for prediction
+        recommendations: List of recommendation strings
+        anxiety_level: Calculated anxiety metric (0-100)
+        negativity_level: Calculated negativity metric (0-100)
+        emotional_intensity: Calculated emotional intensity metric (0-100)
+    """
     template_texts = [
         (
             'I feel so empty inside. Nothing brings me joy anymore.'
@@ -381,13 +416,22 @@ def save_prediction_to_database(
             'Nothing overly extraordinary happened, but it felt like a genuinely pleasant day!'
         ),
     ]
+
     if user_text not in template_texts:
+        # Create the text submission record
         submission = TextSubmission.objects.create(user=user, text_content=user_text)
-        # Save to database
+
+        # Convert recommendations list to string for storage
+        recommendations_text = '\n'.join(recommendations) if isinstance(recommendations, list) else recommendations
+
+        # Create the prediction result with all metrics
         PredictionResult.objects.create(
             submission=submission,
             model_version=model_version,
             mental_state=prediction,
             confidence=confidence,
-            recommendations=recommendations,
+            recommendations=recommendations_text,
+            anxiety_level=anxiety_level,
+            negativity_level=negativity_level,
+            emotional_intensity=emotional_intensity,
         )
