@@ -37,6 +37,14 @@ PIPELINE_TO_MODEL_TYPE = {
     'raw': 'transformer',
 }
 
+# Reverse mapping: model type -> required pipeline type
+MODEL_TO_PIPELINE = {
+    'logistic_regression': 'full',
+    'random_forest': 'full',
+    'lstm': 'partial',
+    'transformer': 'raw',
+}
+
 
 def trigger_full_pipeline_in_background(
     data_upload_id: int,
@@ -380,10 +388,18 @@ def import_csv_dataset(file_path, data_upload, dataset_type='train', batch_size=
 
 
 def get_training_data(
-    dataset_type: Literal['train', 'increment'], upload_ids: List[int] = None
+    dataset_type: Literal['train', 'increment'],
+    upload_ids: List[int] = None,
+    pipeline_type: str = None,
 ) -> Tuple:
     """
     Use one method for acquiring different types of data
+
+    Args:
+        dataset_type: 'train' or 'increment'
+        upload_ids: List of DataUpload IDs to filter training data
+        pipeline_type: Required pipeline type ('full', 'partial', 'raw')
+                      If provided, filters both tran and test data by this type
     """
 
     if dataset_type not in ('train', 'increment'):
@@ -392,6 +408,11 @@ def get_training_data(
     # Test records are always static but train data depens on full train or incremental
     test_records = DatasetRecord.objects.filter(dataset_type='test')
     train_records = DatasetRecord.objects.filter(dataset_type=dataset_type)
+
+    # Filter by pipeline type if specified
+    if pipeline_type:
+        test_records = test_records.filter(data_upload__pipeline_type=pipeline_type)
+        train_records = train_records.filter(data_upload__pipeline_type=pipeline_type)
 
     if upload_ids:
         train_records = train_records.filter(data_upload_id__in=upload_ids)
@@ -444,23 +465,32 @@ def _run_training(
     job = TrainingJob.objects.get(id=job_id)
 
     try:
+        # Get required pipeline type for this model
+        pipeline_type = MODEL_TO_PIPELINE.get(model_name)
+        if not pipeline_type:
+            raise ValueError(f'Unknown model type: {model_name}')
+
         storage = StorageHandler(
             model_dir=settings.MODEL_DIR,
             gcs_bucket=getattr(settings, 'GCS_BUCKET', None),
         )
         trainer = ModelTrainer(storage)
 
-        if is_incremental:
-            X_train, y_train, X_test, y_test = get_training_data(
-                'increment', upload_ids
-            )
-        else:
-            X_train, y_train, X_test, y_test = get_training_data('train', upload_ids)
+        dataset_type = 'increment' if is_incremental else 'train'
+        X_train, y_train, X_test, y_test = get_training_data(
+            dataset_type, upload_ids, pipeline_type
+        )
 
         if not X_train:
-            raise ValueError('No training data found')
+            raise ValueError(
+                f'No {dataset_type} data found with pipeline type "{pipeline_type}". '
+                f'Upload and process data with the correct pipeline type for {model_name}.'
+            )
         if not X_test:
-            raise ValueError('No test data found. Split your dataset first.')
+            raise ValueError(
+                f'No test data found with pipeline type "{pipeline_type}". '
+                f'Ensure test data exists with the correct pipeline type for {model_name}.'
+            )
 
         # Set initial progress for neural network models only
         if model_name in ('lstm', 'transformer'):

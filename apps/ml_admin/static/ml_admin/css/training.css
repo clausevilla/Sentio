@@ -864,6 +864,33 @@ select.param-input {
     color: var(--gray-600);
 }
 
+.test-set-breakdown {
+    display: flex;
+    gap: .5rem
+}
+
+.test-pipeline {
+    padding: .2rem .5rem;
+    border-radius: 4px;
+    font-size: .75rem;
+    font-weight: 600
+}
+
+.test-pipeline.full {
+    background: rgba(74, 124, 89, 0.1);
+    color: var(--primary);
+}
+
+.test-pipeline.partial {
+    background: rgba(243, 156, 18, 0.1);
+    color: #D68910;
+}
+
+.test-pipeline.raw {
+    background: rgba(142, 68, 173, 0.1);
+    color: #8E44AD;
+}
+
 .chart-wrap {
     position: relative;
 }

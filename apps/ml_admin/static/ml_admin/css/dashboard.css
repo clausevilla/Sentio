@@ -56,6 +56,81 @@
     white-space: nowrap;
 }
 
+.stat-card-group {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
+    padding: .75rem 1rem;
+    cursor: pointer;
+    flex: 2;
+    text-align: center;
+}
+
+.stat-group-header {
+    font-size: .7rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: .75rem
+}
+
+.stat-group-items {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+}
+
+.stat-group-item {
+    display: flex;
+    align-items: center;
+    gap: .4rem
+}
+
+.stat-group-item .stat-value {
+    font-size: 1.1rem;
+    font-weight: 700
+}
+
+.stat-group-item.full .stat-label {
+    color: var(--primary);
+}
+
+.stat-group-item.partial .stat-label {
+    color: #D68910;
+}
+
+.stat-group-item.raw .stat-label {
+    color: #8E44AD;
+}
+
+.stat-group-item i {
+    font-size: .8rem
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns:1fr 1fr 1.5fr 1fr;
+    gap: 1rem
+}
+
+.stat-group-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .25rem
+}
+
+.stat-group-item .stat-label {
+    font-size: .7rem;
+    font-weight: 600;
+    text-transform: uppercase
+}
+
+.stat-group-item .stat-value {
+    font-size: 1.25rem;
+    font-weight: 700
+}
+
 /* ========================================
    Active Model Card
    ======================================== */
@@ -242,25 +317,37 @@
     background: rgba(245, 158, 11, 0.05);
     border-color: rgba(245, 158, 11, 0.3);
 }
-.job-stat.pending span { color: var(--warning); }
+
+.job-stat.pending span {
+    color: var(--warning);
+}
 
 .job-stat.running {
     background: rgba(59, 130, 246, 0.05);
     border-color: rgba(59, 130, 246, 0.3);
 }
-.job-stat.running span { color: var(--info); }
+
+.job-stat.running span {
+    color: var(--info);
+}
 
 .job-stat.completed {
     background: rgba(16, 185, 129, 0.05);
     border-color: rgba(16, 185, 129, 0.3);
 }
-.job-stat.completed span { color: var(--success); }
+
+.job-stat.completed span {
+    color: var(--success);
+}
 
 .job-stat.failed {
     background: rgba(239, 68, 68, 0.05);
     border-color: rgba(239, 68, 68, 0.3);
 }
-.job-stat.failed span { color: var(--danger); }
+
+.job-stat.failed span {
+    color: var(--danger);
+}
 
 /* ========================================
    Recent Lists - Compact (No Scroll)

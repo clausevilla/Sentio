@@ -89,7 +89,6 @@
                         <th class="col-metric">Precision</th>
                         <th class="col-metric">Recall</th>
                         <th class="col-metric">F1 Score</th>
-                        <th class="col-info">Dataset</th>
                         <th class="col-info">Created</th>
                         <th class="col-actions">Actions</th>
                     </tr>
@@ -171,18 +170,6 @@
                             </span>
                             {% else %}
                             <span class="metric-empty">—</span>
-                            {% endif %}
-                        </td>
-
-                        <!-- Dataset -->
-                        <td class="col-info">
-                            {% if item.job and item.job.data_upload %}
-                            <span class="info-cell" title="{{ item.job.data_upload.file_name }}">
-                                <i class="fas fa-database"></i>
-                                {{ item.job.data_upload.file_name|truncatechars:15 }}
-                            </span>
-                            {% else %}
-                            <span class="info-empty">—</span>
                             {% endif %}
                         </td>
 
