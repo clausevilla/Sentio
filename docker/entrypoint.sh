@@ -8,6 +8,9 @@ while ! nc -z $SQL_HOST $SQL_PORT; do
 done
 echo "Started PostgreSQL"
 
+echo "Creating migrations..."
+python manage.py makemigrations --noinput
+
 echo "Starting database migrations"
 python manage.py migrate
 

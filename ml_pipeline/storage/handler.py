@@ -25,7 +25,7 @@ class StorageHandler:
         self,
         model_dir: str = './ml-models',
         gcs_bucket: Optional[str] = None,
-        use_gcs: bool = False,
+        use_gcs: bool = True,
     ):
         """
         Args:
