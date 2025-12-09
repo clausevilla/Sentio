@@ -1,0 +1,9 @@
+# Author: Lian Shi
+
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sentio
+  labels:
+    app: sentio

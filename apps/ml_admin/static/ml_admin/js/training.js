@@ -27,6 +27,11 @@ document.addEventListener('DOMContentLoaded', function () {
     updateSummary();
 });
 
+// Format number with commas
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
 // ================================
 // Dataset Filtering
 // ================================
@@ -258,8 +263,8 @@ function updateDistribution() {
                 responsive: true,
                 maintainAspectRatio: true,
                 plugins: {
-                    legend: {display: false},
-                    tooltip: {enabled: true}
+                    legend: { display: false },
+                    tooltip: { enabled: true }
                 },
                 cutout: '55%',
             }

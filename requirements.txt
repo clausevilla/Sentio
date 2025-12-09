@@ -7,5 +7,9 @@ matplotlib==3.10.7
 pytest==9.0.1
 pytest-cov==7.0.0
 pytest-django==4.11.1
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch
 numpy
+google-cloud-storage==2.14.0
+whitenoise>=6.6.0
+django-storages[google]>=1.14.0

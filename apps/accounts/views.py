@@ -1,17 +1,20 @@
 # Author: Lian Shi
 # Disclaimer: LLM has been used to help generate changepassword and delete account API endpoints.
-# Updated: Added consent management functionality
 
 import json
-from datetime import datetime, timedelta
+from collections import defaultdict
+from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
+
+from apps.predictions.models import PredictionResult, TextSubmission
 
 from .forms import LoginForm, RegisterForm
 from .models import UserConsent
@@ -166,11 +169,8 @@ def profile_view(request):
     """
     Display user profile with account information and statistics
     """
-    total_analyses = 0
-    # TODO:
     # Get total number of analyses for this user
-    # For now, using placeholder value
-    # total_analyses = MentalHealthAnalysis.objects.filter(user=request.user).count()
+    total_analyses = TextSubmission.objects.filter(user=request.user).count()
 
     # Get consent status
     consent_status = False
@@ -270,7 +270,7 @@ def change_password_api(request):
 
 
 @login_required(login_url='accounts:login')
-@require_http_methods(['POST'])
+@require_http_methods(['DELETE'])
 def delete_all_data_api(request):
     """
     API endpoint to delete all user's analysis data (but keep account)
@@ -303,11 +303,8 @@ def delete_all_data_api(request):
                 status=400,
             )
 
-        # Delete all user's mental health analyses
-        # TODO: Uncomment when MentalHealthAnalysis model is ready
-        # from apps.predictions.models import MentalHealthAnalysis
-        # deleted_count = MentalHealthAnalysis.objects.filter(user=request.user).delete()[0]
-        deleted_count = 0
+        deletion_result = TextSubmission.objects.filter(user=request.user).delete()
+        deleted_count = deletion_result[0]  # Total number of objects deleted
 
         # Revoke consent - user will need to re-consent
         try:
@@ -349,10 +346,11 @@ def delete_all_data_api(request):
 
 
 @login_required(login_url='accounts:login')
-@require_http_methods(['POST'])
+@require_http_methods(['DELETE'])
 def delete_account_api(request):
     """
     API endpoint to permanently delete user account and all associated data
+
     """
     try:
         # Parse JSON body
@@ -385,7 +383,7 @@ def delete_account_api(request):
         username = request.user.username
 
         # Delete user account (this will cascade delete all related data)
-        # including all MentalHealthAnalysis records due to ForeignKey
+        # including all TextSubmission and PredictionResult records due to ForeignKey
         request.user.delete()
 
         # Logout (session is destroyed)
@@ -412,60 +410,111 @@ def delete_account_api(request):
 @login_required(login_url='accounts:login')
 def history_view(request):
     """
-    Display user's analysis history with charts and statistics
+    Display user's analysis history with charts and statistics.
+
+    This view fetches all prediction results for the logged-in user from the database
+    and calculates statistics for display on the history page.
+
+    Note: mental_state values are normalized to lowercase for consistent comparison,
+    as the database may store them with varying capitalization (e.g., 'Stress' vs 'stress').
     """
-    # TODO: Import the MentalHealthAnalysis model when it's ready
-    # from apps.predictions.models import MentalHealthAnalysis
+    # Get all submissions for this user with related prediction results
+    # Using select_related for efficient database query (single JOIN instead of N+1)
+    submissions = (
+        TextSubmission.objects.filter(user=request.user)
+        .select_related('predictionresult')
+        .order_by('-submitted_at')
+    )
 
-    # Get all analyses for this user
-    # analyses = MentalHealthAnalysis.objects.filter(user=request.user).order_by('-created_at')
+    # Build list of analyses with all necessary data for the template
+    # IMPORTANT: Normalize mental_state to lowercase for consistent filtering and counting
+    analyses = []
+    for submission in submissions:
+        try:
+            prediction = submission.predictionresult
+            # Normalize mental_state to lowercase for consistent comparison
+            raw_mental_state = prediction.mental_state or ''
+            normalized_state = raw_mental_state.lower().strip()
 
-    # Calculate statistics
-    # For now, using placeholder values
-    total_analyses = 0
-    normal_count = 0
-    concern_count = 0
+            analyses.append(
+                {
+                    'id': submission.id,
+                    'text': submission.text_content,
+                    'mental_state': normalized_state,  # Use normalized lowercase value
+                    'get_mental_state_display': prediction.get_mental_state_display(),
+                    'confidence': round(prediction.confidence * 100),
+                    'anxiety_level': prediction.anxiety_level or 0,
+                    'negativity_level': prediction.negativity_level or 0,
+                    'emotional_intensity': prediction.emotional_intensity or 0,
+                    'created_at': submission.submitted_at,
+                    'recommendations': prediction.recommendations,
+                }
+            )
+        except PredictionResult.DoesNotExist:
+            # Submission without a prediction result - skip it
+            continue
+
+    # Calculate statistics using normalized (lowercase) mental_state values
+    total_analyses = len(analyses)
+    normal_count = sum(1 for a in analyses if a['mental_state'] == 'normal')
+    concern_count = total_analyses - normal_count
+
+    # Get last analysis date
     last_analysis = 'Never'
+    if analyses:
+        last_analysis = analyses[0]['created_at'].strftime('%b %d, %Y')
 
-    # TODO: Uncomment when model is ready
-    # total_analyses = analyses.count()
-    # normal_count = analyses.filter(mental_state='normal').count()
-    # concern_count = total_analyses - normal_count
-    #
-    # if analyses.exists():
-    #     last_analysis = analyses.first().created_at.strftime('%b %d, %Y')
+    # Calculate state distribution with percentages
+    # mental_state is already normalized to lowercase in the analyses list
+    state_counts = defaultdict(int)
+    for analysis in analyses:
+        state_counts[analysis['mental_state']] += 1
 
-    # Calculate state distribution
+    # Build state distribution dictionary with counts and percentages
+    # Using a simple structure that works reliably with Django templates
     state_distribution = {
         'normal': {
             'label': 'Normal',
-            'icon': '😊',
-            'class': 'normal',
-            'count': 0,
-            'percentage': 0,
+            'count': state_counts.get('normal', 0),
+            'percentage': round(
+                (state_counts.get('normal', 0) / total_analyses * 100)
+                if total_analyses > 0
+                else 0
+            ),
         },
         'depression': {
             'label': 'Depression',
-            'icon': '😢',
-            'class': 'depression',
-            'count': 0,
-            'percentage': 0,
+            'count': state_counts.get('depression', 0),
+            'percentage': round(
+                (state_counts.get('depression', 0) / total_analyses * 100)
+                if total_analyses > 0
+                else 0
+            ),
         },
         'stress': {
             'label': 'Stress',
-            'icon': '😫',
-            'class': 'stress',
-            'count': 0,
-            'percentage': 0,
+            'count': state_counts.get('stress', 0),
+            'percentage': round(
+                (state_counts.get('stress', 0) / total_analyses * 100)
+                if total_analyses > 0
+                else 0
+            ),
         },
         'suicidal': {
             'label': 'Suicidal',
-            'icon': '🆘',
-            'class': 'suicidal',
-            'count': 0,
-            'percentage': 0,
+            'count': state_counts.get('suicidal', 0),
+            'percentage': round(
+                (state_counts.get('suicidal', 0) / total_analyses * 100)
+                if total_analyses > 0
+                else 0
+            ),
         },
     }
+
+    # Pagination - 10 items per page
+    paginator = Paginator(analyses, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
 
     context = {
         'total_analyses': total_analyses,
@@ -473,74 +522,161 @@ def history_view(request):
         'concern_count': concern_count,
         'last_analysis': last_analysis,
         'state_distribution': state_distribution,
-        'analyses': [],
+        'analyses': page_obj,  # Paginated analyses
+        'page_obj': page_obj,
+        'is_paginated': paginator.num_pages > 1,
     }
 
     return render(request, 'accounts/history.html', context)
 
 
-def get_chart_data(user, period='week'):
+@login_required(login_url='accounts:login')
+@require_http_methods(['GET'])
+def chart_data_api(request):
     """
-    Get chart data for mental health trends over time
-    Helper function for history view
+    API endpoint to fetch chart data for mental health trends over time.
+
+    Query parameters:
+        - period: 'week', 'month', or 'all' (default: 'week')
+
+    Returns JSON with labels and datasets for Chart.js
     """
-    # TODO: Import the MentalHealthAnalysis model when it's ready
-    # from apps.predictions.models import MentalHealthAnalysis
+    period = request.GET.get('period', 'week')
+    now = timezone.now()
 
-    now = datetime.now()
-
-    # Determine date range and labels based on period
+    # Determine date range based on period
+    # More date labels for better visualization
     if period == 'week':
         start_date = now - timedelta(days=7)
-        labels = [(start_date + timedelta(days=i)).strftime('%a') for i in range(7)]
+        # Generate daily labels for the past week (8 labels)
+        labels = [(start_date + timedelta(days=i)).strftime('%a %d') for i in range(8)]
+        group_days = 1
     elif period == 'month':
         start_date = now - timedelta(days=30)
+        # Generate labels for every 2 days (15 labels for better granularity)
         labels = [
-            (start_date + timedelta(days=i * 5)).strftime('%b %d') for i in range(6)
+            (start_date + timedelta(days=i * 2)).strftime('%b %d') for i in range(16)
         ]
-    else:
+        group_days = 2
+    else:  # 'all' - show last 90 days
         start_date = now - timedelta(days=90)
+        # Generate labels for every 7 days (13 labels - about 3 months of weekly data)
         labels = [
-            (start_date + timedelta(days=i * 15)).strftime('%b %d') for i in range(6)
+            (start_date + timedelta(days=i * 7)).strftime('%b %d') for i in range(14)
         ]
+        group_days = 7
 
-    chart_data = {
-        'labels': labels,
-        'normal': [0] * len(labels),
-        'depression': [0] * len(labels),
-        'anxiety': [0] * len(labels),
-        'stress': [0] * len(labels),
-        'suicidal': [0] * len(labels),
-        'bipolar': [0] * len(labels),
-    }
+    # Query predictions within the date range for the current user
+    submissions = (
+        TextSubmission.objects.filter(
+            user=request.user, submitted_at__gte=start_date, submitted_at__lte=now
+        )
+        .select_related('predictionresult')
+        .order_by('submitted_at')
+    )
 
-    # TODO: Get analyses from database when model is ready
-    # analyses = MentalHealthAnalysis.objects.filter(
-    #     user=user,
-    #     created_at__gte=start_date,
-    #     created_at__lte=now
-    # ).order_by('created_at')
+    # Initialize data structure for each mental state
+    mental_states = ['normal', 'depression', 'stress', 'suicidal']
+    chart_data = {state: [0] * len(labels) for state in mental_states}
 
-    # TODO: Count occurrences for each mental state over time
-    # for analysis in analyses:
-    #     if period == 'week':
-    #         label = analysis.created_at.strftime('%a')
-    #     elif period == 'month':
-    #         days_diff = (analysis.created_at.date() - start_date.date()).days
-    #         index = min(days_diff // 5, len(labels) - 1)
-    #         label = labels[index]
-    #     else:
-    #         days_diff = (analysis.created_at.date() - start_date.date()).days
-    #         index = min(days_diff // 15, len(labels) - 1)
-    #         label = labels[index]
-    #
-    #     if label in labels:
-    #         idx = labels.index(label)
-    #         state = analysis.mental_state
-    #         if state in chart_data:
-    #             chart_data[state][idx] += 1
+    # Count occurrences for each mental state over time
+    for submission in submissions:
+        try:
+            prediction = submission.predictionresult
+            # Normalize mental_state to lowercase for consistent comparison
+            raw_state = prediction.mental_state or ''
+            state = raw_state.lower().strip()
 
-    return chart_data
+            if state not in mental_states:
+                continue
+
+            # Determine which bucket this prediction falls into
+            days_diff = (submission.submitted_at.date() - start_date.date()).days
+            index = min(max(0, days_diff // group_days), len(labels) - 1)
+
+            chart_data[state][index] += 1
+
+        except PredictionResult.DoesNotExist:
+            continue
+
+    datasets = [
+        {
+            'label': 'Normal',
+            'data': chart_data['normal'],
+            'borderColor': '#4A7C59',
+            'backgroundColor': 'rgba(74, 124, 89, 0.1)',
+        },
+        {
+            'label': 'Depression',
+            'data': chart_data['depression'],
+            'borderColor': '#5B7C99',
+            'backgroundColor': 'rgba(91, 124, 153, 0.1)',
+        },
+        {
+            'label': 'Stress',
+            'data': chart_data['stress'],
+            'borderColor': '#E07A5F',
+            'backgroundColor': 'rgba(224, 122, 95, 0.1)',
+        },
+        {
+            'label': 'Suicidal',
+            'data': chart_data['suicidal'],
+            'borderColor': '#7B68A6',
+            'backgroundColor': 'rgba(123, 104, 166, 0.1)',
+        },
+    ]
+
+    return JsonResponse(
+        {
+            'labels': labels,
+            'datasets': datasets,
+        }
+    )
+
+
+@login_required(login_url='accounts:login')
+@require_http_methods(['DELETE'])
+def delete_analysis_api(request, analysis_id):
+    """
+    API endpoint to delete a single analysis.
+
+    This allows users to delete individual analyses from their history.
+    The analysis must belong to the current user.
+
+    Args:
+        request: The HTTP request
+        analysis_id: The ID of the PredictionResult to delete
+
+    Returns:
+        JSON response with success status and message
+    """
+    try:
+        # Find the prediction result and verify it belongs to the current user
+        prediction = PredictionResult.objects.select_related('submission').get(
+            id=analysis_id, submission__user=request.user
+        )
+
+        # Get the associated submission
+        submission = prediction.submission
+
+        # Delete the prediction (this will also cascade if set up that way)
+        prediction.delete()
+
+        # Delete the submission
+        submission.delete()
+
+        return JsonResponse(
+            {'success': True, 'message': 'Analysis deleted successfully'}
+        )
+
+    except PredictionResult.DoesNotExist:
+        return JsonResponse(
+            {'success': False, 'error': 'Analysis not found or access denied'},
+            status=404,
+        )
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 @login_required(login_url='accounts:login')
@@ -575,28 +711,48 @@ def export_data_api(request):
         except UserConsent.DoesNotExist:
             consent_data = None
 
-        # TODO: Export mental health analyses
-        # analyses = PredictionResults.objects.filter(user=user).order_by('-created_at')
-        # for analysis in analyses:
-        #     export_data['analysis_history'].append({
-        #         'id': analysis.id,
-        #         'text': analysis.text,
-        #         'mental_state': analysis.mental_state,
-        #         'confidence': analysis.confidence,
-        #         'created_at': analysis.created_at.isoformat(),
-        #     })
+        # Export analysis history
+        analysis_history = []
+        submissions = (
+            TextSubmission.objects.filter(user=user)
+            .select_related('predictionresult')
+            .order_by('-submitted_at')
+        )
+
+        for submission in submissions:
+            try:
+                prediction = submission.predictionresult
+                analysis_history.append(
+                    {
+                        'id': submission.id,
+                        'text': submission.text_content,
+                        'mental_state': prediction.mental_state,
+                        'confidence': prediction.confidence,
+                        'anxiety_level': prediction.anxiety_level,
+                        'negativity_level': prediction.negativity_level,
+                        'emotional_intensity': prediction.emotional_intensity,
+                        'recommendations': prediction.recommendations,
+                        'submitted_at': submission.submitted_at.isoformat(),
+                        'predicted_at': prediction.predicted_at.isoformat(),
+                    }
+                )
+            except PredictionResult.DoesNotExist:
+                continue
 
         export_data = {
             'user_profile': user_data,
             'consent_data': consent_data,
-            'analysis_history': [],
+            'analysis_history': analysis_history,
+            'exported_at': timezone.now().isoformat(),
         }
+
         json_data = json.dumps(export_data, indent=4, ensure_ascii=False)
         response = HttpResponse(json_data, content_type='application/json')
         response['Content-Disposition'] = (
             f'attachment; filename="{user.username}_data_export.json"'
         )
         return response
+
     except Exception as e:
         return JsonResponse(
             {'success': False, 'error': 'server_error', 'message': str(e)}, status=500

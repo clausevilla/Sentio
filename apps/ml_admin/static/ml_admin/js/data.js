@@ -18,7 +18,11 @@ const DATASET_TYPE_LABELS = {
     'increment': 'Increment'
 };
 
-// TODO : Display names for pipeline types, to be matched with model later
+// Format number with commas
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+// Display names for pipeline types, to be matched with model later
 const PIPELINE_LABELS = {
     'full': 'Full',
     'partial': 'Partial',
