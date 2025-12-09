@@ -360,7 +360,7 @@ class ProfileAPITests(TestCase):
         # Test successful deletion of all user data with correct password
         self.client.login(username='testuser', password='strongpassword123')
         data = {'password': 'strongpassword123'}
-        response = self.client.post(
+        response = self.client.delete(
             self.delete_data_url,
             data=json.dumps(data),
             content_type='application/json',
@@ -379,7 +379,7 @@ class ProfileAPITests(TestCase):
         # Test that data deletion fails with incorrect password
         self.client.login(username='testuser', password='strongpassword123')
         data = {'password': 'wrongpassword'}
-        response = self.client.post(
+        response = self.client.delete(
             self.delete_data_url,
             data=json.dumps(data),
             content_type='application/json',
@@ -393,7 +393,7 @@ class ProfileAPITests(TestCase):
         # Test that data deletion fails when password is not provided
         self.client.login(username='testuser', password='strongpassword123')
         data = {}
-        response = self.client.post(
+        response = self.client.delete(
             self.delete_data_url,
             data=json.dumps(data),
             content_type='application/json',
@@ -406,7 +406,7 @@ class ProfileAPITests(TestCase):
     def test_delete_all_data_requires_authentication(self):
         # Test that data deletion endpoint requires authentication
         data = {'password': 'strongpassword123'}
-        response = self.client.post(
+        response = self.client.delete(
             self.delete_data_url,
             data=json.dumps(data),
             content_type='application/json',
@@ -419,7 +419,7 @@ class ProfileAPITests(TestCase):
         # Test successful account deletion with correct password
         self.client.login(username='testuser', password='strongpassword123')
         data = {'password': 'strongpassword123'}
-        response = self.client.post(
+        response = self.client.delete(
             self.delete_account_url,
             data=json.dumps(data),
             content_type='application/json',
@@ -438,7 +438,7 @@ class ProfileAPITests(TestCase):
         # Test that account deletion fails with incorrect password
         self.client.login(username='testuser', password='strongpassword123')
         data = {'password': 'wrongpassword'}
-        response = self.client.post(
+        response = self.client.delete(
             self.delete_account_url,
             data=json.dumps(data),
             content_type='application/json',
@@ -455,7 +455,7 @@ class ProfileAPITests(TestCase):
         # Test that account deletion fails when password is not provided
         self.client.login(username='testuser', password='strongpassword123')
         data = {}
-        response = self.client.post(
+        response = self.client.delete(
             self.delete_account_url,
             data=json.dumps(data),
             content_type='application/json',
@@ -468,7 +468,7 @@ class ProfileAPITests(TestCase):
     def test_delete_account_requires_authentication(self):
         # Test that account deletion endpoint requires authentication
         data = {'password': 'strongpassword123'}
-        response = self.client.post(
+        response = self.client.delete(
             self.delete_account_url,
             data=json.dumps(data),
             content_type='application/json',
