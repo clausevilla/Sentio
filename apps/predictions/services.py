@@ -173,12 +173,13 @@ def analyze_text(text, model_version):
     Analyze text and return prediction results.
 
     Returns:
-        Tuple of (label, confidence, model_version)
+        Tuple of (label, confidence, model_version, all_confidences)
     """
     predictor = get_predictor(model_version)
     result = predictor.predict(text)
+    all_confidences = result['probabilities']
 
-    return result['label'], result['confidence']
+    return result['label'], result['confidence'], all_confidences
 
 
 def preprocess_user_input(df, model_type):
@@ -219,7 +220,7 @@ def get_prediction_result(user, user_text):
     df = clean_user_input(user_text)
     processed_text = preprocess_user_input(df, model_version.model_type)
 
-    label, confidence = analyze_text(processed_text.iloc[0], model_version)
+    label, confidence, all_confidences = analyze_text(processed_text.iloc[0], model_version)
 
     # Calculate metrics
     anxiety_level, negativity_level, emotional_intensity, word_count, char_count = (
@@ -240,9 +241,15 @@ def get_prediction_result(user, user_text):
             anxiety_level=anxiety_level,
             negativity_level=negativity_level,
             emotional_intensity=emotional_intensity,
+            all_confidences=all_confidences,
         )
 
     confidence_percentage = round(confidence * 100)
+    stressor_order = ['depression', 'normal', 'stress', 'suicidal']
+
+    all_confidences_percentage = {}
+    for i, class_name in enumerate(stressor_order):
+        all_confidences_percentage[class_name] = round(all_confidences[i] * 100)
 
     return (
         label,
@@ -253,6 +260,7 @@ def get_prediction_result(user, user_text):
         emotional_intensity,
         word_count,
         char_count,
+        all_confidences_percentage,
     )
 
 
@@ -346,17 +354,17 @@ def calculate_metrics(text: str):
 
     # Anxiety: Ellipses weighted heavier than periods (uncertainty, trailing thoughts)
     anxiety_score = (
-        (ellipsis_count * 50)
-        + (period_count * 20)
-        + (word_density * 25)
+        (ellipsis_count * 20)
+        + (period_count * 3)
+        + (word_density * 15)
         + (capital_count * 0.5)
     )
 
     # Emotional intensity: Exclamations > Questions (strong emotion > curiosity)
     emotional_score = (
-        (exclamation_count * 40)
-        + (question_count * 30)
-        + (capital_count * 20)
+        (exclamation_count * 8)
+        + (question_count * 5)
+        + (capital_count * 4)
         + (word_density * 10)
     )
 
