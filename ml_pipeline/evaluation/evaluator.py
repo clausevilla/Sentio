@@ -4,6 +4,9 @@ import logging
 from io import BytesIO
 from typing import Any, Dict, Optional
 
+import matplotlib
+
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch

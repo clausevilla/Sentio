@@ -76,10 +76,34 @@ function openCompareModal() {
 function buildCompareContent(models) {
     // Metrics to compare
     const metrics = [
-        { key: 'accuracy', label: 'Accuracy', icon: 'fa-bullseye', format: v => v !== null ? v.toFixed(1) : '—', isPercent: true },
-        { key: 'precision', label: 'Precision', icon: 'fa-crosshairs', format: v => v !== null ? v.toFixed(3) : '—', isPercent: false },
-        { key: 'recall', label: 'Recall', icon: 'fa-redo', format: v => v !== null ? v.toFixed(3) : '—', isPercent: false },
-        { key: 'f1', label: 'F1 Score', icon: 'fa-chart-line', format: v => v !== null ? v.toFixed(3) : '—', isPercent: false },
+        {
+            key: 'accuracy',
+            label: 'Accuracy',
+            icon: 'fa-bullseye',
+            format: v => v !== null ? (v * 100).toFixed(2) : '—',
+            isPercent: false
+        },
+        {
+            key: 'precision',
+            label: 'Precision',
+            icon: 'fa-crosshairs',
+            format: v => v !== null ? (v * 100).toFixed(2) : '—',
+            isPercent: false
+        },
+        {
+            key: 'recall',
+            label: 'Recall',
+            icon: 'fa-redo',
+            format: v => v !== null ? (v * 100).toFixed(2) : '—',
+            isPercent: false
+        },
+        {
+            key: 'f1',
+            label: 'F1 Score',
+            icon: 'fa-chart-line',
+            format: v => v !== null ? (v * 100).toFixed(2) : '—',
+            isPercent: false
+        },
     ];
 
     // Find best for each metric
@@ -207,7 +231,7 @@ function buildCompareContent(models) {
                     </tr>
                     <tr>
                         <td class="info-label">Dataset</td>
-                        ${models.map(m => `<td>${m.job_dataset}</td>`).join('')}
+                        ${models.map(m => `<td>${m.job_datasets}</td>`).join('')}
                     </tr>
                     <tr>
                         <td class="info-label">Status</td>
@@ -266,7 +290,7 @@ async function deployModel(id, name) {
     });
     if (!confirmed) return;
 
-    const { ok, data } = await apiCall(`/management/api/models/${id}/activate/`, {
+    const {ok, data} = await apiCall(`/management/api/models/${id}/activate/`, {
         method: 'POST'
     });
 
@@ -289,7 +313,7 @@ async function deleteModel(id, name) {
     });
     if (!confirmed) return;
 
-    const { ok, data } = await apiCall(`/management/api/models/${id}/delete/`, {
+    const {ok, data} = await apiCall(`/management/api/models/${id}/delete/`, {
         method: 'POST'
     });
 

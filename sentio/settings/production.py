@@ -33,3 +33,4 @@ LOGGING = {
         'level': 'INFO',
     },
 }  # Docker logs
+USE_GCS = True

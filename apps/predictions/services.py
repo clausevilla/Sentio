@@ -1,14 +1,22 @@
 # Author: Karl Byland, Claudia Sevilla
 
+import logging
 import re
 
-import joblib
 import pandas as pd
+from django.conf import settings
 
 from apps.ml_admin.models import ModelVersion
 from apps.predictions.models import PredictionResult, TextSubmission
 from ml_pipeline.data_cleaning.cleaner import DataCleaningPipeline
+from ml_pipeline.inference.predictor import Predictor
 from ml_pipeline.preprocessing.preprocessor import DataPreprocessingPipeline
+from ml_pipeline.storage.handler import StorageHandler
+
+logger = logging.getLogger(__name__)
+
+_predictor = None
+_loaded_model_id = None
 
 NEGATIVE_WORDS = [
     # Sadness / Depression
@@ -125,19 +133,31 @@ NEGATIVE_WORDS = [
 ]
 
 
-# Loads the model
-MODEL_PATH = 'ml_pipeline/toy_models/LRmodel.pkl'  # Path to model used to predict
-MODEL = joblib.load(MODEL_PATH)
+def get_predictor(active_model):
+    """
+    Get or create predictor with the active model loaded.
 
+    Caches the predictor to avoid reloading on every request.
+    Reloads if the active model changes.
+    """
+    global _predictor, _loaded_model_id
 
-def analyze_text(analyzed_text):
-    predictions = MODEL.predict([analyzed_text])
+    if active_model is None:
+        raise RuntimeError('No active model configured')
 
-    prediction = predictions[0]
-    proba = MODEL.predict_proba([analyzed_text])[0]
-    confidence = max(proba)
+    if _predictor is None or _loaded_model_id != active_model.id:
+        storage = StorageHandler(
+            model_dir=settings.MODEL_DIR,
+            # Determined by runtime settings
+            gcs_bucket=getattr(settings, 'GCS_BUCKET', None),
+            use_gcs=getattr(settings, 'USE_GCS', False),
+        )
+        _predictor = Predictor(storage)
+        _predictor.load(active_model.model_file_path)
+        _loaded_model_id = active_model.id
+        logger.info(f'Loaded model: {active_model.version_name}')
 
-    return (prediction, confidence)
+    return _predictor
 
 
 def clean_user_input(text):
@@ -148,12 +168,25 @@ def clean_user_input(text):
     return df
 
 
+def analyze_text(text, model_version):
+    """
+    Analyze text and return prediction results.
+
+    Returns:
+        Tuple of (label, confidence, model_version)
+    """
+    predictor = get_predictor(model_version)
+    result = predictor.predict(text)
+
+    return result['label'], result['confidence']
+
+
 def preprocess_user_input(df, model_type):
     pipeline = DataPreprocessingPipeline()
     pipeline_version = ''
     model_to_pipeline = {
         'lstm': 'rnn',
-        'random_forest': 'rnn',
+        'random_forest': 'traditional',
         'transformer': 'transformer',
         'logistic_regression': 'traditional',
     }
@@ -170,15 +203,21 @@ def preprocess_user_input(df, model_type):
 
 
 def get_prediction_result(user, user_text):
+    """
+    Get prediction and optionally save to database.
+
+    Returns:
+        Tuple of (prediction_label, confidence_percentage)
+    """
+
     model_version = ModelVersion.objects.filter(
         is_active=True
-    ).first()  # Takes the active model
+    ).first()  # First and only available model
 
     df = clean_user_input(user_text)
-    processed_text = preprocess_user_input(
-        df, model_version.model_type
-    )  #!!! Placerholder
-    prediction, confidence = analyze_text(processed_text.iloc[0])
+    processed_text = preprocess_user_input(df, model_version.model_type)
+
+    label, confidence = analyze_text(processed_text.iloc[0], model_version)
 
     # Calculate metrics
     anxiety_level, negativity_level, emotional_intensity, word_count, char_count = (
@@ -186,17 +225,17 @@ def get_prediction_result(user, user_text):
     )
 
     # Generate recommendations
-    recommendations = get_recommendations(prediction, confidence, anxiety_level)
+    recommendations = get_recommendations(label, confidence, anxiety_level)
 
     if user:
         save_prediction_to_database(
-            user, user_text, prediction, confidence, model_version, recommendations
+            user, user_text, label, confidence, model_version, recommendations
         )
 
     confidence_percentage = round(confidence * 100)
 
     return (
-        prediction,
+        label,
         confidence_percentage,
         recommendations,
         anxiety_level,
@@ -281,7 +320,7 @@ def calculate_metrics(text: str):
     word_count = len(words)
     char_count = len(text)
 
-    # Negativity level based on key words
+    # Negativity level based on keywords
     negativity_count = sum(words.count(w) for w in NEGATIVE_WORDS)
     negativity_level = min(int((negativity_count / max(word_count, 1)) * 100), 100)
 

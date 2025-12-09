@@ -2,13 +2,19 @@
 import csv
 import logging
 import threading
-from datetime import datetime
-from typing import Any, Dict, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import pandas as pd
 from django.conf import settings
+from django.utils import timezone
 
-from apps.ml_admin.models import DatasetRecord, DataUpload, ModelVersion, TrainingJob
+from apps.ml_admin.models import (
+    DatasetRecord,
+    DataUpload,
+    ModelVersion,
+    Parameter,
+    TrainingJob,
+)
 from ml_pipeline.data_cleaning.cleaner import DataCleaningPipeline
 from ml_pipeline.preprocessing.preprocessor import DataPreprocessingPipeline
 from ml_pipeline.storage.handler import StorageHandler
@@ -29,6 +35,14 @@ PIPELINE_TO_MODEL_TYPE = {
     'full': 'traditional',
     'partial': 'rnn',
     'raw': 'transformer',
+}
+
+# Reverse mapping: model type -> required pipeline type
+MODEL_TO_PIPELINE = {
+    'logistic_regression': 'full',
+    'random_forest': 'full',
+    'lstm': 'partial',
+    'transformer': 'raw',
 }
 
 
@@ -112,16 +126,10 @@ def run_full_pipeline(
             upload = DataUpload.objects.get(id=data_upload_id)
             upload.status = 'failed'
             upload.save()
-        except Exception as e:
-            logger.exception('Cleaning pipeline failed')
-            try:
-                upload = DataUpload.objects.get(id=data_upload_id)
-                upload.status = 'failed'
-                upload.save()
-            except DataUpload.DoesNotExist:
-                logger.warning(
-                    'DataUpload %s not found during error handling', data_upload_id
-                )
+        except DataUpload.DoesNotExist:
+            logger.warning(
+                'DataUpload %s not found during error handling', data_upload_id
+            )
         return {'success': False, 'error': str(e)}
 
 
@@ -263,6 +271,56 @@ def _save_dataset_records(
     logger.info(f'=== Saved {len(records):,} records to database ===')
 
 
+def _save_training_parameters(model_version, config: dict):
+    """
+    Save training configuration as Parameter record linked to ModelVersion.
+    """
+
+    param_data = {'model_version': model_version}
+
+    field_mapping = {
+        'max_iter': 'max_iter',
+        'C': 'regularization_strength',
+        'solver': 'solver',
+        'n_estimators': 'n_estimators',
+        'max_depth': 'max_depth',
+        'min_samples_split': 'min_samples_split',
+        'min_samples_leaf': 'min_samples_leaf',
+        'max_features': 'rf_max_features',
+        'n_jobs': 'n_jobs',
+        'num_layers': 'num_layers',
+        'dropout': 'dropout',
+        'max_seq_len': 'max_seq_length',
+        'vocab_size': 'vocab_size',
+        'learning_rate': 'learning_rate',
+        'batch_size': 'batch_size',
+        'epochs': 'epochs',
+        'embed_dim': 'embed_dim',
+        'hidden_dim': 'hidden_dim',
+        'd_model': 'd_model',
+        'nhead': 'n_head',
+        'dim_feedforward': 'dim_feedforward',
+    }
+
+    for config_key, param_field in field_mapping.items():
+        if config_key in config:
+            param_data[param_field] = config[config_key]
+
+    if 'tfidf' in config:
+        tfidf = config['tfidf']
+        if 'ngram_range' in tfidf:
+            param_data['ngram_range_min'] = tfidf['ngram_range'][0]
+            param_data['ngram_range_max'] = tfidf['ngram_range'][1]
+        if 'min_df' in tfidf:
+            param_data['min_df'] = tfidf['min_df']
+        if 'max_df' in tfidf:
+            param_data['max_df'] = tfidf['max_df']
+        if 'max_features' in tfidf:
+            param_data['tfidf_max_features'] = tfidf['max_features']
+
+    Parameter.objects.create(**param_data)
+
+
 def _finalize_upload(upload, count):
     upload.row_count = count
     upload.status = 'completed'
@@ -329,9 +387,19 @@ def import_csv_dataset(file_path, data_upload, dataset_type='train', batch_size=
             DatasetRecord.objects.bulk_create(batch, ignore_conflicts=True)
 
 
-def get_training_data(dataset_type: Literal['train', 'increment']) -> Tuple:
+def get_training_data(
+    dataset_type: Literal['train', 'increment'],
+    upload_ids: List[int] = None,
+    pipeline_type: str = None,
+) -> Tuple:
     """
     Use one method for acquiring different types of data
+
+    Args:
+        dataset_type: 'train' or 'increment'
+        upload_ids: List of DataUpload IDs to filter training data
+        pipeline_type: Required pipeline type ('full', 'partial', 'raw')
+                      If provided, filters both tran and test data by this type
     """
 
     if dataset_type not in ('train', 'increment'):
@@ -340,6 +408,14 @@ def get_training_data(dataset_type: Literal['train', 'increment']) -> Tuple:
     # Test records are always static but train data depens on full train or incremental
     test_records = DatasetRecord.objects.filter(dataset_type='test')
     train_records = DatasetRecord.objects.filter(dataset_type=dataset_type)
+
+    # Filter by pipeline type if specified
+    if pipeline_type:
+        test_records = test_records.filter(data_upload__pipeline_type=pipeline_type)
+        train_records = train_records.filter(data_upload__pipeline_type=pipeline_type)
+
+    if upload_ids:
+        train_records = train_records.filter(data_upload_id__in=upload_ids)
 
     # In case performance gain needed with a larger dataset, could switch to Pandas
     X_train = [r.text for r in train_records]
@@ -350,11 +426,33 @@ def get_training_data(dataset_type: Literal['train', 'increment']) -> Tuple:
     return X_train, y_train, X_test, y_test
 
 
+def _create_progress_callback(job_id: int):
+    """Create a callback that updates job progress in the database."""
+
+    def callback(epoch: int, total_epochs: int, loss: float, val_accuracy: float):
+        job = TrainingJob.objects.get(id=job_id)
+
+        if job.status == 'CANCELLED':
+            raise InterruptedError('Job was cancelled')
+
+        # Add info to progress_log, current_epoch and total_epochs
+        log_line = f'Epoch {epoch}/{total_epochs} - Loss: {loss:.4f}, Val Acc: {val_accuracy:.4f}'
+        job.progress_log = (
+            (job.progress_log + '\n' + log_line) if job.progress_log else log_line
+        )
+        job.current_epoch = epoch
+        job.total_epochs = total_epochs
+        job.save(update_fields=['progress_log', 'current_epoch', 'total_epochs'])
+
+    return callback
+
+
 def _run_training(
     job_id: int,
     model_name: str,
     config: Dict,
     is_incremental: bool,
+    upload_ids: List[int],
 ):
     """
     Background training task
@@ -367,28 +465,57 @@ def _run_training(
     job = TrainingJob.objects.get(id=job_id)
 
     try:
+        # Get required pipeline type for this model
+        pipeline_type = MODEL_TO_PIPELINE.get(model_name)
+        if not pipeline_type:
+            raise ValueError(f'Unknown model type: {model_name}')
+
         storage = StorageHandler(
             model_dir=settings.MODEL_DIR,
             gcs_bucket=getattr(settings, 'GCS_BUCKET', None),
         )
         trainer = ModelTrainer(storage)
 
-        if is_incremental:
-            X_train, y_train, X_test, y_test = get_training_data('increment')
-        else:
-            X_train, y_train, X_test, y_test = get_training_data('train')
+        dataset_type = 'increment' if is_incremental else 'train'
+        X_train, y_train, X_test, y_test = get_training_data(
+            dataset_type, upload_ids, pipeline_type
+        )
+
+        if not X_train:
+            raise ValueError(
+                f'No {dataset_type} data found with pipeline type "{pipeline_type}". '
+                f'Upload and process data with the correct pipeline type for {model_name}.'
+            )
+        if not X_test:
+            raise ValueError(
+                f'No test data found with pipeline type "{pipeline_type}". '
+                f'Ensure test data exists with the correct pipeline type for {model_name}.'
+            )
+
+        # Set initial progress for neural network models only
+        if model_name in ('lstm', 'transformer'):
+            job.progress_log = f'Initializing {model_name} training...'
+            job.current_epoch = 0
+            job.total_epochs = config.get('epochs', 10)
+            job.save(update_fields=['progress_log', 'current_epoch', 'total_epochs'])
 
         result = trainer.train(
             model_name=model_name,
             data=(X_train, y_train, X_test, y_test),
             config=config,
-            job_id=job.job_id,
+            job_id=str(job_id),
+            progress_callback=_create_progress_callback(job.id),
         )
+
+        # Check if cancelled before creating model version
+        job.refresh_from_db()
+        if job.status == 'CANCELLED':
+            logger.info(f'Job {job_id} was cancelled, skipping model creation')
+            return
 
         model_version = ModelVersion.objects.create(
             model_type=model_name,
             version_name=version_name,
-            created_at=datetime.now(),
             model_file_path=result['model_path'],
             accuracy=result['metrics']['accuracy'],
             precision=result['metrics']['precision'],
@@ -400,15 +527,33 @@ def _run_training(
             created_by_id=job.initiated_by_id,
         )
 
-        job.status = 'completed'
-        job.completed_at = datetime.now()
+        # Save training parameters
+        _save_training_parameters(model_version, config)
+
+        job.status = 'COMPLETED'
+        job.completed_at = timezone.now()
         job.resulting_model = model_version
         job.save()
 
+    except InterruptedError:
+        # Job was cancelled - don't overwrite the CANCELLED status
+        job.refresh_from_db()
+        if job.status != 'CANCELLED':
+            job.status = 'CANCELLED'
+            job.completed_at = timezone.now()
+            job.save()
+
     except Exception as e:
-        job.status = 'failed'
-        job.completed_at = datetime.now()
-        job.error_message = str(e)
+        job.refresh_from_db()
+        if job.status == 'CANCELLED':
+            return  # Don't overwrite cancelled status
+        job.status = 'FAILED'
+        job.completed_at = timezone.now()
+        # Append to possible training log instead of overwriting
+        error_msg = f'\n\nERROR: {str(e)}'
+        job.progress_log = (
+            (job.progress_log + error_msg) if job.progress_log else str(e)
+        )
         job.save()
 
 
@@ -416,23 +561,23 @@ def train_full(
     model_name: str,
     config: Optional[Dict[str, Any]] = None,
     initiated_by: Optional[int] = None,
+    upload_ids: List[int] = None,
 ) -> Dict[str, Any]:
     """
     Start full training in background thread.
     """
-
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    job_id = f'{model_name}_{timestamp}'
-
     job = TrainingJob.objects.create(
-        job_id=job_id,
-        status='running',
+        model_type=model_name,
+        status='RUNNING',
         initiated_by_id=initiated_by,
     )
 
+    if upload_ids:
+        job.data_uploads.set(upload_ids)
+
     thread = threading.Thread(
         target=_run_training,
-        args=(job.id, model_name, config or {}, False),
+        args=(job.id, model_name, config or {}, False, upload_ids),
         daemon=True,
     )
     thread.start()
@@ -445,14 +590,11 @@ def train_incremental(
     base_model_path: str,
     config: Optional[Dict[str, Any]] = None,
     initiated_by: Optional[int] = None,
+    upload_ids: List[int] = None,
 ) -> Dict[str, Any]:
     """
     Start incremental training in background thread.
     """
-
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    job_id = f'{model_name}_incremental_{timestamp}'
-
     incremental_config = {
         'training_mode': 'incremental',
         'base_model_path': base_model_path,
@@ -461,14 +603,17 @@ def train_incremental(
     }
 
     job = TrainingJob.objects.create(
-        job_id=job_id,
-        status='running',
+        model_type=model_name,
+        status='RUNNING',
         initiated_by_id=initiated_by,
     )
 
+    if upload_ids:
+        job.data_uploads.set(upload_ids)
+
     thread = threading.Thread(
         target=_run_training,
-        args=(job.id, model_name, incremental_config, True),
+        args=(job.id, model_name, incremental_config, True, upload_ids),
         daemon=True,
     )
     thread.start()
@@ -491,13 +636,13 @@ def get_job_status(job_id: int) -> Dict[str, Any]:
         'completed_at': job.completed_at,
     }
 
-    if job.status == 'completed' and job.resulting_model:
+    if job.status == 'COMPLETED' and job.resulting_model:
         result['model'] = {
             'id': job.resulting_model.id,
             'accuracy': job.resulting_model.accuracy,
         }
-    elif job.status == 'failed':
-        result['error'] = job.error_message
+    elif job.status == 'FAILED':
+        result['error'] = job.progress_log
 
     return result
 
@@ -514,3 +659,66 @@ def activate_model(model_version_id: int) -> ModelVersion:
     model.is_active = True
     model.save()
     return model
+
+
+def _load_model_metadata(model_file_path: str) -> Dict[str, Any]:
+    """
+    Extract metadata from a model file.
+
+    Returns dict with model_type, metrics, and config (if available).
+    """
+    metadata = {'model_type': None, 'metrics': {}, 'config': {}}
+
+    if model_file_path.endswith('.pt'):
+        storage = StorageHandler(model_dir=settings.MODEL_DIR)
+        checkpoint = storage.load_neural_model(model_file_path)
+        metadata['model_type'] = checkpoint.get('model_type')
+        metadata['metrics'] = checkpoint.get('metrics') or {}
+        metadata['config'] = checkpoint.get('config') or {}
+
+    return metadata
+
+
+def register_model(
+    model_file_path: str, version_name: str = None, set_active: bool = False
+) -> ModelVersion:
+    """
+    Register a trained model into the database.
+
+    Reads model_type, metrics, and config directly from the model file.
+    """
+    metadata = _load_model_metadata(model_file_path)
+    model_type = metadata['model_type']
+    metrics = metadata['metrics']
+    config = metadata.get('config', {})
+
+    if model_type is None:
+        raise ValueError(f'Could not determine model_type from {model_file_path}')
+
+    if version_name is None:
+        existing_count = ModelVersion.objects.filter(model_type=model_type).count()
+        version_name = f'{model_type}_v{existing_count + 1}'
+
+    if set_active:
+        ModelVersion.objects.update(is_active=False)
+
+    model_version = ModelVersion.objects.create(
+        model_type=model_type,
+        version_name=version_name,
+        model_file_path=model_file_path,
+        accuracy=metrics.get('accuracy'),
+        precision=metrics.get('precision'),
+        recall=metrics.get('recall'),
+        f1_score=metrics.get('f1_score'),
+        roc_plot_base64=metrics.get('roc_plot_base64'),
+        confusion_matrix_base64=metrics.get('confusion_matrix_base64'),
+        is_active=set_active,
+    )
+
+    # Save parameters from config
+    if config:
+        _save_training_parameters(model_version, config)
+
+    logger.info(f'Registered model: {version_name}')
+
+    return model_version

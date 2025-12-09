@@ -11,36 +11,21 @@
 <!-- Toast Container -->
 <div id="toasts"></div>
 
-<!-- Stats -->
-<div class="stats-row">
-    <div class="stat-card">
-        <div class="stat-icon blue"><i class="fas fa-database"></i></div>
-        <div class="stat-info">
-            <div class="stat-value">{{ total_uploads }}</div>
-            <div class="stat-label">Datasets</div>
+<!-- Stats by Pipeline Type -->
+<div class="pipeline-stats-grid">
+    {% for ptype, pdata in pipeline_stats.items %}
+    <div class="pipeline-stat-card {{ ptype }}">
+        <div class="pipeline-stat-header">
+            <i class="fas {% if ptype == 'full' %}fa-broom{% elif ptype == 'partial' %}fa-adjust{% else %}fa-feather{% endif %}"></i>
+            <span>{{ ptype|title }}</span>
+        </div>
+        <div class="pipeline-stat-body">
+            <div class="pipeline-stat-row"><span><i class="fas fa-graduation-cap"></i> Train</span><span>{{ pdata.train }}</span></div>
+            <div class="pipeline-stat-row"><span><i class="fas fa-flask"></i> Test</span><span>{{ pdata.test }}</span></div>
+            <div class="pipeline-stat-row"><span><i class="fas fa-square-plus"></i> Increment</span><span>{{ pdata.increment }}</span></div>
         </div>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon green"><i class="fas fa-graduation-cap"></i></div>
-        <div class="stat-info">
-            <div class="stat-value">{{ type_breakdown.training }}</div>
-            <div class="stat-label">Training Records</div>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon purple"><i class="fas fa-flask"></i></div>
-        <div class="stat-info">
-            <div class="stat-value">{{ type_breakdown.test }}</div>
-            <div class="stat-label">Test Records</div>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon coral"><i class="fas fa-question-circle"></i></div>
-        <div class="stat-info">
-            <div class="stat-value">{{ type_breakdown.unlabeled }}</div>
-            <div class="stat-label">Unlabeled</div>
-        </div>
-    </div>
+    {% endfor %}
 </div>
 
 <!-- Upload Panel -->
@@ -113,7 +98,7 @@
                 <select id="datasetType" class="form-select">
                     <option value="train">Training Data</option>
                     <option value="test">Test Data</option>
-                    <option value="unlabeled">Unlabeled</option>
+                    <option value="increment">Increment</option>
                 </select>
             </div>
 

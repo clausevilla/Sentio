@@ -20,7 +20,8 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt /app/
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt && \
-    pip install gunicorn psycopg2-binary
+    pip install gunicorn psycopg2-binary && \
+    python -c "import nltk; nltk.download('stopwords', quiet=True); nltk.download('wordnet', quiet=True); nltk.download('omw-1.4', quiet=True)"
 
 # Copy the project
 COPY . /app/
