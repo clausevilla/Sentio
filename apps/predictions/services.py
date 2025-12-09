@@ -177,9 +177,8 @@ def analyze_text(text, model_version):
     """
     predictor = get_predictor(model_version)
     result = predictor.predict(text)
-    all_confidences = result['probabilities']
 
-    return result['label'], result['confidence'], all_confidences
+    return result['label'], result['confidence'], result['probabilities'], model_version
 
 
 def preprocess_user_input(df, model_type):
@@ -220,7 +219,7 @@ def get_prediction_result(user, user_text):
     df = clean_user_input(user_text)
     processed_text = preprocess_user_input(df, model_version.model_type)
 
-    label, confidence, all_confidences = analyze_text(
+    label, confidence, all_confidences_dict, model_version = analyze_text(
         processed_text.iloc[0], model_version
     )
 
@@ -246,11 +245,10 @@ def get_prediction_result(user, user_text):
         )
 
     confidence_percentage = round(confidence * 100)
-    stressor_order = ['depression', 'normal', 'stress', 'suicidal']
 
     all_confidences_percentage = {}
-    for i, class_name in enumerate(stressor_order):
-        all_confidences_percentage[class_name] = round(all_confidences[i] * 100)
+    for class_name, prob in all_confidences_dict.items():
+        all_confidences_percentage[class_name] = round(prob * 100)
 
     return (
         label,
@@ -267,56 +265,58 @@ def get_prediction_result(user, user_text):
 
 def get_recommendations(prediction, confidence, anxiety_level):
     recommendations = []
+    prediction_lower = str(prediction).lower()
+    confidence_percentage = confidence * 100 if confidence < 1 else confidence
 
-    if confidence > 0.70:  # high confidence results
-        if prediction == 'normal':
+    if confidence_percentage >= 70:  # high confidence results
+        if prediction_lower == 'normal':
             recommendations.append(
                 'You seem to present an undoubtedly healthy mental state. Remember to maintain regular sleep, nutrition, and physical activity. Check in with yourself regularly about emotional wellbeing, and do not hesitate to reach out for help in case of need.'
             )
-        elif prediction == 'stress':
+        elif prediction_lower == 'stress':
             recommendations.append(
                 'You seem to present strong indicators of stress, try to limit caffeine and consider mindfulness meditation for 10 minutes daily. Delegate tasks where possible and practice setting boundaries, focusing on one task at a time can make a big difference.'
             )
-        elif prediction == 'suicidal':
+        elif prediction_lower == 'suicidal':
             recommendations.append(
                 'You are not alone. If you are having thoughts of taking your life or if you know anyone who does, contact Mind Suicide Line dialing 90101 (open 24/7) or contact them on their online chat. For immediate crisis, call 988 (Suicide & Crisis Lifeline).'
             )
-        elif prediction == 'depression':
+        elif prediction_lower == 'depression':
             recommendations.append(
                 'You seem to present strong indicators of depression, consider speaking with a mental health professional this week. Establish a consistent sleep schedule and try behavioral activation: schedule one pleasant activity each day.'
             )
 
-    elif confidence >= 0.50 and confidence <= 0.70:  # medium confidence
-        if prediction == 'normal':
+    elif confidence_percentage >= 50 and confidence_percentage < 70:  # medium confidence
+        if prediction_lower == 'normal':
             recommendations.append(
                 'You seem to have a healthy mental state. Try to maintain regular sleep, nutrition, and physical activity. Check in with yourself regularly about emotional wellbeing, and do not hesitate to reach out for help in case of need.'
             )
-        elif prediction == 'stress':
+        elif prediction_lower == 'stress':
             recommendations.append(
                 'You seem to present medium indicators of stress, try to limit caffeine and consider mindfulness meditation for 10 minutes daily. Delegate tasks where possible and practice setting boundaries, focusing on one task at a time can make a big difference.'
             )
-        elif prediction == 'suicidal':
+        elif prediction_lower == 'suicidal':
             recommendations.append(
                 'The analysis suggests you may have thoughts of taking your own life. If that is true or you know anyone who does, contact Mind Suicide Line dialing 90101 (open 24/7) or contact them on their online chat. For immediate crisis, call 988 (Suicide & Crisis Lifeline).'
             )
-        elif prediction == 'depression':
+        elif prediction_lower == 'depression':
             recommendations.append(
                 'You seem to present mild indicators of depression, consider speaking with a mental health professional if you feel your situation requires professional help. Establish a consistent sleep schedule and try behavioral activation: schedule one pleasant activity each day.'
             )
 
-    else:  # low confidence (< 0.50)
+    else:  # low confidence (< 50)
         recommendations.append(
             'Model confidence is low. Consider these general wellness suggestions:'
         )
-        if prediction == 'suicidal':
+        if prediction_lower == 'suicidal':
             recommendations.append(
                 'The analysis suggests you may have thoughts of taking your own life. If that is true or you know anyone who does, contact Mind Suicide Line dialing 90101 (open 24/7) or contact them on their online chat. Even with low confidence, this is important: For immediate crisis, call 988 (Suicide & Crisis Lifeline).'
             )
-        elif prediction == 'depression':
+        elif prediction_lower == 'depression':
             recommendations.append(
                 'Check in with yourself regularly about emotional wellbeing. In case you feel symptoms of depression, do not hesitate to reach out for professional help.'
             )
-        elif prediction == 'stress':
+        elif prediction_lower == 'stress':
             recommendations.append(
                 'In case you feel stressed, try to limit caffeine and consider mindfulness meditation for 10 minutes daily. Delegate tasks where possible and practice setting boundaries, focusing on one task at a time can make a big difference.'
             )

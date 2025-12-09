@@ -233,10 +233,6 @@
     transition: transform var(--transition-base);
 }
 
-.indicator-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
-}
 
 .indicator-header {
     display: flex;
@@ -264,8 +260,8 @@
 }
 
 .indicator-bar {
-    height: 100%;
-    border-radius: var(--radius-sm);
+    height: 100% !important;
+    border-radius: var(--radius-sm) !important;
     transition: width 0s ease;
 }
 
@@ -282,19 +278,19 @@
 }
 
 .normal-bar {
-    background: linear-gradient(90deg, #eddb4d 0%, #f7e154 100%);
+    background: linear-gradient(90deg, #eddb4d 0%, #f7e154 100%) !important;
 }
 
 .stress-bar {
-    background: linear-gradient(90deg, #F39C12 0%, #ff7a05 100%);
+    background: linear-gradient(90deg, #F39C12 0%, #ff7a05 100%) !important;
 }
 
 .suicidal-bar {
-    background: linear-gradient(90deg, #88a3a5 0%, #88a3a5 100%);
+    background: linear-gradient(90deg, #88a3a5 0%, #88a3a5 100%) !important;
 }
 
 .depression-bar {
-    background: linear-gradient(90deg, #9B59B6 0%, #8E44AD 100%);
+    background: linear-gradient(90deg, #9B59B6 0%, #8E44AD 100%) !important;
 }
 
 .indicator-value {
