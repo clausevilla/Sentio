@@ -249,7 +249,7 @@ Open DBeaver and create a new connection:
    * **Port:** 5432
    * **Database:** sentio_db
    * **Username:** sentio_user
-   * **Password:**
+   * **Password:** see Part 5.2 to retrieve from Secret Manager
 4. Click **Test Connection** to make sure it works
 5. Click **Finish** to save the connection
 
@@ -287,7 +287,7 @@ gcloud secrets list --project=sentio1
 To view a specific secret's value (for example, the database password):
 
 ```bash
-gcloud secrets versions access latest --secret="DATABASE_PASSWORD" --project=sentio1
+gcloud secrets versions access latest --secret="sql-password" --project=sentio1
 ```
 
 ### 5.3 Adding a New Secret

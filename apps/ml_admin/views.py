@@ -166,6 +166,11 @@ def dashboard_view(request):
         'records': DatasetRecord.objects.count(),
         'users': User.objects.count(),
         'predictions': 0,
+        'full': DatasetRecord.objects.filter(data_upload__pipeline_type='full').count(),
+        'partial': DatasetRecord.objects.filter(
+            data_upload__pipeline_type='partial'
+        ).count(),
+        'raw': DatasetRecord.objects.filter(data_upload__pipeline_type='raw').count(),
     }
 
     if PREDICTIONS_AVAILABLE:
@@ -286,6 +291,21 @@ def data_view(request):
         'increment': DatasetRecord.objects.filter(dataset_type='increment').count(),
     }
 
+    # Breakdown by pipeline type
+    pipeline_stats = {}
+    for pipeline_type in ['full', 'partial', 'raw']:
+        pipeline_stats[pipeline_type] = {
+            'train': DatasetRecord.objects.filter(
+                dataset_type='train', data_upload__pipeline_type=pipeline_type
+            ).count(),
+            'test': DatasetRecord.objects.filter(
+                dataset_type='test', data_upload__pipeline_type=pipeline_type
+            ).count(),
+            'increment': DatasetRecord.objects.filter(
+                dataset_type='increment', data_upload__pipeline_type=pipeline_type
+            ).count(),
+        }
+
     total_records = DatasetRecord.objects.count()
 
     return render(
@@ -300,6 +320,7 @@ def data_view(request):
             'overall_distribution_json': json.dumps(overall_distribution),
             'type_breakdown': type_breakdown,
             'active_model': ModelVersion.objects.filter(is_active=True).first(),
+            'pipeline_stats': pipeline_stats,
         },
     )
 
@@ -762,6 +783,17 @@ def training_view(request):
             .values('label')
             .annotate(count=Count('id'))
         ),
+        'by_pipeline': {
+            'full': DatasetRecord.objects.filter(
+                dataset_type='test', data_upload__pipeline_type='full'
+            ).count(),
+            'partial': DatasetRecord.objects.filter(
+                dataset_type='test', data_upload__pipeline_type='partial'
+            ).count(),
+            'raw': DatasetRecord.objects.filter(
+                dataset_type='test', data_upload__pipeline_type='raw'
+            ).count(),
+        },
     }
 
     training_totals = {
@@ -853,13 +885,56 @@ def start_training_api(request):
                 status=400,
             )
 
-        # Check for training data in selected uploads
+        # Determine required pipeline type based on algorithm
+        from apps.ml_admin.services import MODEL_TO_PIPELINE
+
+        # Get model type (from algorithm or base model for retrain)
+        base_model = None
+        if mode == 'retrain':
+            if not base_model_id:
+                return JsonResponse(
+                    {'success': False, 'error': 'No base model selected'}, status=400
+                )
+            try:
+                base_model = ModelVersion.objects.get(id=base_model_id)
+                model_type = base_model.model_type
+            except ModelVersion.DoesNotExist:
+                return JsonResponse(
+                    {'success': False, 'error': 'Base model not found'}, status=400
+                )
+        else:
+            model_type = algorithm
+
+        required_pipeline = MODEL_TO_PIPELINE.get(model_type)
+
+        # Check for test data with correct pipeline type
+        test_count_pipeline = DatasetRecord.objects.filter(
+            dataset_type='test', data_upload__pipeline_type=required_pipeline
+        ).count()
+        if test_count_pipeline == 0:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': f'No test data with "{required_pipeline}" pipeline type. '
+                    f'{model_type} requires {required_pipeline}-processed data.',
+                },
+                status=400,
+            )
+
+        # Check for training data in selected uploads with correct pipeline type
+        dataset_type_filter = 'increment' if mode == 'retrain' else 'train'
         train_count = DatasetRecord.objects.filter(
-            dataset_type__in=['train', 'increment'], data_upload_id__in=upload_ids
+            dataset_type=dataset_type_filter,
+            data_upload_id__in=upload_ids,
+            data_upload__pipeline_type=required_pipeline,
         ).count()
         if train_count == 0:
             return JsonResponse(
-                {'success': False, 'error': 'No training data in selected datasets.'},
+                {
+                    'success': False,
+                    'error': f'No {dataset_type_filter} data with "{required_pipeline}" pipeline type in selected datasets. '
+                    f'{model_type} requires {required_pipeline}-processed data.',
+                },
                 status=400,
             )
 
@@ -872,19 +947,7 @@ def start_training_api(request):
         from apps.ml_admin.services import train_full, train_incremental
 
         if mode == 'retrain':
-            if not base_model_id:
-                return JsonResponse(
-                    {'success': False, 'error': 'No base model selected'}, status=400
-                )
-
-            try:
-                base_model = ModelVersion.objects.get(id=base_model_id)
-            except ModelVersion.DoesNotExist:
-                return JsonResponse(
-                    {'success': False, 'error': 'Base model not found'}, status=400
-                )
-
-            model_type = base_model.model_type
+            # base_model already fetched and validated above
             config = _build_training_config(model_type, params, is_incremental=True)
 
             result = train_incremental(
