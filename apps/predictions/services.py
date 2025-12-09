@@ -220,7 +220,9 @@ def get_prediction_result(user, user_text):
     df = clean_user_input(user_text)
     processed_text = preprocess_user_input(df, model_version.model_type)
 
-    label, confidence, all_confidences = analyze_text(processed_text.iloc[0], model_version)
+    label, confidence, all_confidences = analyze_text(
+        processed_text.iloc[0], model_version
+    )
 
     # Calculate metrics
     anxiety_level, negativity_level, emotional_intensity, word_count, char_count = (
@@ -241,7 +243,6 @@ def get_prediction_result(user, user_text):
             anxiety_level=anxiety_level,
             negativity_level=negativity_level,
             emotional_intensity=emotional_intensity,
-            all_confidences=all_confidences,
         )
 
     confidence_percentage = round(confidence * 100)
