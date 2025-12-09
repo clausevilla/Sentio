@@ -303,7 +303,6 @@ def delete_all_data_api(request):
                 status=400,
             )
 
-
         deletion_result = TextSubmission.objects.filter(user=request.user).delete()
         deleted_count = deletion_result[0]  # Total number of objects deleted
 

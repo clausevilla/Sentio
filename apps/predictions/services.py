@@ -422,7 +422,11 @@ def save_prediction_to_database(
         submission = TextSubmission.objects.create(user=user, text_content=user_text)
 
         # Convert recommendations list to string for storage
-        recommendations_text = '\n'.join(recommendations) if isinstance(recommendations, list) else recommendations
+        recommendations_text = (
+            '\n'.join(recommendations)
+            if isinstance(recommendations, list)
+            else recommendations
+        )
 
         # Create the prediction result with all metrics
         PredictionResult.objects.create(
