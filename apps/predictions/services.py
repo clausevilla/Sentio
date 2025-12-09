@@ -286,7 +286,9 @@ def get_recommendations(prediction, confidence, anxiety_level):
                 'You seem to present strong indicators of depression, consider speaking with a mental health professional this week. Establish a consistent sleep schedule and try behavioral activation: schedule one pleasant activity each day.'
             )
 
-    elif confidence_percentage >= 50 and confidence_percentage < 70:  # medium confidence
+    elif (
+        confidence_percentage >= 50 and confidence_percentage < 70
+    ):  # medium confidence
         if prediction_lower == 'normal':
             recommendations.append(
                 'You seem to have a healthy mental state. Try to maintain regular sleep, nutrition, and physical activity. Check in with yourself regularly about emotional wellbeing, and do not hesitate to reach out for help in case of need.'
