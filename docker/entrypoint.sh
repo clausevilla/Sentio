@@ -23,7 +23,7 @@ python << PYTHON_END
 from google.cloud import storage
 import os
 
-bucket_name = os.environ.get('GCS_BUCKET', 'sentio-ml-models')
+bucket_name = os.environ.get('GCS_BUCKET', 'sentio-m_l-models')
 models_dir = '/app/ml_models'
 os.makedirs(models_dir, exist_ok=True)
 
