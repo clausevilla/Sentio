@@ -1,5 +1,5 @@
 /* Author: Lian Shi */
-/* History Page Styles - Sentio Design System */
+/* Disclaimer: LLM has helped with designing css styling for thie page and manual adjustment is made */
 
 /* ===================================
    Page Layout
@@ -18,8 +18,7 @@
 /* PAGE HEADER  */
 .page-header {
     text-align: center;
-    padding-top: var(--spacing-xl);
-    padding-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
 }
 
 .page-header h1 {
@@ -62,34 +61,23 @@
 }
 
 .stat-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.3rem;
-    flex-shrink: 0;
+    font-size: 2.5rem;
 }
 
 .stat-icon-primary {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
-    color: white;
+    color: var(--color-blue);
 }
 
 .stat-icon-success {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-lighter) 100%);
-    color: white;
+    color:var(--color-primary-light);
 }
 
 .stat-icon-warning {
-    background: linear-gradient(135deg, var(--color-coral) 0%, var(--color-coral-light) 100%);
-    color: white;
+    color:var(--color-coral);
 }
 
 .stat-icon-info {
-    background: linear-gradient(135deg, var(--color-blue) 0%, #7A9BB8 100%);
-    color: white;
+    color:var(--color-text-light);
 }
 
 .stat-content {
@@ -109,12 +97,39 @@
     font-weight: 600;
 }
 
+@media (max-width: 768px) {
+    .stat-value.stat-value-small {
+        font-size: 0.85rem;
+
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-value.stat-value-small {
+        font-size: 0.75rem;
+    }
+}
+
 .stat-label {
     font-size: 0.8rem;
     color: var(--color-text-light);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .stat-label {
+        font-size: 0.7rem;
+        margin-top: 5pt;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-label {
+        font-size: 0.65rem;
+        margin-top: 5pt;
+    }
 }
 
 /* ===================================
@@ -162,9 +177,10 @@
     align-items: center;
 }
 
+
 .distribution-chart-container {
     position: relative;
-    height: 180px;
+    height: 250px;
     width: 100%;
     display: flex;
     align-items: center;
@@ -188,18 +204,22 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-shrink: 0;
+    min-width: 0;
 }
 
 .dist-icon {
     font-size: 1rem;
     width: 20px;
     text-align: center;
+    flex-shrink: 0;
 }
 
 .dist-label {
     font-size: 0.85rem;
     font-weight: 500;
     color: var(--color-text);
+    white-space: nowrap;
 }
 
 .dist-bar-container {
@@ -216,19 +236,19 @@
 }
 
 .dist-bar.normal {
-    background: linear-gradient(90deg, var(--color-primary), var(--color-primary-lighter));
+    background: linear-gradient(90deg, var(--color-state-normal), var(--color-state-normal-light));
 }
 
 .dist-bar.depression {
-    background: linear-gradient(90deg, var(--color-blue), #7A9BB8);
+    background: linear-gradient(90deg, var(--color-state-depression), var(--color-state-depression-light));
 }
 
 .dist-bar.stress {
-    background: linear-gradient(90deg, var(--color-coral), var(--color-coral-light));
+    background: linear-gradient(90deg, var(--color-state-stress), var(--color-state-stress-light));
 }
 
 .dist-bar.suicidal {
-    background: linear-gradient(90deg, var(--color-purple), var(--color-purple-light));
+    background: linear-gradient(90deg, var(--color-state-suicidal), var(--color-state-suicidal-light));
 }
 
 .dist-value {
@@ -240,7 +260,7 @@
 }
 
 /* ===================================
-   Trend Chart - TALLER with dark header
+   Trend Chart
    =================================== */
 .chart-header {
     display: flex;
@@ -283,10 +303,10 @@
     border-color: #FFFFFF;
 }
 
-/* Chart container - TALLER (280px) */
+/* Chart container */
 .chart-container {
     position: relative;
-    height: 280px;
+    height: 350px;
     width: 100%;
     padding: 1rem 0;
 }
@@ -360,6 +380,12 @@
     background: var(--color-bg-white);
 }
 
+@media (max-width: 768px) {
+    .list-content {
+        padding: 0.75rem;
+    }
+}
+
 /* ===================================
    History Items
    =================================== */
@@ -385,19 +411,19 @@
 }
 
 .history-item[data-state="normal"] {
-    border-left-color: var(--color-primary);
+    border-left-color: var(--color-state-normal);
 }
 
 .history-item[data-state="depression"] {
-    border-left-color: var(--color-blue);
+    border-left-color: var(--color-state-depression);
 }
 
 .history-item[data-state="stress"] {
-    border-left-color: var(--color-coral);
+    border-left-color: var(--color-state-stress);
 }
 
 .history-item[data-state="suicidal"] {
-    border-left-color: var(--color-purple);
+    border-left-color: var(--color-state-suicidal);
 }
 
 /* Item Header: Date + Badge + Metrics + Delete Button */
@@ -470,23 +496,27 @@
 }
 
 .badge-normal {
-    background: rgba(74, 124, 89, 0.15);
-    color: var(--color-primary);
+    background: var(--color-state-normal);
+    color: white;
+    border: 1.5px solid rgba(61, 163, 122, 0.91);
 }
 
 .badge-depression {
-    background: rgba(91, 124, 153, 0.15);
-    color: var(--color-blue);
+    background: var(--color-blue);
+    color: white;
+    border: 1.5px solid rgba(90, 139, 191, 0.92);
 }
 
 .badge-stress {
-    background: rgba(224, 122, 95, 0.15);
-    color: var(--color-coral);
+    background: var(--color-coral);
+    color: white;
+    border: 1.5px solid rgba(232, 146, 75, 0.963);
 }
 
 .badge-suicidal {
-    background: rgba(123, 104, 166, 0.15);
-    color: var(--color-purple);
+    background:var(--color-state-suicidal);
+    color: white;
+    border: 1.5px solid rgba(157, 109, 196, 0.898);
 }
 
 .badge-confidence {
@@ -507,20 +537,53 @@
     align-items: center;
     gap: 0.35rem;
     font-size: 0.75rem;
-    color: var(--color-text-light);
-    background: var(--color-bg-white);
     padding: 0.25rem 0.6rem;
     border-radius: 5px;
     font-weight: 500;
-    border: 1px solid var(--color-bg-mint);
 }
 
 .indicator-tag i {
     font-size: 0.7rem;
-    opacity: 0.7;
 }
 
-/* Text - Bolder, larger, darker */
+/* Anxiety indicator - soft coral */
+.indicator-tag:nth-child(1) {
+    background: rgba(220, 100, 100, 0.12);
+    color: #e43f3f;
+    border: 1px solid rgba(220, 100, 100, 0.2);
+}
+
+.indicator-tag:nth-child(1) i {
+    color: #C76B6B;
+}
+
+/* Negativity indicator - soft blue */
+.indicator-tag:nth-child(2) {
+    background: rgba(90, 139, 191, 0.12);
+    color: #2675c9;
+    border: 1px solid rgba(90, 139, 191, 0.2);
+}
+
+.indicator-tag:nth-child(2) i {
+    color: #5A8BBF;
+}
+
+/* Intensity indicator - soft amber */
+.indicator-tag:nth-child(3) {
+    background: rgba(241, 170, 223, 0.12);
+    color: #f453b3;
+    border: 1px solid rgba(240, 165, 204, 0.2);
+}
+
+.indicator-tag:nth-child(3) i {
+    color: #ee6ab7;
+}
+
+/* Text - Expandable with click */
+.item-text-wrapper {
+    position: relative;
+}
+
 .item-text {
     font-size: 0.95rem;
     font-weight: 500;
@@ -530,6 +593,29 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+.item-text.expanded {
+    display: block;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+}
+
+.show-more-btn {
+    display: inline-block;
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 0.5rem;
+}
+
+.show-more-btn:hover {
+    text-decoration: underline;
+    color: var(--color-primary-light);
 }
 
 /* ===================================
@@ -642,7 +728,18 @@
     }
 
     .distribution-chart-container {
-        height: 180px;
+        height: 220px;
+        max-width: 280px;
+        margin: 0 auto;
+    }
+
+    .distribution-bars {
+        width: 100%;
+    }
+
+    /* Ensure distribution items don't overlap */
+    .distribution-item {
+        grid-template-columns: 105px 1fr 70px;
     }
 
     .item-indicators {
@@ -657,10 +754,7 @@
 }
 
 @media (max-width: 768px) {
-    .page-header {
-        margin-top: var(--spacing-lg);
-        padding-top: var(--spacing-lg);
-    }
+
 
     .page-header h1 {
         font-size: var(--font-2xl);
@@ -675,7 +769,13 @@
     }
 
     .distribution-item {
-        grid-template-columns: 90px 1fr 60px;
+        grid-template-columns: 100px 1fr 65px;
+        gap: 0.5rem;
+    }
+
+    .distribution-chart-container {
+        height: 200px;
+        max-width: 250px;
     }
 
     .list-header,
@@ -685,18 +785,57 @@
         gap: 0.75rem;
     }
 
+    .time-filter {
+        width: 100%;
+    }
+
+    .filter-btn {
+        flex: 1;
+        text-align: center;
+    }
+
+    .history-item {
+        position: relative;
+        padding: 0.75rem 1rem;
+        overflow: visible;
+    }
+
     .item-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
     }
 
+    /* Smaller indicator tags on mobile - force one line */
     .item-indicators {
         margin-left: 0;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 0.25rem;
+        max-width: 100%;
+        overflow: visible;
+    }
+
+    .indicator-tag {
+        font-size: 0.55rem;
+        padding: 0.12rem 0.25rem;
+        white-space: nowrap;
+        gap: 0.15rem;
+    }
+
+    /* Hide icons on mobile to save space */
+    .indicator-tag i {
+        display: none;
+    }
+
+    /* Smaller badges on mobile */
+    .item-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.6rem;
     }
 
     .chart-container {
-        height: 240px;
+        height: 300px;
     }
 
     .delete-analysis-btn {
@@ -729,9 +868,85 @@
     }
 
     .stat-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 1.1rem;
+        font-size: 2rem;
+    }
+
+    .distribution-chart-container {
+        height: 180px;
+        max-width: 200px;
+    }
+
+    /* Stack distribution items vertically for narrow screens */
+    .distribution-item {
+        grid-template-columns: 90px 1fr 50px;
+        gap: 0.4rem;
+    }
+
+    .dist-label {
+        font-size: 0.75rem;
+    }
+
+    .dist-value {
+        font-size: 0.7rem;
+    }
+
+    .dist-icon {
+        font-size: 0.85rem;
+    }
+
+    .chart-container {
+        height: 260px;
+    }
+
+    .list-content {
+        padding: 0.5rem;
+    }
+
+    .history-item {
+        padding: 0.6rem 0.75rem;
+    }
+
+    /* Even smaller badges and indicators for tiny screens */
+    .item-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+    }
+
+    .indicator-tag {
+        font-size: 0.5rem;
+        padding: 0.1rem 0.2rem;
+    }
+
+    /* Icons already hidden from 768px */
+
+    .item-indicators {
+        gap: 0.2rem;
+        flex-wrap: nowrap;
+    }
+
+    .item-text {
+        font-size: 0.9rem;
+    }
+
+    .show-more-btn {
+        font-size: 0.8rem;
+    }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+    .indicator-tag {
+        font-size: 0.45rem;
+        padding: 0.08rem 0.15rem;
+    }
+
+    .item-indicators {
+        gap: 0.15rem;
+    }
+
+    .item-badge {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.35rem;
     }
 }
 

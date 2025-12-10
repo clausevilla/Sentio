@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupStateFilter();
     setupTimeFilter();
     setupDeleteButtons();
+    setupExpandableText();
 
     // Add animations
     animateStats();
@@ -181,30 +182,44 @@ function initializeTrendChart(period) {
             throw new Error('Invalid data structure');
         }
 
-        // Map datasets with Sentio colors
+        // Map datasets with Sentio colors for line chart
+        var pointStyles = ['circle', 'rect', 'triangle', 'rectRot'];
+        var datasetIndex = 0;
+
+        // Detect mobile for point sizes
+        var isMobileForPoints = window.innerWidth <= 768;
+
         var datasets = data.datasets.map(function(dataset) {
             var color = colors.normal;
             if (dataset.label === 'Depression') color = colors.depression;
             else if (dataset.label === 'Stress') color = colors.stress;
             else if (dataset.label === 'Suicidal') color = colors.suicidal;
 
+            var style = pointStyles[datasetIndex % pointStyles.length];
+            datasetIndex++;
+
             return {
                 label: dataset.label,
                 data: dataset.data,
                 borderColor: color,
-                backgroundColor: color + '1A',
-                tension: 0.4,
+                backgroundColor: color + '15',
+                tension: 0.3,
                 fill: true,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                borderWidth: 2,
+                pointRadius: isMobileForPoints ? 3 : 5,
+                pointHoverRadius: isMobileForPoints ? 5 : 8,
+                borderWidth: isMobileForPoints ? 2 : 2.5,
                 pointBackgroundColor: color,
                 pointBorderColor: '#ffffff',
-                pointBorderWidth: 2
+                pointBorderWidth: isMobileForPoints ? 1.5 : 2,
+                pointStyle: style
             };
         });
 
         // Create the line chart
+        // Detect mobile for responsive options
+        var isMobile = window.innerWidth <= 768;
+        var isSmallMobile = window.innerWidth <= 480;
+
         window.mentalHealthChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -214,6 +229,11 @@ function initializeTrendChart(period) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: isMobile ? 5 : 10
+                    }
+                },
                 interaction: {
                     intersect: false,
                     mode: 'index'
@@ -223,8 +243,9 @@ function initializeTrendChart(period) {
                         position: 'top',
                         labels: {
                             usePointStyle: true,
-                            padding: 15,
-                            font: { size: 11, weight: '600' }
+                            padding: isMobile ? 12 : 25,
+                            font: { size: isMobile ? 10 : 13, weight: '600' },
+                            boxWidth: isMobile ? 8 : 12
                         }
                     },
                     tooltip: {
@@ -247,28 +268,32 @@ function initializeTrendChart(period) {
                         beginAtZero: true,
                         ticks: {
                             stepSize: 1,
-                            font: { size: 11 },
+                            font: { size: isMobile ? 10 : 13 },
                             color: '#3D5A5A',
                             callback: function(value) {
                                 if (Math.floor(value) === value) return value;
                             }
                         },
                         title: {
-                            display: true,
+                            display: !isSmallMobile,
                             text: 'Predictions',
                             font: { size: 11, weight: '600' },
                             color: '#3D5A5A'
                         },
-                        grid: { color: 'rgba(74, 124, 89, 0.1)' }
+                        grid: { color: 'rgba(74, 124, 89, 0.1)' },
+                        border: { display: true, color: '#3D5A5A' }
                     },
                     x: {
                         ticks: {
-                            font: { size: 10 },
+                            font: { size: isMobile ? 9 : 13 },
                             color: '#3D5A5A',
-                            maxRotation: 45,
-                            minRotation: 0
+                            maxRotation: isMobile ? 60 : 45,
+                            minRotation: isMobile ? 45 : 0,
+                            autoSkip: isMobile,
+                            maxTicksLimit: isMobile ? 8 : 20
                         },
-                        grid: { display: false }
+                        grid: { display: false },
+                        border: { display: true, color: '#3D5A5A' }
                     }
                 },
                 animation: {
@@ -758,4 +783,56 @@ function showToast(message, type, duration) {
             }, 300);
         }
     }, duration);
+}
+
+/**
+ * Setup expandable text functionality for history items.
+ *
+ * Long text entries are truncated to 2 lines by default.
+ * A "show more" button appears for texts that overflow.
+ * Clicking toggles between truncated and full view.
+ */
+function setupExpandableText() {
+    var textElements = document.querySelectorAll('.item-text');
+
+    textElements.forEach(function(textEl) {
+        // Temporarily remove line clamp to measure true height
+        textEl.style.display = 'block';
+        textEl.style.webkitLineClamp = 'unset';
+        textEl.style.overflow = 'visible';
+
+        var fullHeight = textEl.scrollHeight;
+
+        // Remove inline styles - let CSS take over
+        textEl.style.display = '';
+        textEl.style.webkitLineClamp = '';
+        textEl.style.webkitBoxOrient = '';
+        textEl.style.overflow = '';
+
+        var clampedHeight = textEl.clientHeight;
+
+        // Check if text is actually truncated
+        if (fullHeight > clampedHeight + 5) {
+            // Create show more button
+            var showMoreBtn = document.createElement('button');
+            showMoreBtn.className = 'show-more-btn';
+            showMoreBtn.textContent = 'Show more';
+
+            // Insert button after text element
+            textEl.parentNode.insertBefore(showMoreBtn, textEl.nextSibling);
+
+            // Toggle functionality
+            showMoreBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+
+                if (textEl.classList.contains('expanded')) {
+                    textEl.classList.remove('expanded');
+                    showMoreBtn.textContent = 'Show more';
+                } else {
+                    textEl.classList.add('expanded');
+                    showMoreBtn.textContent = 'Show less';
+                }
+            });
+        }
+    });
 }
