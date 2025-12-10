@@ -69,12 +69,20 @@ class PredictionTests(TestCase):
 
     # ----- ML logic with mock model -----
 
-    @patch('apps.predictions.services.MODEL')
-    def test_analyze_text(self, mock_model):
-        mock_model.predict.return_value = ['stress']
-        mock_model.predict_proba.return_value = [[0.1, 0.8, 0.1]]
+    @patch('apps.predictions.services.get_predictor')
+    def test_analyze_text(self, mock_get_predictor):
+        mock_predictor_instance = mock_get_predictor.return_value
 
-        prediction, confidence = services.analyze_text('some text')
+        mock_predictor_instance.predict.return_value = {
+            'label': 'stress',
+            'confidence': 0.8,
+            'probabilities': {'stress': 0.8},
+        }
+
+        mock_model_version = MagicMock()
+        prediction, confidence, _, _ = services.analyze_text(
+            'some text', mock_model_version
+        )
 
         self.assertEqual(prediction, 'stress')
         self.assertEqual(confidence, 0.8)
@@ -122,7 +130,10 @@ class PredictionTests(TestCase):
         mock_clean.return_value = pd.DataFrame()
         mock_df_processed = pd.DataFrame({'text_preprocessed': ['processed text']})
         mock_preprocess.return_value = mock_df_processed['text_preprocessed']
-        mock_analyze.return_value = ('stress', 0.85)
+
+        # FIX: Provide 4 values: label, confidence, probabilities, model_version
+        mock_analyze.return_value = ('stress', 0.85, {'stress': 0.85}, mock_mv_instance)
+
         mock_metrics.return_value = (40, 20, 10, 5, 25)
         mock_recs.return_value = ['Take a break']
 
@@ -137,6 +148,7 @@ class PredictionTests(TestCase):
             _,
             _,
             _,
+            _,  # FIX: You might need to unpack the 9th value (all_confidences_percentage) added in services.py
         ) = result
 
         self.assertEqual(prediction, 'stress')
@@ -168,7 +180,7 @@ class PredictionTests(TestCase):
         res = PredictionResult.objects.first()
         self.assertEqual(res.mental_state, 'stress')
 
-        self.assertEqual(str(res.recommendations), str(recommendations))
+        self.assertEqual(res.recommendations, '\n'.join(recommendations))
 
     def test_save_prediction_ignores_template_text(self):
         user = User.objects.create(username='testuser')
