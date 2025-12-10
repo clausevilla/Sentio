@@ -159,10 +159,6 @@
     color: #2874A6;
 }
 
-.mental-state-badge.anxiety {
-    background: linear-gradient(135deg, #FFF4E6 0%, #FFE8CC 100%);
-    color: #F39C12;
-}
 
 .mental-state-badge.stress {
     background: linear-gradient(135deg, #FADBD8 0%, #F5B7B1 100%);
@@ -174,10 +170,6 @@
     color: #7D3C98;
 }
 
-.mental-state-badge.bipolar {
-    background: linear-gradient(135deg, #FCF3CF 0%, #F9E79F 100%);
-    color: #D68910;
-}
 
 .state-icon {
     font-size: 2rem;

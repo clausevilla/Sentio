@@ -35,6 +35,16 @@
     --color-cyan-bright: #2EC5B6;
     --color-rose-soft: #F6C5CC;
 
+    /* mental state colors - balanced palette */
+    --color-state-normal: #3DA37A;
+    --color-state-normal-light: #5BBC95;
+    --color-state-depression: #5A8BBF;
+    --color-state-depression-light: #7BA5D0;
+    --color-state-stress: #E8924B;
+    --color-state-stress-light: #F0A86D;
+    --color-state-suicidal: #9D6DC4;
+    --color-state-suicidal-light: #B48AD5;
+
 
 
     /* shadows */
