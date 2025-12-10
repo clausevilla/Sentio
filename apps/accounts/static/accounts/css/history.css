@@ -18,8 +18,7 @@
 /* PAGE HEADER  */
 .page-header {
     text-align: center;
-    padding-top: var(--spacing-xl);
-    padding-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
 }
 
 .page-header h1 {
@@ -62,23 +61,24 @@
 }
 
 .stat-icon {
-    font-size: 2rem;
+    font-size: 2.5rem;
 }
 
 .stat-icon-primary {
-    color: var(--color-blue)
+    color: var(--color-blue);
 }
 
 .stat-icon-success {
-    color:var(--color-primary-light)
+    color:var(--color-primary-light);
 }
 
 .stat-icon-warning {
-    color:var(--color-coral)
+    color:var(--color-coral);
 }
 
 .stat-icon-info {
-    color:var(--color-text-light)}
+    color:var(--color-text-light);
+}
 
 .stat-content {
     flex: 1;
@@ -97,12 +97,39 @@
     font-weight: 600;
 }
 
+@media (max-width: 768px) {
+    .stat-value.stat-value-small {
+        font-size: 0.85rem;
+
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-value.stat-value-small {
+        font-size: 0.75rem;
+    }
+}
+
 .stat-label {
     font-size: 0.8rem;
     color: var(--color-text-light);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .stat-label {
+        font-size: 0.7rem;
+        margin-top: 5pt;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-label {
+        font-size: 0.65rem;
+        margin-top: 5pt;
+    }
 }
 
 /* ===================================
@@ -153,7 +180,7 @@
 
 .distribution-chart-container {
     position: relative;
-    height: 180px;
+    height: 250px;
     width: 100%;
     display: flex;
     align-items: center;
@@ -177,18 +204,22 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-shrink: 0;
+    min-width: 0;
 }
 
 .dist-icon {
     font-size: 1rem;
     width: 20px;
     text-align: center;
+    flex-shrink: 0;
 }
 
 .dist-label {
     font-size: 0.85rem;
     font-weight: 500;
     color: var(--color-text);
+    white-space: nowrap;
 }
 
 .dist-bar-container {
@@ -229,7 +260,7 @@
 }
 
 /* ===================================
-   Trend Chart - TALLER with dark header
+   Trend Chart
    =================================== */
 .chart-header {
     display: flex;
@@ -272,10 +303,10 @@
     border-color: #FFFFFF;
 }
 
-/* Chart container - TALLER (280px) */
+/* Chart container */
 .chart-container {
     position: relative;
-    height: 280px;
+    height: 350px;
     width: 100%;
     padding: 1rem 0;
 }
@@ -347,6 +378,12 @@
 .list-content {
     padding: 1rem 1.25rem;
     background: var(--color-bg-white);
+}
+
+@media (max-width: 768px) {
+    .list-content {
+        padding: 0.75rem;
+    }
 }
 
 /* ===================================
@@ -459,26 +496,26 @@
 }
 
 .badge-normal {
-    background: rgba(61, 163, 122, 0.18);
-    color: #2D8A64;
+    background: var(--color-state-normal);
+    color: white;
     border: 1.5px solid rgba(61, 163, 122, 0.91);
 }
 
 .badge-depression {
-    background: rgba(90, 139, 191, 0.18);
-    color: #4A7AAD;
+    background: var(--color-blue);
+    color: white;
     border: 1.5px solid rgba(90, 139, 191, 0.92);
 }
 
 .badge-stress {
-    background: rgba(232, 146, 75, 0.18);
-    color: #D07A35;
+    background: var(--color-coral);
+    color: white;
     border: 1.5px solid rgba(232, 146, 75, 0.963);
 }
 
 .badge-suicidal {
-    background: rgba(157, 109, 196, 0.18);
-    color: #8A5AB0;
+    background:var(--color-state-suicidal);
+    color: white;
     border: 1.5px solid rgba(157, 109, 196, 0.898);
 }
 
@@ -565,7 +602,7 @@
 }
 
 .show-more-btn {
-    display: inline;
+    display: inline-block;
     background: none;
     border: none;
     color: var(--color-primary);
@@ -573,7 +610,7 @@
     font-weight: 600;
     cursor: pointer;
     padding: 0;
-    margin-left: 4px;
+    margin-top: 0.5rem;
 }
 
 .show-more-btn:hover {
@@ -691,7 +728,18 @@
     }
 
     .distribution-chart-container {
-        height: 180px;
+        height: 220px;
+        max-width: 280px;
+        margin: 0 auto;
+    }
+
+    .distribution-bars {
+        width: 100%;
+    }
+
+    /* Ensure distribution items don't overlap */
+    .distribution-item {
+        grid-template-columns: 105px 1fr 70px;
     }
 
     .item-indicators {
@@ -706,10 +754,7 @@
 }
 
 @media (max-width: 768px) {
-    .page-header {
-        margin-top: var(--spacing-lg);
-        padding-top: var(--spacing-lg);
-    }
+
 
     .page-header h1 {
         font-size: var(--font-2xl);
@@ -724,7 +769,13 @@
     }
 
     .distribution-item {
-        grid-template-columns: 90px 1fr 60px;
+        grid-template-columns: 100px 1fr 65px;
+        gap: 0.5rem;
+    }
+
+    .distribution-chart-container {
+        height: 200px;
+        max-width: 250px;
     }
 
     .list-header,
@@ -734,18 +785,57 @@
         gap: 0.75rem;
     }
 
+    .time-filter {
+        width: 100%;
+    }
+
+    .filter-btn {
+        flex: 1;
+        text-align: center;
+    }
+
+    .history-item {
+        position: relative;
+        padding: 0.75rem 1rem;
+        overflow: visible;
+    }
+
     .item-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
     }
 
+    /* Smaller indicator tags on mobile - force one line */
     .item-indicators {
         margin-left: 0;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 0.25rem;
+        max-width: 100%;
+        overflow: visible;
+    }
+
+    .indicator-tag {
+        font-size: 0.55rem;
+        padding: 0.12rem 0.25rem;
+        white-space: nowrap;
+        gap: 0.15rem;
+    }
+
+    /* Hide icons on mobile to save space */
+    .indicator-tag i {
+        display: none;
+    }
+
+    /* Smaller badges on mobile */
+    .item-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.6rem;
     }
 
     .chart-container {
-        height: 240px;
+        height: 300px;
     }
 
     .delete-analysis-btn {
@@ -778,9 +868,85 @@
     }
 
     .stat-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 1.1rem;
+        font-size: 2rem;
+    }
+
+    .distribution-chart-container {
+        height: 180px;
+        max-width: 200px;
+    }
+
+    /* Stack distribution items vertically for narrow screens */
+    .distribution-item {
+        grid-template-columns: 90px 1fr 50px;
+        gap: 0.4rem;
+    }
+
+    .dist-label {
+        font-size: 0.75rem;
+    }
+
+    .dist-value {
+        font-size: 0.7rem;
+    }
+
+    .dist-icon {
+        font-size: 0.85rem;
+    }
+
+    .chart-container {
+        height: 260px;
+    }
+
+    .list-content {
+        padding: 0.5rem;
+    }
+
+    .history-item {
+        padding: 0.6rem 0.75rem;
+    }
+
+    /* Even smaller badges and indicators for tiny screens */
+    .item-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+    }
+
+    .indicator-tag {
+        font-size: 0.5rem;
+        padding: 0.1rem 0.2rem;
+    }
+
+    /* Icons already hidden from 768px */
+
+    .item-indicators {
+        gap: 0.2rem;
+        flex-wrap: nowrap;
+    }
+
+    .item-text {
+        font-size: 0.9rem;
+    }
+
+    .show-more-btn {
+        font-size: 0.8rem;
+    }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+    .indicator-tag {
+        font-size: 0.45rem;
+        padding: 0.08rem 0.15rem;
+    }
+
+    .item-indicators {
+        gap: 0.15rem;
+    }
+
+    .item-badge {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.35rem;
     }
 }
 
