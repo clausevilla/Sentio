@@ -1,4 +1,4 @@
-<!-- Author: Lian Shi -->
+<!-- Author: Lian Shi, Claudia Sevilla -->
 <!-- Disclaimer: LLM has been used to help with page layout and manual adjustments were done after -->
 
 {% extends 'base.html' %}
@@ -15,7 +15,7 @@
     <div class="container">
         <!-- Page Header -->
         <div class="text-center mb-xl">
-            <h2>👤 My Profile</h2>
+            <h2>My Profile</h2>
             <p
                 style="color: var(--color-text-light); font-size: var(--font-lg);">Manage
                 your account settings</p>
@@ -28,7 +28,7 @@
             <!-- Account Information -->
             <div class="card">
                 <div class="card-header">
-                    <h2>ℹ️ Account Information</h2>
+                    <h2>Account Information</h2>
                 </div>
                 <div class="card-body">
                     <div class="info-row">
@@ -60,7 +60,7 @@
             <!-- Export Your Data - NEW SECTION -->
             <div class="card">
                 <div class="card-header">
-                    <h2>📦 Your Data</h2>
+                    <h2><i class="fas fa-boxes" style="margin-right: 15px;"></i>Your Data</h2>
                 </div>
                 <div class="card-body">
                     <p style="color: var(--color-text-light); margin-bottom: 1rem;">
@@ -68,7 +68,7 @@
                     </p>
                     <div class="export-info" style="background: #e8f5e9; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
                         <p style="margin: 0; font-size: 0.9rem; color: #2e7d32;">
-                            <strong>📥 Export includes:</strong><br>
+                            <strong> Export includes:</strong><br>
                             • Account information (username, email)<br>
                             • Consent records<br>
                             • All your text analysis history
@@ -83,7 +83,7 @@
             <!-- Change Password -->
             <div class="card">
                 <div class="card-header">
-                    <h2>🔒 Change Password</h2>
+                    <h2><i class="fas fa-lock" style="margin-right: 15px;"></i> Change Password</h2>
                 </div>
                 <div class="card-body">
                     <form id="changePasswordForm">
@@ -140,11 +140,11 @@
             <!-- Danger Zone -->
             <div class="card danger-card">
                 <div class="card-header">
-                    <h2>⚠️ Danger Zone</h2>
+                    <h2><i class="fas fa-exclamation-triangle" style="margin-right: 15px;"></i>Danger Zone</h2>
                 </div>
                 <div class="card-body">
                     <div class="danger-action">
-                        <h3>🗑️ Delete All Data</h3>
+                        <h3>Delete All Data</h3>
                         <p>Permanently delete all your analysis history. Your
                             account will remain active.</p>
                         <button class="btn btn-danger"
@@ -157,7 +157,7 @@
                         style="margin: 2rem 0; border: none; border-top: 1px solid #e0e0e0;">
 
                     <div class="danger-action">
-                        <h3>❌ Delete Account</h3>
+                        <h3>Delete Account</h3>
                         <p>Permanently delete your account and all data. This
                             cannot be undone.</p>
                         <button class="btn btn-danger"
