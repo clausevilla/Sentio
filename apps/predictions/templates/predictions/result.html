@@ -19,7 +19,7 @@
         </div>
 
         <!-- Alert Box (if needed) -->
-        {% if mental_state_label != 'normal' and confidence >= 70 %}
+        {% if mental_state_label|lower != 'normal' and confidence >= 70 %}
         <div class="alert alert-warning">
             <h3><i class="fas fa-exclamation-triangle"></i>Mental Health Indicator Detected</h3>
             <p>Your text shows patterns associated with {{ mental_state_label }}.
@@ -37,7 +37,7 @@
                     <div class="progress-header">
                         <h2 class="card-title" id="mentalStateTitle">{{ mental_state_label }}</h2>
                         <div class="score-container">
-                            <svg class="circular-progress" width="350" height="350">
+                            <svg class="circular-progress" width="360" height="360">
                                 <circle class="progress-background" cx="180" cy="180" r="145"></circle>
                                 <circle class="progress-bar" id="progressBar" cx="180" cy="180" r="145"></circle>
                             </svg>
