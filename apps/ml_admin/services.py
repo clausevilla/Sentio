@@ -473,6 +473,7 @@ def _run_training(
         storage = StorageHandler(
             model_dir=settings.MODEL_DIR,
             gcs_bucket=getattr(settings, 'GCS_BUCKET', None),
+            use_gcs=getattr(settings, 'USE_GCS', False),
         )
         trainer = ModelTrainer(storage)
 
