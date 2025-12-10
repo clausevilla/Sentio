@@ -123,6 +123,8 @@ function selectModel(element, modelId, modelType, modelName) {
         const modelData = retrainableModelsData.find(m => m.id === modelId);
         if (modelData && modelData.saved_params) {
             selectedModelSavedParams = modelData.saved_params;
+            const paramsKey = `retrain_${modelType}`;
+            delete currentParams[paramsKey];
         }
     }
 
