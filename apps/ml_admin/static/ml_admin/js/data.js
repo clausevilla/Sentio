@@ -15,10 +15,14 @@ let distModalChart = null;
 const DATASET_TYPE_LABELS = {
     'train': 'Training',
     'test': 'Test',
-    'unlabeled': 'Unlabeled'
+    'increment': 'Increment'
 };
 
-// TODO : Display names for pipeline types, to be matched with model later
+// Format number with commas
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+// Display names for pipeline types, to be matched with model later
 const PIPELINE_LABELS = {
     'full': 'Full',
     'partial': 'Partial',
@@ -1169,9 +1173,9 @@ async function loadSplitInfo(id, name) {
                     <span class="split-count">${formatNumber(b.test)}</span>
                     <span class="split-label">Test</span>
                 </div>
-                <div class="split-stat unlabeled">
-                    <span class="split-count">${formatNumber(b.unlabeled)}</span>
-                    <span class="split-label">Unlabeled</span>
+                <div class="split-stat increment">
+                    <span class="split-count">${formatNumber(b.increment)}</span>
+                    <span class="split-label">Increment</span>
                 </div>
             </div>
 
@@ -1200,10 +1204,10 @@ async function loadSplitInfo(id, name) {
                 <div class="split-quick-actions">
                     <label>Quick Actions:</label>
                     <button class="btn btn-secondary btn-block" onclick="applySplit('all_training')">
-                        <i class="fas fa-graduation-cap"></i> All â†’ Training
+                        <i class="fas fa-graduation-cap"></i> All -> Training
                     </button>
                     <button class="btn btn-secondary btn-block" onclick="applySplit('all_test')">
-                        <i class="fas fa-flask"></i> All â†’ Test
+                        <i class="fas fa-flask"></i> All -> Test
                     </button>
                 </div>
             </div>

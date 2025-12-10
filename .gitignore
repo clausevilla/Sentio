@@ -48,3 +48,9 @@ sentio_results/
 ml-models/
 .pt
 #*.pkl
+
+# K8s secrets
+k8s/secrets.yaml
+**/secrets.yaml
+*.secret
+*.secrets

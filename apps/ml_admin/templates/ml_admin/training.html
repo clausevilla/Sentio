@@ -1,8 +1,9 @@
-<!--Author: Lian Shi-->
+<!--Author: Lian Shi, Marcus Berggren-->
 <!-- Disclaimer: LLM has used to generate initial layout related to training, and fine tuning was done manually to different elements -->
 
 {% extends 'ml_admin/base_admin.html' %}
 {% load static %}
+{% load filters %}
 {% block title %}Training{% endblock %}
 {% block page_title %}Training Center{% endblock %}
 {% block page_css %}<link rel="stylesheet" href="{% static 'ml_admin/css/training.css' %}">{% endblock %}
@@ -29,11 +30,12 @@
     <div class="test-set-icon"><i class="fas fa-flask"></i></div>
     <div class="test-set-info">
         <strong>Fixed Test Set</strong>
-        <span>{{ test_set_info.total }} records · Used for all evaluations</span>
+        <span class="test-set-breakdown">
+            <span class="test-pipeline full"><i class="fas fa-broom"></i> {{ test_set_info.by_pipeline.full }}</span>
+            <span class="test-pipeline partial"><i class="fas fa-adjust"></i> {{ test_set_info.by_pipeline.partial }}</span>
+            <span class="test-pipeline raw"><i class="fas fa-feather"></i> {{ test_set_info.by_pipeline.raw }}</span>
+        </span>
     </div>
-    <button class="btn btn-sm btn-secondary" onclick="openModal('testSetModal')">
-        <i class="fas fa-eye"></i> View
-    </button>
 </div>
 {% else %}
 <div class="alert warning">
@@ -102,8 +104,8 @@
                                 </span>
                                 <span class="model-meta">
                                     <span class="model-type-tag">{{ model.get_model_type_display }}</span>
-                                    {% if model.accuracy %} · Accuracy: {{ model.accuracy|floatformat:1 }}{% endif %}
-                                    {% if model.f1_score %} · F1: {{ model.f1_score|floatformat:2 }}{% endif %}
+                                    {% if model.accuracy %} · Accuracy: {{ model.accuracy|percentage }}{% endif %}
+                                    {% if model.f1_score %} · F1: {{ model.f1_score|percentage }}{% endif %}
                                     · {{ model.created_at|date:"M d" }}
                                 </span>
                             </div>
@@ -131,7 +133,6 @@
                 <div class="col-header">
                     <div class="col-tab active static">
                         <i class="fas fa-database"></i> Select Training Data
-                        <span class="header-hint">({{ training_totals.records }} total)</span>
                     </div>
                 </div>
 
@@ -139,12 +140,28 @@
                     <!-- Dataset List -->
                     <div class="dataset-list">
                         {% for item in uploads %}
-                        <div class="dataset-option" onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }}, event)" data-distribution='{{ item.distribution_json|safe }}'>
+                        <div class="dataset-option"
+                             onclick="toggleDataset(this, {{ item.upload.id }}, {{ item.count }}, event)"
+                             data-distribution='{{ item.distribution_json|safe }}'
+                             data-pipeline-type="{{ item.pipeline_type }}"
+                             data-train-count="{{ item.train_count }}"
+                             data-increment-count="{{ item.increment_count }}">
                             <input type="checkbox" data-id="{{ item.upload.id }}" data-count="{{ item.count }}">
                             <div class="dataset-info">
                                 <span class="dataset-name">{{ item.upload.file_name }}</span>
                                 <span class="dataset-meta">
-                                    {{ item.upload.uploaded_at|date:"M d" }} · {{ item.count }} training
+                                    {{ item.upload.uploaded_at|date:"M d" }} · {{ item.count }} records ·
+                                    {% if item.upload.pipeline_type %}
+                                    <span class="pipeline-badge {{ item.upload.pipeline_type }}">
+                                        {% if item.upload.pipeline_type == 'raw' %}
+                                        <i class="fas fa-feather"></i> Raw
+                                        {% elif item.upload.pipeline_type == 'partial' %}
+                                        <i class="fas fa-adjust"></i> Partial
+                                        {% else %}
+                                        <i class="fas fa-broom"></i> Full
+                                        {% endif %}
+                                    </span>
+                                    {% endif %}
                                 </span>
                             </div>
                         </div>
@@ -230,27 +247,26 @@
 <div class="card" style="margin-bottom: 1.5rem;">
     <div class="card-header">
         <h3><i class="fas fa-chart-bar"></i> Current Baseline</h3>
-        <span class="badge success"><i class="fas fa-check"></i> Active</span>
     </div>
     <div class="card-body">
         <div class="baseline-row">
             <div class="baseline-name">{{ active_model.version_name }}</div>
             <div class="baseline-metrics">
                 <div class="metric">
-                    <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}{% else %}—{% endif %}</span>
                     <span class="metric-lbl">Accuracy</span>
+                    <span class="metric-val">{% if active_model.accuracy %}{{ active_model.accuracy|percentage }}{% else %}—{% endif %}</span>
                 </div>
                 <div class="metric">
-                    <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|floatformat:3 }}{% else %}—{% endif %}</span>
                     <span class="metric-lbl">F1</span>
+                    <span class="metric-val">{% if active_model.f1_score %}{{ active_model.f1_score|percentage }}{% else %}—{% endif %}</span>
                 </div>
                 <div class="metric">
-                    <span class="metric-val">{% if active_model.precision %}{{ active_model.precision|floatformat:1 }}%{% else %}—{% endif %}</span>
                     <span class="metric-lbl">Precision</span>
+                    <span class="metric-val">{% if active_model.precision %}{{ active_model.precision|percentage }}{% else %}—{% endif %}</span>
                 </div>
                 <div class="metric">
-                    <span class="metric-val">{% if active_model.recall %}{{ active_model.recall|floatformat:1 }}%{% else %}—{% endif %}</span>
                     <span class="metric-lbl">Recall</span>
+                    <span class="metric-val">{% if active_model.recall %}{{ active_model.recall|percentage }}{% else %}—{% endif %}</span>
                 </div>
             </div>
         </div>
@@ -270,12 +286,12 @@
                 <tr>
                     <th>Job</th>
                     <th>Algorithm</th>
-                    <th>Dataset</th>
-                    <th>Records</th>
+                    <th>Datasets</th>
                     <th>Started</th>
                     <th>Duration</th>
+                    <th>Progress</th>
                     <th>Status</th>
-                    <th>Accuracy</th>
+                    <th>F1 Score</th>
                     <th></th>
                 </tr>
             </thead>
@@ -292,14 +308,11 @@
                         <span class="model-type-tag">{{ job.get_model_type_display|default:"-" }}</span>
                     </td>
                     <td>
-                        <span class="dataset-cell" title="{{ job.data_upload.file_name }}">
-                            {{ job.data_upload.file_name|default:"-"|truncatechars:20 }}
-                        </span>
-                    </td>
-                    <td>
-                        {% if job.data_upload.row_count %}
-                        <span class="records-count">{{ job.data_upload.row_count }}</span>
-                        {% else %}—{% endif %}
+                        {% for upload in job.data_uploads.all %}
+                            {{ upload.file_name|truncatechars:20 }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            —
+                        {% endfor %}
                     </td>
                     <td>{{ job.started_at|date:"M d, H:i" }}</td>
                     <td>
@@ -308,6 +321,20 @@
                         {% elif job.status == 'RUNNING' %}
                             <span class="duration running"><i class="fas fa-clock"></i> {{ job.started_at|timesince }}</span>
                         {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if job.total_epochs %}
+                            <div class="epoch-progress">
+                                <div class="epoch-bar">
+                                    <div class="epoch-fill" style="width: {% widthratio job.current_epoch|default:0 job.total_epochs 100 %}%"></div>
+                                </div>
+                                <span class="epoch-text">{{ job.current_epoch|default:0 }}/{{ job.total_epochs }}</span>
+                            </div>
+                        {% elif job.model_type == 'lstm' or job.model_type == 'transformer' %}
+                            <span class="text-muted">—</span>
+                        {% else %}
+                            <span class="text-muted">N/A</span>
+                        {% endif %}
                     </td>
                     <td>
                         <span class="badge {{ job.status|lower }}">
@@ -319,8 +346,10 @@
                         </span>
                     </td>
                     <td>
-                        {% if job.resulting_model and job.resulting_model.accuracy %}
-                        <span class="accuracy-value">{{ job.resulting_model.accuracy|floatformat:1 }}%</span>
+                        {% if job.resulting_model and job.resulting_model.f1_score %}
+                        <span class="metric-value-cell {% if job.resulting_model.f1_score >= 0.8 %}good{% elif job.resulting_model.f1_score >= 0.6 %}okay{% else %}low{% endif %}">
+                            {{ job.resulting_model.f1_score|percentage }}
+                        </span>
                         {% elif job.status == 'FAILED' %}
                         <span class="text-danger">—</span>
                         {% else %}—{% endif %}
@@ -394,9 +423,8 @@
     "started_at": "{{ job.started_at|date:'M d, Y H:i' }}",
     "completed_at": "{{ job.completed_at|date:'M d, Y H:i'|default:'' }}",
     "initiated_by": "{{ job.initiated_by.username|default:'-' }}",
-    "dataset": "{{ job.data_upload.file_name|default:'-' }}",
-    "records": {{ job.data_upload.row_count|default:'null' }},
-    "error_message": "{{ job.error_message|default:''|escapejs }}",
+    "datasets": "{% for u in job.data_uploads.all %}{{ u.file_name }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}",
+    "progress_log": "{{ job.progress_log|default:''|escapejs }}",
     {% if job.resulting_model %}
     "model": {
         "name": "{{ job.resulting_model.version_name }}",

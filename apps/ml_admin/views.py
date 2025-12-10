@@ -1,4 +1,4 @@
-# Author: Lian Shi
+# Author: Lian Shi, Marcus Berggren
 # Disclaimer: LLM has been used to help with initial structure of views.py, with manual tuning and adjustments made throughout.
 
 """
@@ -6,9 +6,9 @@ ML Admin Dashboard - 6 Pages: Dashboard, Data, Training, Models, Users, Analytic
 """
 
 import json
+import logging
 import os
 from datetime import timedelta
-from venv import logger
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
@@ -38,6 +38,8 @@ try:
 except ImportError:
     PREDICTIONS_AVAILABLE = False
 
+logger = logging.getLogger(__name__)
+
 # Neural network model types (only these can be retrained)
 NEURAL_NETWORK_TYPES = ['lstm', 'transformer', 'rnn']
 
@@ -59,10 +61,89 @@ ML_ALGORITHMS = {
     },
     'transformer': {
         'name': 'Transformer',
-        'description': 'Custom architecture',
+        'description': 'Encoder-only transformer',
         'icon': 'fa-microchip',
     },
 }
+
+
+def _parse_param_value(value):
+    """
+    Convert frontend parameter values to Python types.
+    """
+    if value is None or value == '':
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value
+
+    str_value = str(value).strip()
+
+    if str_value.lower() == 'true':
+        return True
+    if str_value.lower() == 'false':
+        return False
+    if str_value in ('None', 'null'):
+        return None
+
+    try:
+        if '.' in str_value:
+            return float(str_value)
+        return int(str_value)
+    except ValueError:
+        return str_value
+
+
+def _build_training_config(
+    algorithm: str, params: dict, is_incremental: bool = False
+) -> dict:
+    """
+    Transform frontend params into trainer-compatible config.
+    """
+    config = {}
+
+    for key, value in params.items():
+        parsed = _parse_param_value(value)
+        if parsed is not None:
+            config[key] = parsed
+
+    config['training_mode'] = 'incremental' if is_incremental else 'full'
+
+    if algorithm in ('logistic_regression', 'random_forest'):
+        tfidf_config = {}
+
+        ngram_min = config.pop('ngram_range_min', None)
+        ngram_max = config.pop('ngram_range_max', None)
+        if ngram_min is not None and ngram_max is not None:
+            tfidf_config['ngram_range'] = (int(ngram_min), int(ngram_max))
+
+        for key in ['min_df', 'max_df']:
+            if key in config:
+                tfidf_config[key] = config.pop(key)
+
+        max_features = config.pop('tfidf_max_features', None)
+        if max_features is not None and max_features != 'None':
+            tfidf_config['max_features'] = int(max_features)
+
+        if tfidf_config:
+            config['tfidf'] = tfidf_config
+
+        if algorithm == 'logistic_regression' and 'regularization_strength' in config:
+            config['C'] = config.pop('regularization_strength')
+
+        if algorithm == 'random_forest' and 'rf_max_features' in config:
+            rf_max = config.pop('rf_max_features')
+            config['max_features'] = None if rf_max == 'None' else rf_max
+
+    elif algorithm in ('lstm', 'transformer'):
+        if 'max_seq_length' in config:
+            config['max_seq_len'] = config.pop('max_seq_length')
+
+        if algorithm == 'transformer' and 'n_head' in config:
+            config['nhead'] = config.pop('n_head')
+
+    return config
 
 
 # ============================================
@@ -85,6 +166,11 @@ def dashboard_view(request):
         'records': DatasetRecord.objects.count(),
         'users': User.objects.count(),
         'predictions': 0,
+        'full': DatasetRecord.objects.filter(data_upload__pipeline_type='full').count(),
+        'partial': DatasetRecord.objects.filter(
+            data_upload__pipeline_type='partial'
+        ).count(),
+        'raw': DatasetRecord.objects.filter(data_upload__pipeline_type='raw').count(),
     }
 
     if PREDICTIONS_AVAILABLE:
@@ -124,7 +210,7 @@ def dashboard_view(request):
     dataset_overview = {
         'train': DatasetRecord.objects.filter(dataset_type='train').count(),
         'test': DatasetRecord.objects.filter(dataset_type='test').count(),
-        'unlabeled': DatasetRecord.objects.filter(dataset_type='unlabeled').count(),
+        'increment': DatasetRecord.objects.filter(dataset_type='incremet').count(),
     }
     dataset_overview['total'] = sum(dataset_overview.values())
 
@@ -177,8 +263,8 @@ def data_view(request):
         test_count = DatasetRecord.objects.filter(
             data_upload=upload, dataset_type='test'
         ).count()
-        unlabeled_count = DatasetRecord.objects.filter(
-            data_upload=upload, dataset_type='unlabeled'
+        increment_count = DatasetRecord.objects.filter(
+            data_upload=upload, dataset_type='increment'
         ).count()
 
         uploads_with_stats.append(
@@ -187,7 +273,7 @@ def data_view(request):
                 'distribution': dist,
                 'training_count': training_count,
                 'test_count': test_count,
-                'unlabeled_count': unlabeled_count,
+                'increment_count': increment_count,
             }
         )
 
@@ -202,8 +288,23 @@ def data_view(request):
     type_breakdown = {
         'training': DatasetRecord.objects.filter(dataset_type='train').count(),
         'test': DatasetRecord.objects.filter(dataset_type='test').count(),
-        'unlabeled': DatasetRecord.objects.filter(dataset_type='unlabeled').count(),
+        'increment': DatasetRecord.objects.filter(dataset_type='increment').count(),
     }
+
+    # Breakdown by pipeline type
+    pipeline_stats = {}
+    for pipeline_type in ['full', 'partial', 'raw']:
+        pipeline_stats[pipeline_type] = {
+            'train': DatasetRecord.objects.filter(
+                dataset_type='train', data_upload__pipeline_type=pipeline_type
+            ).count(),
+            'test': DatasetRecord.objects.filter(
+                dataset_type='test', data_upload__pipeline_type=pipeline_type
+            ).count(),
+            'increment': DatasetRecord.objects.filter(
+                dataset_type='increment', data_upload__pipeline_type=pipeline_type
+            ).count(),
+        }
 
     total_records = DatasetRecord.objects.count()
 
@@ -219,6 +320,7 @@ def data_view(request):
             'overall_distribution_json': json.dumps(overall_distribution),
             'type_breakdown': type_breakdown,
             'active_model': ModelVersion.objects.filter(is_active=True).first(),
+            'pipeline_stats': pipeline_stats,
         },
     )
 
@@ -239,7 +341,7 @@ def upload_csv_api(request):
             )
 
         dataset_type = request.POST.get('dataset_type', 'train')
-        if dataset_type not in ['train', 'test', 'unlabeled']:
+        if dataset_type not in ['train', 'test', 'increment']:
             dataset_type = 'train'
 
         upload_dir = os.path.join('data', 'uploads')
@@ -354,8 +456,8 @@ def get_upload_distribution_api(request, upload_id):
             'test': DatasetRecord.objects.filter(
                 data_upload=upload, dataset_type='test'
             ).count(),
-            'unlabeled': DatasetRecord.objects.filter(
-                data_upload=upload, dataset_type='unlabeled'
+            'increment': DatasetRecord.objects.filter(
+                data_upload=upload, dataset_type='increment'
             ).count(),
         }
 
@@ -399,8 +501,8 @@ def get_upload_split_api(request, upload_id):
         'test': DatasetRecord.objects.filter(
             data_upload=upload, dataset_type='test'
         ).count(),
-        'unlabeled': DatasetRecord.objects.filter(
-            data_upload=upload, dataset_type='unlabeled'
+        'increment': DatasetRecord.objects.filter(
+            data_upload=upload, dataset_type='increment'
         ).count(),
     }
     breakdown['total'] = sum(breakdown.values())
@@ -483,8 +585,8 @@ def update_upload_split_api(request, upload_id):
             'test': DatasetRecord.objects.filter(
                 data_upload=upload, dataset_type='test'
             ).count(),
-            'unlabeled': DatasetRecord.objects.filter(
-                data_upload=upload, dataset_type='unlabeled'
+            'increment': DatasetRecord.objects.filter(
+                data_upload=upload, dataset_type='increment'
             ).count(),
         }
 
@@ -643,12 +745,22 @@ def training_view(request):
     uploads_with_counts = []
     for upload in available_uploads:
         training_count = DatasetRecord.objects.filter(
-            data_upload=upload, dataset_type='train'
+            data_upload=upload, dataset_type__in=['train', 'increment']
         ).count()
 
         if training_count > 0:
+            # Get counts by dataset_type
+            train_count = DatasetRecord.objects.filter(
+                data_upload=upload, dataset_type='train'
+            ).count()
+            increment_count = DatasetRecord.objects.filter(
+                data_upload=upload, dataset_type='increment'
+            ).count()
+
             dist = list(
-                DatasetRecord.objects.filter(data_upload=upload, dataset_type='train')
+                DatasetRecord.objects.filter(
+                    data_upload=upload, dataset_type__in=['train', 'increment']
+                )
                 .values('label')
                 .annotate(count=Count('id'))
             )
@@ -658,6 +770,9 @@ def training_view(request):
                     'count': training_count,
                     'distribution': dist,
                     'distribution_json': json.dumps(dist),
+                    'pipeline_type': upload.pipeline_type,
+                    'train_count': train_count,
+                    'increment_count': increment_count,
                 }
             )
 
@@ -668,6 +783,17 @@ def training_view(request):
             .values('label')
             .annotate(count=Count('id'))
         ),
+        'by_pipeline': {
+            'full': DatasetRecord.objects.filter(
+                dataset_type='test', data_upload__pipeline_type='full'
+            ).count(),
+            'partial': DatasetRecord.objects.filter(
+                dataset_type='test', data_upload__pipeline_type='partial'
+            ).count(),
+            'raw': DatasetRecord.objects.filter(
+                dataset_type='test', data_upload__pipeline_type='raw'
+            ).count(),
+        },
     }
 
     training_totals = {
@@ -742,58 +868,74 @@ def start_training_api(request):
                 {'success': False, 'error': 'No datasets selected'}, status=400
             )
 
-        # Validate mode
-        if mode not in ['new', 'retrain']:
-            return JsonResponse(
-                {'success': False, 'error': 'Invalid training mode'}, status=400
-            )
-
-        # Validate algorithm
-        valid_algorithms = [
-            'logistic_regression',
-            'random_forest',
-            'lstm',
-            'transformer',
-        ]
-        if algorithm not in valid_algorithms:
-            return JsonResponse(
-                {'success': False, 'error': 'Invalid algorithm'}, status=400
-            )
-
-        # For retrain, validate base model and ensure it's a neural network
-        base_model = None
-        if mode == 'retrain':
-            if not base_model_id:
-                return JsonResponse(
-                    {
-                        'success': False,
-                        'error': 'No base model selected for retraining',
-                    },
-                    status=400,
-                )
-            try:
-                base_model = ModelVersion.objects.get(id=base_model_id)
-                # Verify it's a neural network model
-                if base_model.model_type not in NEURAL_NETWORK_TYPES:
-                    return JsonResponse(
-                        {
-                            'success': False,
-                            'error': 'Only neural network models (LSTM, Transformer) can be fine-tuned',
-                        },
-                        status=400,
-                    )
-                # Use the base model's algorithm for retrain
-                algorithm = base_model.model_type
-            except ModelVersion.DoesNotExist:
-                return JsonResponse(
-                    {'success': False, 'error': 'Base model not found'}, status=400
-                )
-
-        # Validate uploads
         uploads = DataUpload.objects.filter(id__in=upload_ids, is_validated=True)
         if uploads.count() != len(upload_ids):
             return JsonResponse(
                 {'success': False, 'error': 'Invalid datasets'}, status=400
+            )
+
+        # Check for test data
+        test_count = DatasetRecord.objects.filter(dataset_type='test').count()
+        if test_count == 0:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': 'No test data available. Please split your dataset into train/test before training, or upload a new dataset.',
+                },
+                status=400,
+            )
+
+        # Determine required pipeline type based on algorithm
+        from apps.ml_admin.services import MODEL_TO_PIPELINE
+
+        # Get model type (from algorithm or base model for retrain)
+        base_model = None
+        if mode == 'retrain':
+            if not base_model_id:
+                return JsonResponse(
+                    {'success': False, 'error': 'No base model selected'}, status=400
+                )
+            try:
+                base_model = ModelVersion.objects.get(id=base_model_id)
+                model_type = base_model.model_type
+            except ModelVersion.DoesNotExist:
+                return JsonResponse(
+                    {'success': False, 'error': 'Base model not found'}, status=400
+                )
+        else:
+            model_type = algorithm
+
+        required_pipeline = MODEL_TO_PIPELINE.get(model_type)
+
+        # Check for test data with correct pipeline type
+        test_count_pipeline = DatasetRecord.objects.filter(
+            dataset_type='test', data_upload__pipeline_type=required_pipeline
+        ).count()
+        if test_count_pipeline == 0:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': f'No test data with "{required_pipeline}" pipeline type. '
+                    f'{model_type} requires {required_pipeline}-processed data.',
+                },
+                status=400,
+            )
+
+        # Check for training data in selected uploads with correct pipeline type
+        dataset_type_filter = 'increment' if mode == 'retrain' else 'train'
+        train_count = DatasetRecord.objects.filter(
+            dataset_type=dataset_type_filter,
+            data_upload_id__in=upload_ids,
+            data_upload__pipeline_type=required_pipeline,
+        ).count()
+        if train_count == 0:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': f'No {dataset_type_filter} data with "{required_pipeline}" pipeline type in selected datasets. '
+                    f'{model_type} requires {required_pipeline}-processed data.',
+                },
+                status=400,
             )
 
         # Check if training already running
@@ -802,100 +944,76 @@ def start_training_api(request):
                 {'success': False, 'error': 'Training already running'}, status=400
             )
 
-        # Create training job with model_type
-        job = TrainingJob.objects.create(
-            model_type=algorithm,
-            status='PENDING',
-            initiated_by=request.user,
-        )
-
-        # Process params - convert string booleans to actual booleans
-        processed_params = {}
-        for key, value in params.items():
-            if value == 'true':
-                processed_params[key] = True
-            elif value == 'false':
-                processed_params[key] = False
-            elif value == '' or value is None:
-                processed_params[key] = None
-            else:
-                processed_params[key] = value
-
-        # Create training configuration using helper function
-        from .models import create_training_config
-
-        config = create_training_config(
-            training_job=job,
-            algorithm=algorithm,
-            custom_params=processed_params,
-            base_model=base_model,
-        )
-
-        # TODO: Trigger actual training
-        # from ml_pipeline.training import train_model
-        # train_model.delay(job.id, upload_ids)
-
-        algo_names = {
-            'logistic_regression': 'Logistic Regression',
-            'random_forest': 'Random Forest',
-            'lstm': 'LSTM',
-            'transformer': 'Transformer',
-        }
+        from apps.ml_admin.services import train_full, train_incremental
 
         if mode == 'retrain':
-            message = f'Started retraining {algo_names.get(algorithm, algorithm)} based on {base_model.version_name}'
+            # base_model already fetched and validated above
+            config = _build_training_config(model_type, params, is_incremental=True)
+
+            result = train_incremental(
+                model_name=model_type,
+                base_model_path=base_model.model_file_path,
+                config=config,
+                initiated_by=request.user.id,
+                upload_ids=upload_ids,
+            )
+            message = f'Started retraining based on {base_model.version_name}'
         else:
-            message = f'Started {algo_names.get(algorithm, algorithm)} training'
+            if algorithm not in ML_ALGORITHMS:
+                return JsonResponse(
+                    {'success': False, 'error': f'Unknown algorithm: {algorithm}'},
+                    status=400,
+                )
+
+            config = _build_training_config(algorithm, params, is_incremental=False)
+
+            result = train_full(
+                model_name=algorithm,
+                config=config,
+                initiated_by=request.user.id,
+                upload_ids=upload_ids,
+            )
+            message = f'Started {ML_ALGORITHMS[algorithm]["name"]} training'
+
+        logger.info(f'Training started: {message}, config keys: {list(config.keys())}')
 
         return JsonResponse(
             {
                 'success': True,
                 'message': message,
-                'job_id': job.id,
-                'config_id': config.id,
+                'job_id': result['job_id'],
                 'mode': mode,
-                'algorithm': algorithm,
             }
         )
 
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
     except Exception as e:
+        logger.exception(f'Training API error: {e}')
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 @staff_member_required
 @require_http_methods(['POST'])
 def cancel_training_api(request, job_id):
-    """
-    Cancel a running or pending training job by deleting it.
-    """
+    """Cancel a running or pending training job."""
     try:
-        job = get_object_or_404(TrainingJob, id=job_id)
+        job = TrainingJob.objects.get(id=job_id)
 
-        # Only allow cancelling PENDING or RUNNING jobs
-        if job.status not in ['PENDING', 'RUNNING']:
+        if job.status not in ['RUNNING', 'PENDING']:
             return JsonResponse(
-                {
-                    'success': False,
-                    'error': f'Cannot cancel job with status {job.status}',
-                },
+                {'success': False, 'error': 'Can only cancel running or pending jobs'},
                 status=400,
             )
 
-        # Delete the job
-        job.delete()
+        job.status = 'CANCELLED'
+        job.completed_at = timezone.now()
+        job.save()
 
-        return JsonResponse(
-            {
-                'success': True,
-                'message': f'Training job #{job_id} has been cancelled and removed',
-                'job_id': job_id,
-            }
-        )
+        return JsonResponse({'success': True})
 
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    except TrainingJob.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Job not found'}, status=404)
 
 
 # ============================================
@@ -914,12 +1032,13 @@ def models_view(request):
 
         training_records = 0
         training_labels = []
-        if job and job.data_upload:
+        if job and job.data_uploads.exists():
+            # Sum records from all associated uploads
             training_records = DatasetRecord.objects.filter(
-                data_upload=job.data_upload, dataset_type='train'
+                data_upload__in=job.data_uploads.all(), dataset_type='train'
             ).count()
             training_labels = list(
-                DatasetRecord.objects.filter(data_upload=job.data_upload)
+                DatasetRecord.objects.filter(data_upload__in=job.data_uploads.all())
                 .values('label')
                 .annotate(count=Count('id'))
                 .order_by('-count')[:4]
@@ -1190,12 +1309,14 @@ def get_jobs_status_api(request):
                     'completed_at': job.completed_at.isoformat()
                     if job.completed_at
                     else None,
-                    'accuracy': float(job.resulting_model.accuracy)
-                    if job.resulting_model and job.resulting_model.accuracy
+                    'f1_score': float(job.resulting_model.f1_score)
+                    if job.resulting_model and job.resulting_model.f1_score
                     else None,
-                    'error_message': job.error_message
-                    if hasattr(job, 'error_message')
+                    'progress_log': job.progress_log
+                    if hasattr(job, 'progress_log')
                     else None,
+                    'current_epoch': job.current_epoch,
+                    'total_epochs': job.total_epochs,
                 }
                 for job in jobs
             ],
