@@ -1,5 +1,6 @@
 # Author: Karl Byland, Claudia Sevilla
 
+import json
 import re
 
 import joblib
@@ -10,124 +11,16 @@ from apps.predictions.models import PredictionResult, TextSubmission
 from ml_pipeline.data_cleaning.cleaner import DataCleaningPipeline
 from ml_pipeline.preprocessing.preprocessor import DataPreprocessingPipeline
 
-NEGATIVE_WORDS = [
-    # Sadness / Depression
-    'sad',
-    'depressed',
-    'hopeless',
-    'empty',
-    'numb',
-    'lonely',
-    'miserable',
-    'worthless',
-    'useless',
-    'helpless',
-    'despair',
-    'grief',
-    'heartbroken',
-    'unhappy',
-    'down',
-    'low',
-    'blue',
-    'gloomy',
-    'melancholy',
-    'dejected',
-    # Anger / Frustration
-    'angry',
-    'mad',
-    'furious',
-    'rage',
-    'hate',
-    'frustrated',
-    'irritated',
-    'annoyed',
-    'bitter',
-    'resentful',
-    'hostile',
-    'agitated',
-    'outraged',
-    # Anxiety / Fear
-    'anxious',
-    'worried',
-    'nervous',
-    'scared',
-    'afraid',
-    'fear',
-    'panic',
-    'terrified',
-    'dread',
-    'uneasy',
-    'tense',
-    'restless',
-    'overwhelmed',
-    'paranoid',
-    'insecure',
-    'uncertain',
-    # Stress / Exhaustion
-    'stress',
-    'stressed',
-    'exhausted',
-    'tired',
-    'drained',
-    'burned',
-    'burnout',
-    'overwhelmed',
-    'pressured',
-    'overloaded',
-    'fatigued',
-    # General negative
-    'bad',
-    'terrible',
-    'awful',
-    'horrible',
-    'worst',
-    'painful',
-    'suffering',
-    'struggling',
-    'failing',
-    'broken',
-    'damaged',
-    'ruined',
-    'destroyed',
-    'pessimistic',
-    'negative',
-    'dark',
-    'lost',
-    'stuck',
-    'trapped',
-    # Self-critical
-    'stupid',
-    'dumb',
-    'idiot',
-    'failure',
-    'loser',
-    'pathetic',
-    'weak',
-    'ugly',
-    'fat',
-    'disgusting',
-    'ashamed',
-    'embarrassed',
-    'guilty',
-    # Crisis indicators (important for mental health)
-    'suicide',
-    'suicidal',
-    'die',
-    'dying',
-    'death',
-    'kill',
-    'end',
-    'goodbye',
-    'harm',
-    'hurt',
-    'cutting',
-    'selfharm',
-]
-
-
 # Loads the model
 MODEL_PATH = 'ml_pipeline/toy_models/LRmodel.pkl'  # Path to model used to predict
 MODEL = joblib.load(MODEL_PATH)
+DATA_PATH = 'apps/predictions/data/strings.json'
+
+
+def load_json():
+    with open(DATA_PATH, 'r', encoding='utf-8') as f:
+        text_data = json.load(f)
+    return text_data
 
 
 def analyze_text(analyzed_text):
@@ -175,22 +68,30 @@ def get_prediction_result(user, user_text):
     ).first()  # Takes the active model
 
     df = clean_user_input(user_text)
-    processed_text = preprocess_user_input(
-        df, model_version.model_type
-    )  #!!! Placerholder
+    processed_text = preprocess_user_input(df, model_version.model_type)
     prediction, confidence = analyze_text(processed_text.iloc[0])
+
+    text_data = load_json()
 
     # Calculate metrics
     anxiety_level, negativity_level, emotional_intensity, word_count, char_count = (
-        calculate_metrics(user_text)
+        calculate_metrics(user_text, text_data['negative_words'])
     )
 
     # Generate recommendations
-    recommendations = get_recommendations(prediction, confidence, anxiety_level)
+    recommendations = get_recommendations(
+        prediction, confidence, anxiety_level, text_data['recommendations']
+    )
 
     if user:
         save_prediction_to_database(
-            user, user_text, prediction, confidence, model_version, recommendations
+            user,
+            user_text,
+            prediction,
+            confidence,
+            model_version,
+            recommendations,
+            text_data,
         )
 
     confidence_percentage = round(confidence * 100)
@@ -207,82 +108,78 @@ def get_prediction_result(user, user_text):
     )
 
 
-def get_recommendations(prediction, confidence, anxiety_level):
+def get_recommendations(prediction, confidence, anxiety_level, recommendations_strings):
     recommendations = []
 
     if confidence > 0.70:  # high confidence results
         if prediction == 'normal':
-            recommendations.append(
-                'You seem to present an undoubtedly healthy mental state. Remember to maintain regular sleep, nutrition, and physical activity. Check in with yourself regularly about emotional wellbeing, and do not hesitate to reach out for help in case of need.'
+            recommendations.append(  # Index 0 because maybe we want to add random recs in future
+                recommendations_strings['normal']['high_confidence'][0]
             )
         elif prediction == 'stress':
             recommendations.append(
-                'You seem to present strong indicators of stress, try to limit caffeine and consider mindfulness meditation for 10 minutes daily. Delegate tasks where possible and practice setting boundaries, focusing on one task at a time can make a big difference.'
+                recommendations_strings['stress']['high_confidence'][0]
             )
         elif prediction == 'suicidal':
             recommendations.append(
-                'You are not alone. If you are having thoughts of taking your life or if you know anyone who does, contact Mind Suicide Line dialing 90101 (open 24/7) or contact them on their online chat. For immediate crisis, call 988 (Suicide & Crisis Lifeline).'
+                recommendations_strings['suicidal']['high_confidence'][0]
             )
         elif prediction == 'depression':
             recommendations.append(
-                'You seem to present strong indicators of depression, consider speaking with a mental health professional this week. Establish a consistent sleep schedule and try behavioral activation: schedule one pleasant activity each day.'
+                recommendations_strings['depression']['high_confidence'][0]
             )
 
     elif confidence >= 0.50 and confidence <= 0.70:  # medium confidence
         if prediction == 'normal':
             recommendations.append(
-                'You seem to have a healthy mental state. Try to maintain regular sleep, nutrition, and physical activity. Check in with yourself regularly about emotional wellbeing, and do not hesitate to reach out for help in case of need.'
+                recommendations_strings['normal']['medium_confidence'][0]
             )
         elif prediction == 'stress':
             recommendations.append(
-                'You seem to present medium indicators of stress, try to limit caffeine and consider mindfulness meditation for 10 minutes daily. Delegate tasks where possible and practice setting boundaries, focusing on one task at a time can make a big difference.'
+                recommendations_strings['stress']['medium_confidence'][0]
             )
         elif prediction == 'suicidal':
             recommendations.append(
-                'The analysis suggests you may have thoughts of taking your own life. If that is true or you know anyone who does, contact Mind Suicide Line dialing 90101 (open 24/7) or contact them on their online chat. For immediate crisis, call 988 (Suicide & Crisis Lifeline).'
+                recommendations_strings['suicidal']['medium_confidence'][0]
             )
         elif prediction == 'depression':
             recommendations.append(
-                'You seem to present mild indicators of depression, consider speaking with a mental health professional if you feel your situation requires professional help. Establish a consistent sleep schedule and try behavioral activation: schedule one pleasant activity each day.'
+                recommendations_strings['depression']['medium_confidence'][0]
             )
 
     else:  # low confidence (< 0.50)
-        recommendations.append(
-            'Model confidence is low. Consider these general wellness suggestions:'
-        )
+        recommendations.append(recommendations_strings['low_model_confidence'])
         if prediction == 'suicidal':
             recommendations.append(
-                'The analysis suggests you may have thoughts of taking your own life. If that is true or you know anyone who does, contact Mind Suicide Line dialing 90101 (open 24/7) or contact them on their online chat. Even with low confidence, this is important: For immediate crisis, call 988 (Suicide & Crisis Lifeline).'
+                recommendations_strings['suicidal']['low_confidence'][0]
             )
         elif prediction == 'depression':
             recommendations.append(
-                'Check in with yourself regularly about emotional wellbeing. In case you feel symptoms of depression, do not hesitate to reach out for professional help.'
+                recommendations_strings['depression']['low_confidence'][0]
             )
         elif prediction == 'stress':
             recommendations.append(
-                'In case you feel stressed, try to limit caffeine and consider mindfulness meditation for 10 minutes daily. Delegate tasks where possible and practice setting boundaries, focusing on one task at a time can make a big difference.'
+                recommendations_strings['stress']['low_confidence'][0]
             )
 
         else:
             recommendations.append(
-                'Your mental state seems normal. Ensure to maintain regular sleep, nutrition, and physical activity. Check in with yourself regularly about emotional wellbeing, and do not hesitate to reach out for help in case of need.'
+                recommendations_strings['normal']['low_confidence'][0]
             )
 
     if anxiety_level >= 50:
-        recommendations.append(
-            'Additionally, your text presents a high anxiety level, consider practicing daily grounding techniques (5-4-3-2-1 method). Try to take a step back and think long-term; it might feel less overwhelming. Remember to always prioritize your mental health.'
-        )
+        recommendations.append(recommendations_strings['anxiety'][0])
 
     return recommendations
 
 
-def calculate_metrics(text: str):
+def calculate_metrics(text: str, negative_words):
     words = re.findall(r"\b[\w']+\b", text.lower())
     word_count = len(words)
     char_count = len(text)
 
     # Negativity level based on key words
-    negativity_count = sum(words.count(w) for w in NEGATIVE_WORDS)
+    negativity_count = sum(words.count(w) for w in negative_words)
     negativity_level = min(int((negativity_count / max(word_count, 1)) * 100), 100)
 
     # Extract general text features (punctuation, use of caps, word density)
@@ -318,30 +215,9 @@ def calculate_metrics(text: str):
 
 
 def save_prediction_to_database(
-    user, user_text, prediction, confidence, model_version, recommendations
+    user, user_text, prediction, confidence, model_version, recommendations, text_data
 ):
-    template_texts = [
-        (
-            'I feel so empty inside. Nothing brings me joy anymore.'
-            " I wake up each day wondering what's the point."
-            " I used to love painting but now I can't even pick up a brush."
-            ' My friends invite me out but I just make excuses.'
-            " I'm tired all the time but can't sleep properly. Everything feels gray and meaningless."
-        ),
-        (
-            'I have so much on my plate right now.'
-            ' Work deadlines are piling up, bills need to be paid, and I barely have time to breathe.'
-            " I feel overwhelmed and like I'm drowning."
-            ' My body feels tense all the time and I get headaches every day.'
-            " I snap at people I care about because I'm so on edge."
-        ),
-        (
-            'I have been feeling pretty good lately. '
-            'I finished my tasks for the day and even had time to grab coffee with a friend. '
-            'The weather was really nice! So I took a short walk and it really boosted my mood. '
-            'Nothing overly extraordinary happened, but it felt like a genuinely pleasant day!'
-        ),
-    ]
+    template_texts = text_data['example_texts']
     if user_text not in template_texts:
         submission = TextSubmission.objects.create(user=user, text_content=user_text)
         # Save to database
