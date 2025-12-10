@@ -186,6 +186,9 @@ function initializeTrendChart(period) {
         var pointStyles = ['circle', 'rect', 'triangle', 'rectRot'];
         var datasetIndex = 0;
 
+        // Detect mobile for point sizes
+        var isMobileForPoints = window.innerWidth <= 768;
+
         var datasets = data.datasets.map(function(dataset) {
             var color = colors.normal;
             if (dataset.label === 'Depression') color = colors.depression;
@@ -202,17 +205,21 @@ function initializeTrendChart(period) {
                 backgroundColor: color + '15',
                 tension: 0.3,
                 fill: true,
-                pointRadius: 5,
-                pointHoverRadius: 8,
-                borderWidth: 2.5,
+                pointRadius: isMobileForPoints ? 3 : 5,
+                pointHoverRadius: isMobileForPoints ? 5 : 8,
+                borderWidth: isMobileForPoints ? 2 : 2.5,
                 pointBackgroundColor: color,
                 pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
+                pointBorderWidth: isMobileForPoints ? 1.5 : 2,
                 pointStyle: style
             };
         });
 
         // Create the line chart
+        // Detect mobile for responsive options
+        var isMobile = window.innerWidth <= 768;
+        var isSmallMobile = window.innerWidth <= 480;
+
         window.mentalHealthChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -222,6 +229,11 @@ function initializeTrendChart(period) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: isMobile ? 5 : 10
+                    }
+                },
                 interaction: {
                     intersect: false,
                     mode: 'index'
@@ -231,8 +243,9 @@ function initializeTrendChart(period) {
                         position: 'top',
                         labels: {
                             usePointStyle: true,
-                            padding: 20,
-                            font: { size: 15, weight: '600' }
+                            padding: isMobile ? 12 : 25,
+                            font: { size: isMobile ? 10 : 13, weight: '600' },
+                            boxWidth: isMobile ? 8 : 12
                         }
                     },
                     tooltip: {
@@ -255,16 +268,16 @@ function initializeTrendChart(period) {
                         beginAtZero: true,
                         ticks: {
                             stepSize: 1,
-                            font: { size: 13 },
+                            font: { size: isMobile ? 10 : 13 },
                             color: '#3D5A5A',
                             callback: function(value) {
                                 if (Math.floor(value) === value) return value;
                             }
                         },
                         title: {
-                            display: true,
+                            display: !isSmallMobile,
                             text: 'Predictions',
-                            font: { size: 13, weight: '600' },
+                            font: { size: 11, weight: '600' },
                             color: '#3D5A5A'
                         },
                         grid: { color: 'rgba(74, 124, 89, 0.1)' },
@@ -272,11 +285,12 @@ function initializeTrendChart(period) {
                     },
                     x: {
                         ticks: {
-                            font: { size: 13 },
+                            font: { size: isMobile ? 9 : 13 },
                             color: '#3D5A5A',
-                            maxRotation: 45,
-                            minRotation: 0,
-                            autoSkip: false
+                            maxRotation: isMobile ? 60 : 45,
+                            minRotation: isMobile ? 45 : 0,
+                            autoSkip: isMobile,
+                            maxTicksLimit: isMobile ? 8 : 20
                         },
                         grid: { display: false },
                         border: { display: true, color: '#3D5A5A' }
