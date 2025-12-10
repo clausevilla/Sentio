@@ -23,7 +23,7 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon stat-icon-primary">
-                    <i class="fas fa-journal-whills"></i>
+                    <i class="fas fa-list-check"></i>
                 </div>
                 <div class="stat-content">
                     <div class="stat-value" data-count="{{ total_analyses }}">{{ total_analyses }}</div>
@@ -33,7 +33,7 @@
 
             <div class="stat-card">
                 <div class="stat-icon stat-icon-success">
-                    <i class="fas fa-seedling"></i>
+                    <i class="fas fa-smile"></i>
                 </div>
                 <div class="stat-content">
                     <div class="stat-value" data-count="{{ normal_count }}">{{ normal_count }}</div>
@@ -43,7 +43,7 @@
 
             <div class="stat-card">
                 <div class="stat-icon stat-icon-warning">
-                    <i class="fas fa-hand-holding-heart"></i>
+                    <i class="fas fa-heart-pulse"></i>
                 </div>
                 <div class="stat-content">
                     <div class="stat-value" data-count="{{ concern_count }}">{{ concern_count }}</div>
@@ -53,7 +53,7 @@
 
             <div class="stat-card">
                 <div class="stat-icon stat-icon-info">
-                    <i class="fas fa-calendar-alt"></i>
+                    <i class="fas fa-calendar-day"></i>
                 </div>
                 <div class="stat-content">
                     <div class="stat-value stat-value-small">{{ last_analysis }}</div>
@@ -74,7 +74,7 @@
                     <div class="distribution-bars">
                         <div class="distribution-item">
                             <div class="dist-header">
-                                <i class="fas fa-smile dist-icon" style="color: var(--color-primary);"></i>
+                                <i class="fas fa-smile dist-icon" style="color: var(--color-state-normal);"></i>
                                 <span class="dist-label">Normal</span>
                             </div>
                             <div class="dist-bar-container">
@@ -84,7 +84,7 @@
                         </div>
                         <div class="distribution-item">
                             <div class="dist-header">
-                                <i class="fas fa-sad-tear dist-icon" style="color: var(--color-blue);"></i>
+                                <i class="fas fa-sad-tear dist-icon" style="color: var(--color-state-depression);"></i>
                                 <span class="dist-label">Depression</span>
                             </div>
                             <div class="dist-bar-container">
@@ -94,7 +94,7 @@
                         </div>
                         <div class="distribution-item">
                             <div class="dist-header">
-                                <i class="fas fa-tired dist-icon" style="color: var(--color-coral);"></i>
+                                <i class="fas fa-tired dist-icon" style="color: var(--color-state-stress);"></i>
                                 <span class="dist-label">Stress</span>
                             </div>
                             <div class="dist-bar-container">
@@ -104,7 +104,7 @@
                         </div>
                         <div class="distribution-item">
                             <div class="dist-header">
-                                <i class="fas fa-heart-broken dist-icon" style="color: var(--color-purple);"></i>
+                                <i class="fas fa-heart-broken dist-icon" style="color: var(--color-state-suicidal);"></i>
                                 <span class="dist-label">Suicidal</span>
                             </div>
                             <div class="dist-bar-container">
@@ -185,7 +185,7 @@
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </div>
-                        <div class="item-text">{{ analysis.text|truncatewords:30 }}</div>
+                        <div class="item-text">{{ analysis.text }}</div>
                     </div>
                     {% endfor %}
                 </div>
@@ -244,10 +244,10 @@
             suicidal: {{ state_distribution.suicidal.count|default:0 }}
         },
         colors: {
-            normal: '#4A7C59',
-            depression: '#5B7C99',
-            stress: '#E07A5F',
-            suicidal: '#7B68A6'
+            normal: '#3DA37A',
+            depression: '#5A8BBF',
+            stress: '#E8924B',
+            suicidal: '#9D6DC4'
         }
     };
 </script>
