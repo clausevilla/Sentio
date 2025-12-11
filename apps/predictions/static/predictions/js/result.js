@@ -1,3 +1,4 @@
+// Authors: Lian Shi, Claudia Sevilla
 // predictions/result.js - Analysis results page with animations
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -22,7 +23,7 @@ function animateProgressBar() {
     if (!progressBar || !scoreText) return;
 
     const confidence = parseInt(scoreText.textContent);
-    const circumference = 2 * Math.PI * 95; // radius = 95
+    const circumference = 2 * Math.PI * 145; // radius = 145
 
     // Set initial state
     progressBar.style.strokeDasharray = circumference;
@@ -39,11 +40,13 @@ function animateProgressBar() {
 
     // Color based on confidence level
     if (confidence >= 70) {
-        progressBar.style.stroke = '#ff4444';
+        progressBar.style.stroke = '#7FAF93';
     } else if (confidence >= 50) {
         progressBar.style.stroke = '#ffa500';
+        scoreText.style.color = '#ffa500';
     } else {
-        progressBar.style.stroke = '#7FAF93';
+        progressBar.style.stroke = '#ff4444';
+        scoreText.style.color = '#ff4444';
     }
 
     // Animate badge
