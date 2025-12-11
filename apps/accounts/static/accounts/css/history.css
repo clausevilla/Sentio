@@ -754,35 +754,100 @@
 }
 
 @media (max-width: 768px) {
+    .history-section .container {
+        padding: 1rem;
+    }
 
+    .page-header {
+        padding-bottom: 0.5rem;
+    }
 
     .page-header h1 {
-        font-size: var(--font-2xl);
+        font-size: 1.5rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .page-header p {
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
     }
 
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem;
+        margin-bottom: 1.25rem;
     }
 
-    .stat-value {
+    .stat-card {
+        padding: 0.75rem;
+        gap: 0.6rem;
+    }
+
+    .stat-icon {
         font-size: 1.5rem;
     }
 
+    .stat-value {
+        font-size: 1.35rem;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        margin-top: 2px;
+    }
+
+    /* Chart cards */
+    .chart-card {
+        margin-bottom: 1rem;
+    }
+
+    .section-title {
+        font-size: 0.95rem;
+        padding: 0.65rem 0.875rem;
+    }
+
+    .section-title i {
+        font-size: 0.85rem;
+        margin-right: 8px;
+    }
+
+    .card-content {
+        padding: 0.875rem;
+    }
+
+    /* Distribution */
+    .distribution-content {
+        gap: 1rem;
+    }
+
     .distribution-item {
-        grid-template-columns: 100px 1fr 65px;
+        grid-template-columns: 90px 1fr 60px;
         gap: 0.5rem;
     }
 
     .distribution-chart-container {
-        height: 200px;
-        max-width: 250px;
+        height: 180px;
+        max-width: 220px;
     }
 
-    .list-header,
+    .dist-label {
+        font-size: 0.8rem;
+    }
+
+    .dist-value {
+        font-size: 0.75rem;
+    }
+
+    .dist-icon {
+        font-size: 0.9rem;
+    }
+
+    /* Trend chart */
     .chart-header {
+        padding: 0.65rem 0.875rem;
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.75rem;
+        gap: 0.6rem;
     }
 
     .time-filter {
@@ -792,94 +857,206 @@
     .filter-btn {
         flex: 1;
         text-align: center;
+        padding: 0.35rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .chart-container {
+        height: 280px;
+        padding: 0.5rem 0;
+    }
+
+    .chart-info {
+        font-size: 0.75rem;
+        padding: 0.4rem 0;
+    }
+
+    /* History list */
+    .history-list-card {
+        margin-bottom: 1.5rem;
+    }
+
+    .list-header {
+        padding: 0.65rem 0.875rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.6rem;
+    }
+
+    .state-filter {
+        width: 100%;
+        padding: 0.35rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .list-content {
+        padding: 0.625rem;
+    }
+
+    .history-list {
+        gap: 0.5rem;
+        max-height: 450px;
     }
 
     .history-item {
         position: relative;
-        padding: 0.75rem 1rem;
-        overflow: visible;
+        padding: 0.625rem 0.75rem;
+        border-radius: 8px;
     }
 
     .item-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.5rem;
+        gap: 0.4rem;
+        margin-bottom: 0.5rem;
     }
 
-    /* Smaller indicator tags on mobile - force one line */
+    .item-date {
+        font-size: 0.8rem;
+    }
+
+    .item-date i {
+        font-size: 0.7rem;
+    }
+
+    .item-badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.55rem;
+    }
+
     .item-indicators {
         margin-left: 0;
         flex-direction: row;
         flex-wrap: nowrap;
-        gap: 0.25rem;
+        gap: 0.3rem;
         max-width: 100%;
-        overflow: visible;
     }
 
     .indicator-tag {
-        font-size: 0.55rem;
-        padding: 0.12rem 0.25rem;
+        font-size: 0.65rem;
+        padding: 0.15rem 0.35rem;
         white-space: nowrap;
-        gap: 0.15rem;
+        gap: 0.2rem;
     }
 
-    /* Hide icons on mobile to save space */
     .indicator-tag i {
         display: none;
     }
 
-    /* Smaller badges on mobile */
-    .item-badge {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.6rem;
-    }
-
-    .chart-container {
-        height: 300px;
+    .item-text {
+        font-size: 0.9rem;
+        line-height: 1.5;
     }
 
     .delete-analysis-btn {
         position: absolute;
-        top: 0.75rem;
-        right: 0.75rem;
+        top: 0.625rem;
+        right: 0.625rem;
+        padding: 0.3rem;
     }
 
-    .history-item {
-        position: relative;
+    .delete-analysis-btn i {
+        font-size: 0.75rem;
+    }
+
+    /* Pagination */
+    .pagination {
+        gap: 0.35rem;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+    }
+
+    .page-link {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .page-current {
+        font-size: 0.75rem;
+    }
+
+    /* Empty state */
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+
+    .empty-state h3 {
+        font-size: 1.1rem;
+    }
+
+    .empty-state p {
+        font-size: 0.9rem;
     }
 }
 
+/* Small mobile - 480px */
 @media (max-width: 480px) {
+    .history-section .container {
+        padding: 0.75rem;
+    }
+
     .page-header h1 {
-        font-size: 1.75rem;
+        font-size: 1.35rem;
+    }
+
+    .page-header p {
+        font-size: 0.88rem;
     }
 
     .stats-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 0.75rem;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
     }
 
     .stat-card {
-        padding: 1rem;
-    }
-
-    .stat-value {
-        font-size: 1.25rem;
+        padding: 0.6rem;
+        gap: 0.5rem;
     }
 
     .stat-icon {
-        font-size: 2rem;
+        font-size: 1.3rem;
+    }
+
+    .stat-value {
+        font-size: 1.2rem;
+    }
+
+    .stat-value.stat-value-small {
+        font-size: 0.75rem;
+    }
+
+    .stat-label {
+        font-size: 0.65rem;
+    }
+
+    /* Chart cards */
+    .section-title {
+        font-size: 0.88rem;
+        padding: 0.55rem 0.75rem;
+    }
+
+    .section-title i {
+        font-size: 0.8rem;
+        margin-right: 6px;
+    }
+
+    .card-content {
+        padding: 0.75rem;
+    }
+
+    /* Distribution */
+    .distribution-content {
+        gap: 0.75rem;
     }
 
     .distribution-chart-container {
-        height: 180px;
-        max-width: 200px;
+        height: 160px;
+        max-width: 180px;
     }
 
-    /* Stack distribution items vertically for narrow screens */
     .distribution-item {
-        grid-template-columns: 90px 1fr 50px;
-        gap: 0.4rem;
+        grid-template-columns: 80px 1fr 50px;
+        gap: 0.35rem;
     }
 
     .dist-label {
@@ -887,66 +1064,175 @@
     }
 
     .dist-value {
-        font-size: 0.7rem;
+        font-size: 0.68rem;
     }
 
     .dist-icon {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+        width: 16px;
+    }
+
+    .dist-bar-container {
+        height: 8px;
+    }
+
+    /* Trend chart */
+    .chart-header {
+        padding: 0.55rem 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .filter-btn {
+        padding: 0.3rem 0.4rem;
+        font-size: 0.7rem;
     }
 
     .chart-container {
-        height: 260px;
+        height: 240px;
+    }
+
+    .chart-info {
+        font-size: 0.7rem;
+    }
+
+    /* History list */
+    .list-header {
+        padding: 0.55rem 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .state-filter {
+        font-size: 0.75rem;
+        min-width: 100px;
     }
 
     .list-content {
         padding: 0.5rem;
     }
 
-    .history-item {
-        padding: 0.6rem 0.75rem;
+    .history-list {
+        gap: 0.4rem;
+        max-height: 400px;
     }
 
-    /* Even smaller badges and indicators for tiny screens */
+    .history-item {
+        padding: 0.5rem 0.625rem;
+        border-left-width: 3px;
+    }
+
+    .item-header {
+        gap: 0.3rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .item-date {
+        font-size: 0.75rem;
+    }
+
     .item-badge {
         font-size: 0.7rem;
-        padding: 0.2rem 0.5rem;
+        padding: 0.15rem 0.45rem;
+    }
+
+    .item-indicators {
+        gap: 0.25rem;
     }
 
     .indicator-tag {
-        font-size: 0.5rem;
-        padding: 0.1rem 0.2rem;
-    }
-
-    /* Icons already hidden from 768px */
-
-    .item-indicators {
-        gap: 0.2rem;
-        flex-wrap: nowrap;
+        font-size: 0.6rem;
+        padding: 0.12rem 0.3rem;
     }
 
     .item-text {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+        line-height: 1.45;
     }
 
-    .show-more-btn {
-        font-size: 0.8rem;
+    .delete-analysis-btn {
+        top: 0.5rem;
+        right: 0.5rem;
+    }
+
+    /* Pagination */
+    .pagination {
+        gap: 0.25rem;
+    }
+
+    .page-link {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.7rem;
+    }
+
+    /* Empty state */
+    .empty-state {
+        padding: 1.5rem 0.75rem;
+    }
+
+    .empty-icon i {
+        font-size: 2.5rem;
+    }
+
+    .empty-state h3 {
+        font-size: 1rem;
+    }
+
+    .empty-state p {
+        font-size: 0.85rem;
+    }
+
+    .empty-state .btn-primary {
+        padding: 0.6rem 1.25rem;
+        font-size: 0.85rem;
     }
 }
 
-/* Very small phones */
+/* Extra small mobile - 360px */
 @media (max-width: 360px) {
+    .history-section .container {
+        padding: 0.5rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.25rem;
+    }
+
+    .stats-grid {
+        gap: 0.4rem;
+    }
+
+    .stat-card {
+        padding: 0.5rem;
+        gap: 0.4rem;
+    }
+
+    .stat-icon {
+        font-size: 1.15rem;
+    }
+
+    .stat-value {
+        font-size: 1.1rem;
+    }
+
+    .stat-label {
+        font-size: 0.6rem;
+    }
+
     .indicator-tag {
-        font-size: 0.45rem;
-        padding: 0.08rem 0.15rem;
+        font-size: 0.55rem;
+        padding: 0.1rem 0.25rem;
     }
 
     .item-indicators {
-        gap: 0.15rem;
+        gap: 0.2rem;
     }
 
     .item-badge {
-        font-size: 0.6rem;
-        padding: 0.15rem 0.35rem;
+        font-size: 0.65rem;
+        padding: 0.12rem 0.4rem;
+    }
+
+    .item-text {
+        font-size: 0.82rem;
     }
 }
 

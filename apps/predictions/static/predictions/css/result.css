@@ -1,6 +1,6 @@
 /* Author: Lian Shi, Claudia Sevilla */
 /* Disclaimer: LLM has been used to help generate initial styles and manual adjustments were made later */
-/* Updated: Mobile responsiveness improvements */
+
 
 /* ===================================
    Mental State Analysis Results Page
@@ -52,6 +52,7 @@
 .alert p {
     color: var(--color-text);
     line-height: 1.6;
+    font-size: 1.1rem;
     margin: 0;
 }
 
@@ -77,10 +78,9 @@
 .text-column h3 {
     margin-top: 0;
     padding-top: 0;
-    height: 140px;
-    display: flex;
-    align-items: flex-end;
-    margin-bottom: 40px;
+    margin-bottom: 1.5rem;
+    font-size: 1.3rem;
+    color: var(--color-text-dark);
 }
 
 .card-title {
@@ -96,7 +96,10 @@
     flex: 1;
     min-width: 300px;
     text-align: left;
-    margin-left: 50px;
+    margin-left: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 /* Circular Progress */
@@ -154,13 +157,13 @@
 }
 
 .score-subtitle {
-    font-size: var(--font-base);
+    font-size: 1.1rem;
     color: var(--color-text-light);
     margin-top: 0;
 }
 
 .confidence-hint {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     color: var(--color-text-light);
     margin-top: 0.75rem;
     text-align: center;
@@ -221,6 +224,7 @@
     text-align: justify;
     margin-bottom: var(--spacing-md);
     line-height: 1.6;
+    font-size: 1.1rem;
 }
 
 .recommendations p:last-child {
@@ -256,7 +260,7 @@
 }
 
 .indicator-name {
-    font-size: var(--font-lg);
+    font-size: 1.15rem;
     font-weight: 600;
     color: var(--color-text-dark);
 }
@@ -304,14 +308,14 @@
 }
 
 .indicator-value {
-    font-size: var(--font-xl);
+    font-size: 1.35rem;
     font-weight: 700;
     color: var(--color-primary);
     margin-bottom: var(--spacing-xs);
 }
 
 .indicator-desc {
-    font-size: var(--font-sm);
+    font-size: 1.1rem;
     color: var(--color-text-light);
     line-height: 1.5;
     margin: 0;
@@ -348,6 +352,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    max-width: 500px;
 }
 
 .category-header {
@@ -357,22 +362,22 @@
 }
 
 .category-label {
-    font-size: 1.1rem;
+    font-size: 1.35rem;
     font-weight: 600;
     color: var(--color-text-dark);
 }
 
 .category-value {
-    font-size: 1.1rem;
+    font-size: 1.35rem;
     font-weight: 600;
     color: var(--color-text-dark);
 }
 
 .category-item .category-bar-container {
     width: 100%;
-    height: 10px;
+    height: 12px;
     background: #E9ECEF;
-    border-radius: 5px;
+    border-radius: 6px;
     overflow: hidden;
 }
 
@@ -443,7 +448,7 @@
     padding: var(--spacing-lg);
     border-radius: var(--radius-sm);
     border-left: 4px solid var(--color-primary);
-    font-size: var(--font-base);
+    font-size: 1.15rem;
     line-height: 1.8;
     color: var(--color-text);
     margin-bottom: var(--spacing-md);
@@ -453,7 +458,7 @@
 .text-meta {
     display: flex;
     gap: var(--spacing-md);
-    font-size: var(--font-sm);
+    font-size: 1.1rem;
     color: var(--color-text-light);
 }
 
@@ -486,6 +491,7 @@
     padding-left: 3rem;
     position: relative;
     line-height: 1.6;
+    font-size: 1.1rem;
     color: var(--color-text);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
@@ -653,15 +659,37 @@
     }
 
     .text-column {
-        text-align: center;
         margin-left: 0;
         min-width: unset;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     .text-column h3 {
         height: auto;
-        justify-content: center;
+        text-align: left;
         margin-bottom: 1rem;
+        width: 100%;
+        max-width: 350px;
+        padding-left: 1.25rem;
+    }
+
+    .categories-list {
+        width: 100%;
+        max-width: 350px;
+        padding: 1.25rem;
+        background: rgba(248, 250, 252, 0.5);
+        border-radius: 12px;
+    }
+
+    .category-item {
+        width: 100%;
+        text-align: left;
+    }
+
+    .category-item .category-bar-container {
+        width: 100%;
     }
 
     .progress-column {
@@ -738,11 +766,15 @@
 
 @media (max-width: 640px) {
     .results-section {
-        padding: 1rem 0;
+        padding: 1.25rem 0;
+    }
+
+    .container {
+        padding: 0 1rem;
     }
 
     .page-header {
-        margin-bottom: 0.75rem;
+        margin-bottom: 1rem;
     }
 
     .page-header h1 {
@@ -754,19 +786,13 @@
     }
 
     .classification-card {
-        padding: 0.875rem;
-        border-radius: 10px;
+        padding: 1.25rem 1rem;
+        border-radius: 12px;
     }
 
     .card-title {
         font-size: 1.5rem;
-        margin-bottom: 0.6rem;
-    }
-
-    .text-column h3 {
-        font-size: 0.95rem;
-        margin-bottom: 0.5rem;
-        text-align: center;
+        margin-bottom: 0.75rem;
     }
 
     /* BIGGER circular progress on phone */
@@ -775,48 +801,48 @@
     }
 
     .score-container {
-        width: 220px;
-        height: 220px;
+        width: 240px;
+        height: 240px;
     }
 
     .score-text {
-        font-size: 2rem;
+        font-size: 2.2rem;
     }
 
     .score-subtitle {
-        font-size: 0.875rem;
+        font-size: 0.9rem;
     }
 
     /* Compact indicator cards */
     .indicators-grid {
-        gap: 0.5rem;
+        gap: 0.75rem;
     }
 
     .indicator-card {
-        padding: 0.65rem;
+        padding: 1rem;
     }
 
     .indicator-header {
-        margin-bottom: 0.35rem;
-        gap: 0.35rem;
+        margin-bottom: 0.5rem;
+        gap: 0.4rem;
     }
 
     .indicator-header i {
-        font-size: 1rem;
+        font-size: 1.1rem;
     }
 
     .indicator-name {
-        font-size: 0.875rem;
+        font-size: 0.9rem;
     }
 
     /* Horizontal bar + percentage layout */
     .indicator-row {
         gap: 0.5rem;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.35rem;
     }
 
     .indicator-row .indicator-bar-container {
-        height: 7px;
+        height: 8px;
     }
 
     .indicator-row .indicator-value {
@@ -829,44 +855,67 @@
         line-height: 1.4;
     }
 
-    /* All Categories - original layout on mobile */
+    /* All Categories - centered container on mobile */
     .text-column {
         width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     .text-column h3 {
-        font-size: 0.95rem;
-        margin-bottom: 0.75rem;
+        width: 100%;
+        max-width: 320px;
         text-align: left;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        padding-left: 0.75rem;
     }
 
     .categories-list {
-        gap: 1rem;
+        gap: 0.5rem;
+        width: 100%;
+        max-width: 320px;
+        padding: 0.75rem;
+        background: rgba(248, 250, 252, 0.5);
+        border-radius: 10px;
     }
 
+    /* Single row layout: Name | Percentage | Bar */
     .category-item {
-        gap: 0.35rem;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
     }
 
     .category-header {
-        gap: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        flex-shrink: 0;
     }
 
     .category-label {
-        font-size: 0.95rem;
+        font-size: 0.85rem;
+        min-width: 85px;
+        text-align: left;
     }
 
     .category-value {
-        font-size: 0.95rem;
+        font-size: 0.85rem;
+        min-width: 40px;
+        text-align: right;
     }
 
     .category-item .category-bar-container {
-        height: 8px;
+        flex: 1;
+        height: 6px;
     }
 
     /* Analyzed Text Card */
     .analyzed-text-card {
-        padding: 0.75rem;
+        padding: 1rem;
     }
 
     .analyzed-text-card h3 {
@@ -894,8 +943,8 @@
 
     /* Recommendations */
     .recommendations {
-        padding: 0.65rem;
-        margin-top: 0.65rem;
+        padding: 1rem;
+        margin-top: 0.75rem;
         margin-bottom: 0.75rem;
     }
 
@@ -929,15 +978,15 @@
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 0.65rem;
     }
 
     .cta-buttons .btn {
         flex: 1 1 45%;
         min-width: 0;
-        padding: 0.45rem 0.6rem;
-        font-size: 0.8rem;
-        border-radius: 6px;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.85rem;
+        border-radius: 8px;
     }
 
     /* Mental State Badge */
@@ -959,7 +1008,7 @@
     /* Action buttons - with better spacing */
     .action-buttons {
         margin-top: 0;
-        gap: 0.5rem;
+        gap: 0.75rem;
         flex-direction: row;
         flex-wrap: wrap;
     }
@@ -973,22 +1022,22 @@
     .btn-large-action {
         flex: 1 1 45%;
         min-width: 0;
-        padding: 0.65rem 0.6rem;
-        font-size: 0.875rem;
-        border-radius: 8px;
+        padding: 0.85rem 0.75rem;
+        font-size: 0.95rem;
+        border-radius: 10px;
         gap: 0.5rem;
     }
 
     .btn-large-action i {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
 
     .btn-large {
         flex: 1 1 45%;
         min-width: 0;
-        padding: 0.65rem 0.6rem;
-        font-size: 0.875rem;
-        border-radius: 8px;
+        padding: 0.85rem 0.75rem;
+        font-size: 0.95rem;
+        border-radius: 10px;
     }
 
     /* Alert box */
@@ -1015,7 +1064,11 @@
 /* Extra Small Mobile */
 @media (max-width: 400px) {
     .results-section {
-        padding: 0.75rem 0;
+        padding: 1rem 0;
+    }
+
+    .container {
+        padding: 0 0.875rem;
     }
 
     .page-header h1 {
@@ -1027,80 +1080,88 @@
     }
 
     .classification-card {
-        padding: 0.75rem;
+        padding: 1rem 0.875rem;
     }
 
     .card-title {
-        font-size: 1.3rem;
+        font-size: 1.5rem;
     }
 
     /* Circle still reasonably sized on very small phones */
     .score-container {
-        width: 190px;
-        height: 190px;
+        width: 210px;
+        height: 210px;
     }
 
     .score-text {
-        font-size: 1.75rem;
+        font-size: 1.9rem;
     }
 
     .score-subtitle {
-        font-size: 0.75rem;
+        font-size: 0.85rem;
     }
 
     .text-column h3 {
-        font-size: 0.875rem;
+        font-size: 0.9rem;
+        margin-bottom: 0.35rem;
+        max-width: 280px;
+        padding-left: 0.5rem;
     }
 
-    /* Categories list - extra small */
+    /* Categories list */
     .categories-list {
-        gap: 0.85rem;
+        gap: 0.4rem;
+        max-width: 280px;
+        padding: 0.5rem;
     }
 
     .category-item {
-        gap: 0.3rem;
+        gap: 0.4rem;
     }
 
     .category-label {
-        font-size: 0.85rem;
+        font-size: 0.78rem;
+        min-width: 75px;
     }
 
     .category-value {
-        font-size: 0.85rem;
+        font-size: 0.78rem;
+        min-width: 35px;
     }
 
     .category-item .category-bar-container {
-        height: 6px;
+        height: 5px;
     }
 
     .indicator-card {
-        padding: 0.55rem;
+        padding: 0.875rem;
     }
 
     .indicator-name {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 
     .indicator-row .indicator-value {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 
     .indicator-desc {
-        font-size: 0.75rem;
+        font-size: 0.78rem;
     }
 
     .analyzed-text-card {
-        padding: 0.65rem;
+        padding: 0.875rem;
+        margin-bottom: 1.5rem;
     }
 
     .text-content {
-        padding: 0.55rem;
-        max-height: 110px;
-        font-size: 0.8rem;
+        padding: 0.65rem;
+        max-height: 150px;
+        font-size: 0.85rem;
     }
 
     .action-buttons {
-        gap: 0.4rem;
+        gap: 0.6rem;
     }
 
     .btn-full-width {
@@ -1109,18 +1170,18 @@
     }
 
     .btn-large-action {
-        font-size: 0.8rem;
-        padding: 0.55rem 0.5rem;
+        font-size: 0.85rem;
+        padding: 0.7rem 0.6rem;
         gap: 0.4rem;
     }
 
     .btn-large-action i {
-        font-size: 0.75rem;
+        font-size: 0.8rem;
     }
 
     .btn-large {
-        font-size: 0.8rem;
-        padding: 0.55rem 0.5rem;
+        font-size: 0.85rem;
+        padding: 0.7rem 0.6rem;
     }
 
     .save-results-cta {
@@ -1138,13 +1199,13 @@
     }
 
     .cta-buttons .btn {
-        padding: 0.4rem 0.5rem;
-        font-size: 0.75rem;
+        padding: 0.5rem 0.6rem;
+        font-size: 0.8rem;
         border-radius: 5px;
     }
 
     .confidence-hint {
-        font-size: 0.68rem;
+        font-size: 0.7rem;
         margin-top: 0.4rem;
     }
 
@@ -1153,7 +1214,7 @@
     }
 
     .recommendations p {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 
     .alert h3 {
@@ -1161,7 +1222,7 @@
     }
 
     .alert p {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 }
 
@@ -1303,7 +1364,7 @@
     .card-content {
         display: flex;
         flex-direction: row;
-        align-items: flex-start;
+        align-items: center;
         gap: 1cm;
     }
 
@@ -1320,14 +1381,14 @@
 
     /* Circular progress for print */
     .score-container {
-        width: 150px;
-        height: 150px;
+        width: 200px;
+        height: 200px;
         margin: 0 auto;
     }
 
     .circular-progress {
-        width: 150px;
-        height: 150px;
+        width: 200px;
+        height: 200px;
     }
 
     .progress-background {
@@ -1335,12 +1396,12 @@
     }
 
     .score-text {
-        font-size: 24pt !important;
+        font-size: 28pt !important;
         color: #3DA37A !important;
     }
 
     .score-subtitle {
-        font-size: 9pt !important;
+        font-size: 10pt !important;
         color: #666 !important;
     }
 
@@ -1353,6 +1414,9 @@
     /* Categories list */
     .text-column {
         flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .text-column h3 {
@@ -1375,6 +1439,10 @@
         gap: 0.2cm;
     }
 
+    .category-item {
+        max-width: 300px;
+    }
+
     .category-label,
     .category-value {
         font-size: 11pt;
@@ -1382,6 +1450,7 @@
     }
 
     .category-item .category-bar-container {
+        width: 100%;
         height: 8px;
         background: #E9ECEF !important;
         border: 1px solid #ddd;
