@@ -432,20 +432,20 @@
             <div class="detail-section">
                 <h4><i class="fas fa-bullseye"></i> Performance Metrics</h4>
                 <div class="metrics-grid-modal">
-                    <div class="metric-box-modal ${model.accuracy !== null && model.accuracy >= 80 ? 'good' : ''}">
-                        <span class="metric-value">${model.accuracy !== null ? model.accuracy.toFixed(1) : '—'}</span>
+                    <div class="metric-box-modal ${model.accuracy !== null && model.accuracy >= 0.8 ? 'good' : ''}">
+                        <span class="metric-value">${model.accuracy !== null ? (model.accuracy * 100).toFixed(2) + '%' : '—'}</span>
                         <span class="metric-label">Accuracy</span>
                     </div>
-                    <div class="metric-box-modal">
-                        <span class="metric-value">${model.precision !== null ? model.precision.toFixed(3) : '—'}</span>
+                    <div class="metric-box-modal ${model.precision !== null && model.precision >= 0.8 ? 'good' : ''}">
+                        <span class="metric-value">${model.precision !== null ? (model.precision * 100).toFixed(2) + '%' : '—'}</span>
                         <span class="metric-label">Precision</span>
                     </div>
-                    <div class="metric-box-modal">
-                        <span class="metric-value">${model.recall !== null ? model.recall.toFixed(3) : '—'}</span>
+                    <div class="metric-box-modal ${model.recall !== null && model.recall >= 0.8 ? 'good' : ''}">
+                        <span class="metric-value">${model.recall !== null ? (model.recall * 100).toFixed(2) + '%' : '—'}</span>
                         <span class="metric-label">Recall</span>
                     </div>
-                    <div class="metric-box-modal">
-                        <span class="metric-value">${model.f1 !== null ? model.f1.toFixed(3) : '—'}</span>
+                    <div class="metric-box-modal ${model.f1 !== null && model.f1 >= 0.8 ? 'good' : ''}">
+                        <span class="metric-value">${model.f1 !== null ? (model.f1 * 100).toFixed(2) + '%' : '—'}</span>
                         <span class="metric-label">F1 Score</span>
                     </div>
                 </div>

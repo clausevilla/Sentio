@@ -75,10 +75,10 @@ function openCompareModal() {
 function buildCompareContent(models) {
     // Metrics to compare
     const metrics = [
-        { key: 'accuracy', label: 'Accuracy', icon: 'fa-bullseye', format: v => v !== null ? v.toFixed(1) : 'â€”', isPercent: true },
-        { key: 'precision', label: 'Precision', icon: 'fa-crosshairs', format: v => v !== null ? v.toFixed(3) : 'â€”', isPercent: false },
-        { key: 'recall', label: 'Recall', icon: 'fa-redo', format: v => v !== null ? v.toFixed(3) : 'â€”', isPercent: false },
-        { key: 'f1', label: 'F1 Score', icon: 'fa-chart-line', format: v => v !== null ? v.toFixed(3) : 'â€”', isPercent: false },
+        { key: 'accuracy', label: 'Accuracy', icon: 'fa-bullseye', format: v => v !== null ? v.toFixed(1) : '-', isPercent: true },
+        { key: 'precision', label: 'Precision', icon: 'fa-crosshairs', format: v => v !== null ? v.toFixed(3) : '-', isPercent: false },
+        { key: 'recall', label: 'Recall', icon: 'fa-redo', format: v => v !== null ? v.toFixed(3) : '-', isPercent: false },
+        { key: 'f1', label: 'F1 Score', icon: 'fa-chart-line', format: v => v !== null ? v.toFixed(3) : '-', isPercent: false },
     ];
 
     // Find best for each metric
@@ -110,7 +110,7 @@ function buildCompareContent(models) {
             <div class="compare-model-card ${model.is_active ? 'active' : ''} ${isTopPerformer ? 'top-performer' : ''}">
                 <div class="model-card-color" style="background: ${COMPARE_COLORS[i]}"></div>
                 <div class="model-card-content">
-                    <div class="model-card-name">${model.name}</div>
+                    <div class="model-card-name" title="${model.name}">${model.name}</div>
                     <div class="model-card-meta">
                         <span class="model-card-type">${model.model_type_display}</span>
                         ${model.is_active ? '<span class="model-card-active">Deployed</span>' : ''}
@@ -123,7 +123,7 @@ function buildCompareContent(models) {
                             ${leading}/${metrics.length}
                         </span>
                         <span class="leading-label">leading</span>
-                    ` : '<span class="leading-label">â€”</span>'}
+                    ` : '<span class="leading-label">-</span>'}
                 </div>
             </div>
         `;

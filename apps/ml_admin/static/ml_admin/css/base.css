@@ -178,7 +178,7 @@ body {
 
 .topbar {
     background: var(--white);
-    padding: 1rem 2rem;
+    padding: 0.75rem 2rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -241,7 +241,7 @@ body {
     color: var(--warning);
 }
 
-.content { padding: 2rem; }
+.content { padding: 1rem 2rem; }
 
 /* Grid */
 .grid-2 {
@@ -426,7 +426,7 @@ body {
     }
 
     .content {
-        padding: 0.25rem;
+        padding: 0.7rem;
     }
     .topbar-right {
         gap: 0.25rem;

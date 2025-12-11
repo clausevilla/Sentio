@@ -795,14 +795,14 @@ select.param-input {
 
 .summary-items {
     display: flex;
-    gap: 3rem;
+    gap: 1.5rem;
 }
 
 .summary-item {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    min-width: 180pt;
+    min-width: 100pt;
 }
 
 .sum-label {
@@ -819,7 +819,7 @@ select.param-input {
 }
 
 .summary-action .btn {
-    min-width: 200px;
+    min-width: 100px;
 }
 
 /* ================================
@@ -955,7 +955,7 @@ select.param-input {
 ================================ */
 .job-user {
     display: block;
-    font-size: var(--font-xs);
+    font-size: 0.65rem;
     color: var(--gray-500);
     font-weight: 400;
 }
@@ -963,18 +963,19 @@ select.param-input {
 .dataset-cell {
     display: block;
     max-width: 150px;
-    white-space: nowrap;
+    white-space: normal;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-size: 0.75rem;
 }
 
 .records-count {
-    font-size: var(--font-sm);
+    font-size: 0.75rem;
     color: var(--gray-600);
 }
 
 .duration {
-    font-size: var(--font-sm);
+    font-size: 0.75rem;
     color: var(--gray-600);
 }
 
@@ -989,10 +990,41 @@ select.param-input {
     font-size: 0.625rem;
 }
 
+/* Table-specific smaller elements */
+#trainingJobsTable th,
+#trainingJobsTable td {
+    padding: 0.75rem 0.75rem;
+    font-size: 0.8rem;
+}
+
+#trainingJobsTable th {
+    font-size: 0.8rem;
+}
+
+#trainingJobsTable .btn-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+}
+
+#trainingJobsTable .model-type-tag {
+    font-size: 0.65rem;
+    padding: 0.5rem 0.5rem;
+}
+
+
+
+#trainingJobsTable .badge {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.4rem;
+}
+
 .accuracy-value {
     font-weight: 600;
     color: var(--primary);
+    font-size: 0.8rem;
 }
+
 
 .text-danger {
     color: var(--danger);
@@ -1184,6 +1216,58 @@ select.param-input {
     font-size: 0.875rem;
 }
 
+
+.job-params-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem;
+}
+
+.job-param-item {
+    display: flex;
+    flex-direction: column;
+    padding: 0.6rem 0.8rem;
+    background: var(--gray-50);
+    border-radius: 6px;
+    border: 1px solid var(--gray-200);
+}
+
+.job-param-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.25rem;
+}
+
+.job-param-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
+
+
+
+    .job-param-item {
+        padding: 0.4rem 0.6rem;
+    }
+
+    .job-param-label {
+        font-size: 0.9rem;
+    }
+
+    .job-param-value {
+        font-size: 0.9rem;
+    }
+
+    .job-progress-log {
+        font-size: 0.9rem;
+        max-height: 200px;
+    }
+
 /* ================================
    Scrollbar Styling
 ================================ */
@@ -1207,6 +1291,39 @@ select.param-input {
 .dataset-list::-webkit-scrollbar-thumb:hover,
 .model-list::-webkit-scrollbar-thumb:hover {
     background: var(--gray-400);
+}
+
+/* ================================
+   Between 1024px and 1200px
+================================ */
+@media (max-width: 1200px) {
+    /* Hide F1 Score column (8th column) */
+    #trainingJobsTable th:nth-child(8),
+    #trainingJobsTable td:nth-child(8) {
+        display: none;
+    }
+
+    /* Reduce cell padding */
+    #trainingJobsTable th,
+    #trainingJobsTable td {
+        padding: 0.5rem 0.4rem;
+        font-size: 0.8rem;
+    }
+
+    /* Ensure actions column visible */
+    #trainingJobsTable th:last-child,
+    #trainingJobsTable td:last-child {
+        display: table-cell !important;
+    }
+
+    .actions-cell {
+        justify-content: center;
+    }
+
+    .btn-icon {
+        width: 28px;
+        height: 28px;
+    }
 }
 
 /* ================================
@@ -1243,6 +1360,19 @@ select.param-input {
     .summary-action .btn {
         width: 100%;
     }
+
+    /* Hide more columns: Datasets, Started, Duration, Progress */
+#trainingJobsTable th:nth-child(3),
+#trainingJobsTable td:nth-child(3),
+#trainingJobsTable th:nth-child(4),
+#trainingJobsTable td:nth-child(4),
+#trainingJobsTable th:nth-child(5),
+#trainingJobsTable td:nth-child(5),
+#trainingJobsTable th:nth-child(6),
+#trainingJobsTable td:nth-child(6) {
+    display: none;
+}
+
 }
 
 @media (max-width: 768px) {
@@ -1324,8 +1454,8 @@ select.param-input {
     }
 
     .model-type-tag {
-        font-size: 0.65rem;
-        padding: 0.1rem 0.25rem;
+        font-size: 0.75rem;
+        padding: 0.08rem 0.25rem;
     }
 
     .badge.sm {
@@ -1366,6 +1496,27 @@ select.param-input {
         right: 10px;
         transform: none;
     }
+
+    .summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: auto;
+}
+
+
+.summary-items {
+    gap: 1rem;
+    width: 100%;
+}
+
+.sum-label {
+    font-size: 0.65rem;
+}
+
+.sum-value {
+    font-size: 0.8rem;
+}
     /* Current Baseline - smaller text */
     .baseline-name {
         font-size: 0.85rem;
@@ -1451,6 +1602,10 @@ select.param-input {
         height: 20px;
         font-size: 0.7rem;
     }
+
+
+
+
         #jobDetailsModal .modal-content {
         max-height: 85vh;
         overflow-y: auto;
@@ -1661,4 +1816,5 @@ select.param-input {
     display: flex;
     gap: 0.25rem;
     justify-content: flex-end;
+}
 }
