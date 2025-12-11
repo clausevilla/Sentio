@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupTimeFilter();
     setupDeleteButtons();
     setupExpandableText();
+    setupPagination();
 
     // Add animations
     animateStats();
@@ -121,12 +122,6 @@ function initializeDistributionChart() {
 
 /**
  * Initialize the trend chart with data from the API.
- *
- * This fetches mental health trend data for the specified time period
- * and renders it as a line chart. The chart shows how mental state
- * predictions have changed over time.
- *
- * @param {string} period - Time period: 'week', 'month', or 'all'
  */
 function initializeTrendChart(period) {
     console.log('Initializing trend chart for period:', period);
@@ -216,7 +211,6 @@ function initializeTrendChart(period) {
         });
 
         // Create the line chart
-        // Detect mobile for responsive options
         var isMobile = window.innerWidth <= 768;
         var isSmallMobile = window.innerWidth <= 480;
 
@@ -317,14 +311,10 @@ function initializeTrendChart(period) {
 
 /**
  * Animate the horizontal distribution bars from 0% to their target width.
- *
- * Each bar animates with a slight stagger (150ms between bars) to create
- * a cascading effect that draws attention across all four states.
  */
 function animateDistributionBars() {
     console.log('Animating distribution bars');
 
-    // FIXED: Using correct class name '.dist-bar' to match HTML
     var bars = document.querySelectorAll('.dist-bar');
     console.log('Found', bars.length, 'distribution bars');
 
@@ -340,7 +330,6 @@ function animateDistributionBars() {
         if (targetWidth !== null && targetWidth !== '') {
             var targetValue = parseFloat(targetWidth);
 
-            // Stagger each bar's animation
             setTimeout(function() {
                 bar.style.transition = 'width 1s cubic-bezier(0.4, 0, 0.2, 1)';
                 bar.style.width = targetValue + '%';
@@ -352,9 +341,6 @@ function animateDistributionBars() {
 
 /**
  * Setup the state filter dropdown for the history list.
- *
- * When users select a mental state from the dropdown, only history items
- * matching that state will be shown. Includes a smooth fade animation.
  */
 function setupStateFilter() {
     var stateFilter = document.getElementById('stateFilter');
@@ -403,12 +389,8 @@ function setupStateFilter() {
 
 /**
  * Setup the time filter buttons for the trend chart.
- *
- * Clicking a time period button (Week, Month, All Time) updates the
- * visual active state and reloads the trend chart with new data.
  */
 function setupTimeFilter() {
-    // FIXED: Using correct class name '.filter-btn' to match HTML
     var filterButtons = document.querySelectorAll('.filter-btn');
 
     if (filterButtons.length === 0) {
@@ -422,15 +404,12 @@ function setupTimeFilter() {
         button.addEventListener('click', function() {
             console.log('Filter button clicked:', this.getAttribute('data-period'));
 
-            // Remove active class from all buttons
             filterButtons.forEach(function(btn) {
                 btn.classList.remove('active');
             });
 
-            // Add active class to clicked button
             this.classList.add('active');
 
-            // Get period and reload chart
             var period = this.getAttribute('data-period');
             initializeTrendChart(period);
         });
@@ -438,10 +417,123 @@ function setupTimeFilter() {
 }
 
 /**
+ * Setup AJAX pagination for the history list.
+ * Fetches the new page HTML and replaces just the list content.
+ * No backend API changes required - uses existing Django views.
+ */
+function setupPagination() {
+    var paginationContainer = document.querySelector('.pagination');
+    if (!paginationContainer) {
+        console.log('Pagination container not found');
+        return;
+    }
+
+    console.log('Setting up AJAX pagination');
+
+    // Use event delegation for pagination links
+    paginationContainer.addEventListener('click', function(e) {
+        var link = e.target.closest('.page-link');
+        if (!link) return;
+
+        e.preventDefault();
+
+        var href = link.getAttribute('href');
+        if (!href || href === '#') return;
+
+        console.log('Pagination clicked, loading:', href);
+
+        // Fetch the new page
+        fetchPageContent(href);
+    });
+}
+
+/**
+ * Fetch page content via AJAX and update the DOM.
+ * This fetches the full HTML page and extracts just the parts we need.
+ */
+function fetchPageContent(url) {
+    var historyList = document.getElementById('historyList');
+    var paginationContainer = document.querySelector('.pagination');
+    var listCard = document.querySelector('.history-list-card');
+
+    if (!historyList) {
+        console.error('History list container not found');
+        return;
+    }
+
+    // Show loading state
+    historyList.style.opacity = '0.5';
+    historyList.style.pointerEvents = 'none';
+
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('Network error: ' + response.status);
+        }
+        return response.text();
+    })
+    .then(function(html) {
+        // Parse the HTML response
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(html, 'text/html');
+
+        // Get the new history list content
+        var newHistoryList = doc.getElementById('historyList');
+        var newPagination = doc.querySelector('.pagination');
+
+        if (newHistoryList) {
+            // Replace list content
+            historyList.innerHTML = newHistoryList.innerHTML;
+
+            // Animate new items
+            var items = historyList.querySelectorAll('.history-item');
+            items.forEach(function(item, index) {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(10px)';
+                setTimeout(function() {
+                    item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateY(0)';
+                }, index * 50);
+            });
+        }
+
+        if (newPagination && paginationContainer) {
+            // Replace pagination
+            paginationContainer.innerHTML = newPagination.innerHTML;
+        }
+
+        // Re-setup delete buttons and expandable text for new items
+        setupDeleteButtons();
+        setupExpandableText();
+
+        // Update URL without reload (for browser back/forward)
+        window.history.pushState({}, '', url);
+
+        // Scroll to top of list smoothly
+        if (listCard) {
+            listCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    })
+    .catch(function(error) {
+        console.error('Error fetching page:', error);
+        showToast('Failed to load page. Please try again.', 'error');
+    })
+    .finally(function() {
+        // Remove loading state
+        historyList.style.opacity = '1';
+        historyList.style.pointerEvents = 'auto';
+    });
+}
+
+/**
  * Setup delete buttons for each analysis item.
- *
- * Each analysis item has a delete button that, when clicked, shows a
- * confirmation dialog and then deletes the analysis via the API.
  */
 function setupDeleteButtons() {
     var deleteButtons = document.querySelectorAll('.delete-analysis-btn');
@@ -451,167 +543,126 @@ function setupDeleteButtons() {
         return;
     }
 
-    console.log('Setting up', deleteButtons.length, 'delete buttons');
+    console.log('Setting up delete buttons for', deleteButtons.length, 'items');
 
     deleteButtons.forEach(function(button) {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
+        // Remove existing listeners by cloning
+        var newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+
+        newButton.addEventListener('click', function(e) {
             e.stopPropagation();
-
             var analysisId = this.getAttribute('data-id');
-            var historyItem = this.closest('.history-item');
-
             console.log('Delete button clicked for analysis:', analysisId);
-
-            // Show custom confirmation modal
-            showConfirm({
-                title: 'Delete Analysis',
-                message: 'Are you sure you want to delete this analysis? This action cannot be undone.',
-                type: 'danger',
-                confirmText: 'Delete',
-                cancelText: 'Cancel',
-                danger: true
-            }).then(function(confirmed) {
-                if (confirmed) {
-                    deleteAnalysis(analysisId, historyItem);
-                }
-            });
+            handleDeleteAnalysis(analysisId, this);
         });
     });
 }
 
 /**
- * Delete an analysis via the API.
- *
- * This sends a DELETE request to the server to remove the analysis.
- * On success, the item is removed from the DOM with a fade-out animation.
- *
- * @param {string} analysisId - The ID of the analysis to delete
- * @param {HTMLElement} historyItem - The DOM element to remove on success
+ * Handle the deletion of an analysis.
  */
-function deleteAnalysis(analysisId, historyItem) {
-    // Build the delete URL by replacing the placeholder with the actual ID
-    var deleteUrl = window.historyConfig.deleteAnalysisUrl.replace('{id}', analysisId);
+function handleDeleteAnalysis(analysisId, buttonElement) {
+    showConfirm({
+        title: 'Delete Analysis',
+        message: 'Are you sure you want to delete this analysis? This action cannot be undone.',
+        type: 'danger',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        danger: true
+    }).then(function(confirmed) {
+        if (!confirmed) return;
 
-    console.log('Deleting analysis:', analysisId);
-    console.log('Delete URL:', deleteUrl);
-
-    // Show loading state on the item
-    historyItem.style.opacity = '0.5';
-    historyItem.style.pointerEvents = 'none';
-
-    fetch(deleteUrl, {
-        method: 'DELETE',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': window.historyConfig.csrfToken,
-            'Content-Type': 'application/json'
-        },
-        credentials: 'same-origin'
-    })
-    .then(function(response) {
-        console.log('Delete response status:', response.status);
-        if (!response.ok) {
-            throw new Error('Delete failed: ' + response.status);
+        var historyItem = buttonElement.closest('.history-item');
+        if (historyItem) {
+            historyItem.style.opacity = '0.5';
+            historyItem.style.pointerEvents = 'none';
         }
-        return response.json();
-    })
-    .then(function(data) {
-        console.log('Delete successful:', data);
 
-        // Animate the item out
-        historyItem.style.transition = 'all 0.3s ease';
-        historyItem.style.transform = 'translateX(-20px)';
-        historyItem.style.opacity = '0';
-        historyItem.style.maxHeight = historyItem.offsetHeight + 'px';
+        var deleteUrl = window.historyConfig.deleteAnalysisUrl.replace('{id}', analysisId);
 
-        setTimeout(function() {
-            historyItem.style.maxHeight = '0';
-            historyItem.style.padding = '0';
-            historyItem.style.margin = '0';
-            historyItem.style.border = 'none';
-        }, 300);
-
-        setTimeout(function() {
-            historyItem.remove();
-
-            // Update the total count in the stats
-            updateStatsAfterDelete();
-
-            // Check if there are any items left
-            var remainingItems = document.querySelectorAll('.history-item');
-            if (remainingItems.length === 0) {
-                // Reload the page to show empty state
-                window.location.reload();
+        fetch(deleteUrl, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': window.historyConfig.csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        })
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Delete failed: ' + response.status);
             }
-        }, 500);
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                console.log('Analysis deleted successfully');
+                showToast('Analysis deleted successfully', 'success');
 
-        // Show success message
-        showToast('Analysis deleted successfully', 'success');
-    })
-    .catch(function(error) {
-        console.error('Delete error:', error);
+                if (historyItem) {
+                    historyItem.style.transition = 'all 0.3s ease';
+                    historyItem.style.transform = 'translateX(-100%)';
+                    historyItem.style.opacity = '0';
 
-        // Restore the item
-        historyItem.style.opacity = '1';
-        historyItem.style.pointerEvents = 'auto';
+                    setTimeout(function() {
+                        historyItem.remove();
 
-        // Show error message
-        showToast('Failed to delete analysis. Please try again.', 'error');
+                        var remainingItems = document.querySelectorAll('.history-item');
+                        if (remainingItems.length === 0) {
+                            window.location.reload();
+                        }
+                    }, 300);
+                }
+            } else {
+                throw new Error(data.error || 'Unknown error');
+            }
+        })
+        .catch(function(error) {
+            console.error('Delete error:', error);
+            showToast('Failed to delete analysis: ' + error.message, 'error');
+
+            if (historyItem) {
+                historyItem.style.opacity = '1';
+                historyItem.style.pointerEvents = 'auto';
+            }
+        });
     });
 }
 
 /**
- * Update the statistics cards after an analysis is deleted.
- *
- * This decrements the total count and updates the display.
- */
-function updateStatsAfterDelete() {
-    // Update total analyses count
-    var totalStatValue = document.querySelector('.stat-card:first-child .stat-value');
-    if (totalStatValue) {
-        var currentTotal = parseInt(totalStatValue.textContent) || 0;
-        if (currentTotal > 0) {
-            totalStatValue.textContent = currentTotal - 1;
-        }
-    }
-}
-
-/**
- * Animate the statistics numbers with a counting-up effect.
- *
- * Creates visual interest when the page loads and draws attention
- * to the key metrics at the top of the page.
+ * Animate statistics cards on page load.
  */
 function animateStats() {
-    // FIXED: Using correct class name '.stat-value' to match HTML
+    var statCards = document.querySelectorAll('.stat-card');
+
+    statCards.forEach(function(card, index) {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+
+        setTimeout(function() {
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+
     var statValues = document.querySelectorAll('.stat-value[data-count]');
-    console.log('Found', statValues.length, 'stat values to animate');
 
-    statValues.forEach(function(stat, index) {
-        var finalValue = parseInt(stat.getAttribute('data-count'));
-
-        if (!isNaN(finalValue)) {
-            stat.textContent = '0';
-
-            // Stagger the animations
+    statValues.forEach(function(element) {
+        var targetValue = parseInt(element.getAttribute('data-count'), 10);
+        if (!isNaN(targetValue) && targetValue > 0) {
+            element.textContent = '0';
             setTimeout(function() {
-                animateNumber(stat, 0, finalValue, 800);
-            }, index * 100);
+                animateNumber(element, 0, targetValue, 1000);
+            }, 500);
         }
     });
 }
 
 /**
  * Animate a number from start to end over a duration.
- *
- * Uses requestAnimationFrame for smooth 60fps animation with an ease-out
- * cubic function that starts fast and slows down at the end.
- *
- * @param {HTMLElement} element - Element to update
- * @param {number} start - Starting value
- * @param {number} end - Ending value
- * @param {number} duration - Animation duration in milliseconds
  */
 function animateNumber(element, start, end, duration) {
     var range = end - start;
@@ -621,7 +672,6 @@ function animateNumber(element, start, end, duration) {
         var elapsed = currentTime - startTime;
         var progress = Math.min(elapsed / duration, 1);
 
-        // Ease-out cubic: starts fast, slows at end
         var easeOut = 1 - Math.pow(1 - progress, 3);
         var current = Math.floor(start + range * easeOut);
 
@@ -639,18 +689,6 @@ function animateNumber(element, start, end, duration) {
 
 /**
  * Show a custom confirmation modal dialog.
- *
- * This replaces the browser's built-in confirm() with a styled modal
- * that matches the Sentio design system.
- *
- * @param {Object} options - Configuration options
- * @param {string} options.title - Modal title
- * @param {string} options.message - Modal message
- * @param {string} options.type - Type: 'warning', 'danger', 'info', 'success'
- * @param {string} options.confirmText - Text for confirm button
- * @param {string} options.cancelText - Text for cancel button
- * @param {boolean} options.danger - If true, styles confirm button as danger
- * @returns {Promise<boolean>} - Resolves to true if confirmed, false if cancelled
  */
 function showConfirm(options) {
     var title = options.title || 'Confirm';
@@ -661,11 +699,9 @@ function showConfirm(options) {
     var danger = options.danger || false;
 
     return new Promise(function(resolve) {
-        // Remove any existing modal
         var existing = document.getElementById('customConfirmModal');
         if (existing) existing.remove();
 
-        // Icon mapping
         var icons = {
             warning: 'fa-exclamation-triangle',
             danger: 'fa-trash-alt',
@@ -673,7 +709,6 @@ function showConfirm(options) {
             success: 'fa-check-circle'
         };
 
-        // Create modal element
         var modal = document.createElement('div');
         modal.id = 'customConfirmModal';
         modal.className = 'confirm-modal';
@@ -692,12 +727,10 @@ function showConfirm(options) {
 
         document.body.appendChild(modal);
 
-        // Trigger open animation
         requestAnimationFrame(function() {
             modal.classList.add('open');
         });
 
-        // Close function
         var closeModal = function(result) {
             modal.classList.remove('open');
             setTimeout(function() {
@@ -706,14 +739,12 @@ function showConfirm(options) {
             resolve(result);
         };
 
-        // Event listeners
         modal.querySelector('.btn-cancel').onclick = function() { closeModal(false); };
         modal.querySelector('.btn-confirm').onclick = function() { closeModal(true); };
         modal.onclick = function(e) {
             if (e.target === modal) closeModal(false);
         };
 
-        // ESC key to close
         var handleEsc = function(e) {
             if (e.key === 'Escape') {
                 closeModal(false);
@@ -726,19 +757,11 @@ function showConfirm(options) {
 
 /**
  * Show a toast notification message.
- *
- * This displays a brief notification at the top of the screen that
- * automatically fades out after a few seconds.
- *
- * @param {string} message - The message to display
- * @param {string} type - Type: 'success', 'error', 'warning', 'info'
- * @param {number} duration - How long to show the toast (ms), default 3000
  */
 function showToast(message, type, duration) {
     type = type || 'info';
     duration = duration || 3000;
 
-    // Find or create toast container
     var container = document.querySelector('.toast-container');
     if (!container) {
         container = document.createElement('div');
@@ -746,7 +769,6 @@ function showToast(message, type, duration) {
         document.body.appendChild(container);
     }
 
-    // Icon mapping
     var icons = {
         success: 'fa-check-circle',
         error: 'fa-times-circle',
@@ -754,7 +776,6 @@ function showToast(message, type, duration) {
         info: 'fa-info-circle'
     };
 
-    // Create toast element
     var toast = document.createElement('div');
     toast.className = 'toast ' + type;
     toast.innerHTML =
@@ -766,7 +787,6 @@ function showToast(message, type, duration) {
 
     container.appendChild(toast);
 
-    // Close button handler
     toast.querySelector('.toast-close').onclick = function() {
         toast.classList.add('hiding');
         setTimeout(function() {
@@ -774,7 +794,6 @@ function showToast(message, type, duration) {
         }, 300);
     };
 
-    // Auto-remove after duration
     setTimeout(function() {
         if (toast.parentElement) {
             toast.classList.add('hiding');
@@ -787,23 +806,21 @@ function showToast(message, type, duration) {
 
 /**
  * Setup expandable text functionality for history items.
- *
- * Long text entries are truncated to 2 lines by default.
- * A "show more" button appears for texts that overflow.
- * Clicking toggles between truncated and full view.
  */
 function setupExpandableText() {
     var textElements = document.querySelectorAll('.item-text');
 
     textElements.forEach(function(textEl) {
-        // Temporarily remove line clamp to measure true height
+        if (textEl.nextElementSibling && textEl.nextElementSibling.classList.contains('show-more-btn')) {
+            return;
+        }
+
         textEl.style.display = 'block';
         textEl.style.webkitLineClamp = 'unset';
         textEl.style.overflow = 'visible';
 
         var fullHeight = textEl.scrollHeight;
 
-        // Remove inline styles - let CSS take over
         textEl.style.display = '';
         textEl.style.webkitLineClamp = '';
         textEl.style.webkitBoxOrient = '';
@@ -811,17 +828,13 @@ function setupExpandableText() {
 
         var clampedHeight = textEl.clientHeight;
 
-        // Check if text is actually truncated
         if (fullHeight > clampedHeight + 5) {
-            // Create show more button
             var showMoreBtn = document.createElement('button');
             showMoreBtn.className = 'show-more-btn';
             showMoreBtn.textContent = 'Show more';
 
-            // Insert button after text element
             textEl.parentNode.insertBefore(showMoreBtn, textEl.nextSibling);
 
-            // Toggle functionality
             showMoreBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
 
@@ -836,3 +849,8 @@ function setupExpandableText() {
         }
     });
 }
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', function(e) {
+    fetchPageContent(window.location.href);
+});

@@ -268,7 +268,7 @@
 }
 
 .page-header h1 {
-    font-size: var(--font-2xl);
+    font-size: var(--font-3xl);
     color: var(--color-text-dark, #2C3E50);
     margin-bottom: 1rem;
 }

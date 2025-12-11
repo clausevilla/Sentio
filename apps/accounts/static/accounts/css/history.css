@@ -220,6 +220,7 @@
     font-weight: 500;
     color: var(--color-text);
     white-space: nowrap;
+    max-width: 100%;
 }
 
 .dist-bar-container {
@@ -821,7 +822,7 @@
     }
 
     .distribution-item {
-        grid-template-columns: 90px 1fr 60px;
+        grid-template-columns: 100px 1fr 60px;
         gap: 0.5rem;
     }
 
@@ -996,11 +997,14 @@
     }
 
     .page-header h1 {
-        font-size: 1.35rem;
+        font-size: 1.5rem;
+        margin-top: 1.5rem;
+
     }
 
     .page-header p {
         font-size: 0.88rem;
+        margin-bottom: 1 rem;
     }
 
     .stats-grid {
@@ -1055,7 +1059,7 @@
     }
 
     .distribution-item {
-        grid-template-columns: 80px 1fr 50px;
+        grid-template-columns: 90px 1fr 50px;
         gap: 0.35rem;
     }
 
@@ -1194,6 +1198,7 @@
 
     .page-header h1 {
         font-size: 1.25rem;
+        margin-top: 1rem;
     }
 
     .stats-grid {
@@ -1480,3 +1485,4 @@
         transform: translateY(-20px);
     }
 }
+
