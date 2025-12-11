@@ -41,6 +41,7 @@ def result_view(request):
         emotional_intensity,
         word_count,
         char_count,
+        all_confidences,
     ) = get_prediction_result(user, user_text)
     return render(
         request,
@@ -55,6 +56,7 @@ def result_view(request):
             'emotional_intensity': emotional_intensity,
             'word_count': word_count,
             'char_count': char_count,
+            'all_confidences': all_confidences,
         },
     )
 

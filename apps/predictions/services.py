@@ -67,12 +67,12 @@ def analyze_text(text, model_version):
     Analyze text and return prediction results.
 
     Returns:
-        Tuple of (label, confidence, model_version)
+        Tuple of (label, confidence, model_version, all_confidences)
     """
     predictor = get_predictor(model_version)
     result = predictor.predict(text)
 
-    return result['label'], result['confidence']
+    return result['label'], result['confidence'], result['probabilities'], model_version
 
 
 def preprocess_user_input(df, model_type):
@@ -113,7 +113,9 @@ def get_prediction_result(user, user_text):
     df = clean_user_input(user_text)
     processed_text = preprocess_user_input(df, model_version.model_type)
 
-    label, confidence = analyze_text(processed_text.iloc[0], model_version)
+    label, confidence, all_confidences_dict, model_version = analyze_text(
+        processed_text.iloc[0], model_version
+    )
 
     text_data = load_json()
 
@@ -143,6 +145,10 @@ def get_prediction_result(user, user_text):
 
     confidence_percentage = round(confidence * 100)
 
+    all_confidences_percentage = {}
+    for class_name, prob in all_confidences_dict.items():
+        all_confidences_percentage[class_name] = round(prob * 100)
+
     return (
         label,
         confidence_percentage,
@@ -152,59 +158,64 @@ def get_prediction_result(user, user_text):
         emotional_intensity,
         word_count,
         char_count,
+        all_confidences_percentage,
     )
 
 
 def get_recommendations(prediction, confidence, anxiety_level, recommendations_strings):
     recommendations = []
+    prediction_lower = str(prediction).lower()
+    confidence_percentage = confidence * 100 if confidence < 1 else confidence
 
-    if confidence > 0.70:  # high confidence results
+    if confidence_percentage > 0.70:  # high confidence results
         if prediction == 'normal':
             recommendations.append(  # Index 0 because maybe we want to add random recs in future
                 recommendations_strings['normal']['high_confidence'][0]
             )
-        elif prediction == 'stress':
+        elif prediction_lower == 'stress':
             recommendations.append(
                 recommendations_strings['stress']['high_confidence'][0]
             )
-        elif prediction == 'suicidal':
+        elif prediction_lower == 'suicidal':
             recommendations.append(
                 recommendations_strings['suicidal']['high_confidence'][0]
             )
-        elif prediction == 'depression':
+        elif prediction_lower == 'depression':
             recommendations.append(
                 recommendations_strings['depression']['high_confidence'][0]
             )
 
-    elif confidence >= 0.50 and confidence <= 0.70:  # medium confidence
-        if prediction == 'normal':
+    elif (
+        confidence_percentage >= 50 and confidence_percentage < 70
+    ):  # medium confidence
+        if prediction_lower == 'normal':
             recommendations.append(
                 recommendations_strings['normal']['medium_confidence'][0]
             )
-        elif prediction == 'stress':
+        elif prediction_lower == 'stress':
             recommendations.append(
                 recommendations_strings['stress']['medium_confidence'][0]
             )
-        elif prediction == 'suicidal':
+        elif prediction_lower == 'suicidal':
             recommendations.append(
                 recommendations_strings['suicidal']['medium_confidence'][0]
             )
-        elif prediction == 'depression':
+        elif prediction_lower == 'depression':
             recommendations.append(
                 recommendations_strings['depression']['medium_confidence'][0]
             )
 
     else:  # low confidence (< 0.50)
         recommendations.append(recommendations_strings['low_model_confidence'])
-        if prediction == 'suicidal':
+        if prediction_lower == 'suicidal':
             recommendations.append(
                 recommendations_strings['suicidal']['low_confidence'][0]
             )
-        elif prediction == 'depression':
+        elif prediction_lower == 'depression':
             recommendations.append(
                 recommendations_strings['depression']['low_confidence'][0]
             )
-        elif prediction == 'stress':
+        elif prediction_lower == 'stress':
             recommendations.append(
                 recommendations_strings['stress']['low_confidence'][0]
             )
@@ -241,17 +252,17 @@ def calculate_metrics(text: str, negative_words):
 
     # Anxiety: Ellipses weighted heavier than periods (uncertainty, trailing thoughts)
     anxiety_score = (
-        (ellipsis_count * 50)
-        + (period_count * 20)
-        + (word_density * 25)
+        (ellipsis_count * 20)
+        + (period_count * 3)
+        + (word_density * 15)
         + (capital_count * 0.5)
     )
 
     # Emotional intensity: Exclamations > Questions (strong emotion > curiosity)
     emotional_score = (
-        (exclamation_count * 40)
-        + (question_count * 30)
-        + (capital_count * 20)
+        (exclamation_count * 8)
+        + (question_count * 5)
+        + (capital_count * 4)
         + (word_density * 10)
     )
 

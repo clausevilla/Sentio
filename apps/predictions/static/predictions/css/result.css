@@ -66,13 +66,24 @@
 .card-content {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: space-between;
     gap: var(--spacing-xl);
     max-width: 1000px;
     margin: 0 auto;
 }
 
+.text-column h3 {
+    margin-top: 0;
+    padding-top: 0;
+    height: 140px;
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 40px;
+}
+
 .card-title {
+    text-align: left;
     font-size: var(--font-3xl);
     color: var(--color-text-dark);
     margin-bottom: var(--spacing-lg);
@@ -84,24 +95,33 @@
     flex: 1;
     min-width: 300px;
     text-align: left;
+    margin-left: 50px;
 }
 
 /* Circular Progress */
 .score-container {
     position: relative;
-    width: 220px;
-    height: 220px;
-    margin: 0 auto var(--spacing-lg);
+    width: 360px;
+    height: 360px;
 }
 
 .circular-progress {
     transform: rotate(-90deg);
+    width: 360px;
+    height: 360px;
+}
+
+.progress-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
 }
 
 .progress-background {
     fill: none;
     stroke: #E9ECEF;
-    stroke-width: 12;
+    stroke-width: 15;
 }
 
 .progress-column {
@@ -110,7 +130,7 @@
 
 .progress-bar {
     fill: none;
-    stroke-width: 12;
+    stroke-width: 15;
     stroke-linecap: round;
     transition: stroke-dashoffset 1.5s ease, stroke 0.3s ease;
 }
@@ -121,6 +141,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
+    width: 100%
 }
 
 .score-text {
@@ -159,11 +180,6 @@
     color: #2874A6;
 }
 
-.mental-state-badge.anxiety {
-    background: linear-gradient(135deg, #FFF4E6 0%, #FFE8CC 100%);
-    color: #F39C12;
-}
-
 .mental-state-badge.stress {
     background: linear-gradient(135deg, #FADBD8 0%, #F5B7B1 100%);
     color: #E74C3C;
@@ -172,11 +188,6 @@
 .mental-state-badge.suicidal {
     background: linear-gradient(135deg, #EBDEF0 0%, #D7BDE2 100%);
     color: #7D3C98;
-}
-
-.mental-state-badge.bipolar {
-    background: linear-gradient(135deg, #FCF3CF 0%, #F9E79F 100%);
-    color: #D68910;
 }
 
 .state-icon {
@@ -188,12 +199,12 @@
 }
 
 .recommendations {
-    background: var(--color-bg-cream);
+    background: var(--color-bg-mint);
     padding: var(--spacing-md);
     border-radius: var(--radius-sm);
     border-left: 4px solid var(--color-primary);
     margin-top: var(--spacing-lg);
-    font-style: italic;
+    margin-bottom: var(--spacing-2xl);
     text-align: justify;
 }
 
@@ -212,7 +223,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-md);
 }
 
 .indicator-card {
@@ -223,10 +234,6 @@
     transition: transform var(--transition-base);
 }
 
-.indicator-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
-}
 
 .indicator-header {
     display: flex;
@@ -254,13 +261,13 @@
 }
 
 .indicator-bar {
-    height: 100%;
-    border-radius: var(--radius-sm);
+    height: 100% !important;
+    border-radius: var(--radius-sm) !important;
     transition: width 0s ease;
 }
 
 .anxiety-bar {
-    background: linear-gradient(90deg, #F39C12 0%, #E67E22 100%);
+    background: linear-gradient(90deg, #F39C12 0%, #ff7a05 100%);
 }
 
 .negativity-bar {
@@ -269,6 +276,22 @@
 
 .intensity-bar {
     background: linear-gradient(90deg, #9B59B6 0%, #8E44AD 100%);
+}
+
+.normal-bar {
+    background: linear-gradient(90deg, #eddb4d 0%, #f7e154 100%) !important;
+}
+
+.stress-bar {
+    background: linear-gradient(90deg, #F39C12 0%, #ff7a05 100%) !important;
+}
+
+.suicidal-bar {
+    background: linear-gradient(90deg, #88a3a5 0%, #88a3a5 100%) !important;
+}
+
+.depression-bar {
+    background: linear-gradient(90deg, #9B59B6 0%, #8E44AD 100%) !important;
 }
 
 .indicator-value {
@@ -421,12 +444,17 @@
     }
 
     .score-container {
-        width: 220px;
-        height: 220px;
+        width: 350px;
+        height: 350px;
     }
 
     .score-text {
         font-size: 2.8rem;
+    }
+
+    .card-title {
+        text-align: center;
+        font-size: 2.5rem;
     }
 
     .card-content {
@@ -440,8 +468,16 @@
         width: 100%;
     }
 
+    .text-column h3 {
+        height: auto;
+    }
+
     .recommendations {
         text-align: justify;
+    }
+
+    .progress-column {
+        margin-right: 60px !important;
     }
 }
 
@@ -452,6 +488,11 @@
         gap: var(--spacing-lg);
     }
 
+    .card-title {
+        text-align: center;
+        font-size: 2.2rem;
+    }
+
     .text-column, .progress-column {
         width: 100%;
     }
@@ -460,12 +501,31 @@
         text-align: center;
     }
 
+    .text-column h3 {
+        height: auto;
+    }
+
     .progress-column {
         display: flex;
         justify-content: center;
         align-items: center;
         padding: 0;
         margin: 0;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .btn-large-action {
+        flex: none;
+        width: 100%;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 
@@ -483,11 +543,16 @@
 
     .action-buttons {
         flex-direction: column;
+        gap: var(--spacing-sm);
     }
 
-    .btn {
+    .text-column h3 {
+        height: auto;
+    }
+
+    .btn-large-action {
+        flex: none;
         width: 100%;
-        justify-content: center;
     }
 
     .mental-state-badge {
@@ -499,12 +564,9 @@
         font-size: 1.5rem;
     }
 
-    .score-text {
-        font-size: 2.5rem;
-    }
-
     .card-title {
-        font-size: var(--font-2xl);
+        text-align: center;
+        font-size: 1.8rem;
     }
 }
 

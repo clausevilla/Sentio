@@ -55,7 +55,7 @@ gcloud components install kubectl
 Finally, connect to our Kubernetes cluster. This downloads the cluster credentials and configures kubectl to communicate with it:
 
 ```bash
-gcloud container clusters get-credentials sentio-cluster --region europe-north2
+gcloud container clusters get-credentials sentio-cluster-1 --region europe-north2
 ```
 
 ### 1.3 Verify Your Setup
