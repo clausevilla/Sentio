@@ -2,7 +2,6 @@
 /* Disclaimer: LLM has been used to helo set up modelc comparison modal js */
 
 
-/*--TODO : MODIFY TO REFELCT UPDATED DATABASE and methods IF NEEDED*/
 
 /**
  * ML Admin - Models Page with Compare Feature
@@ -259,7 +258,7 @@ function clearCompareSelection() {
 // Model Actions
 // ================================
 
-// Deploy model
+// Deploy model - PATCH /api/models/{id}/activate/
 async function deployModel(id, name) {
     const confirmed = await showConfirm({
         title: 'Deploy Model',
@@ -270,7 +269,7 @@ async function deployModel(id, name) {
     if (!confirmed) return;
 
     const { ok, data } = await apiCall(`/management/api/models/${id}/activate/`, {
-        method: 'POST'
+        method: 'PATCH'
     });
 
     if (ok && data.success) {
@@ -281,7 +280,7 @@ async function deployModel(id, name) {
     }
 }
 
-// Delete model
+// Delete model - DELETE /api/models/{id}/delete/
 async function deleteModel(id, name) {
     const confirmed = await showConfirm({
         title: 'Delete Model',
@@ -293,7 +292,7 @@ async function deleteModel(id, name) {
     if (!confirmed) return;
 
     const { ok, data } = await apiCall(`/management/api/models/${id}/delete/`, {
-        method: 'POST'
+        method: 'DELETE'
     });
 
     if (ok && data.success) {

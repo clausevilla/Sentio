@@ -29,7 +29,6 @@ class PredictionResult(models.Model):
     PROTECT on model_version prevents deletion of models that have made predictions,
     preserving audit trail. Includes confidence scores for each predicted metric.
 
-    TODO: Possibly adding JSONField to recommendations for more flexible recommendation storage.
     """
 
     MENTAL_STATE_CHOICES = [
