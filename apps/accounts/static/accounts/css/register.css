@@ -623,3 +623,192 @@
         font-size: 0.85rem;
     }
 }
+
+
+/* ============================================
+   REGISTER PAGE - REAL-TIME VALIDATION STYLES
+   ============================================ */
+
+/* ----- Input States ----- */
+.form-control.error {
+    border-color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.05);
+}
+
+.form-control.success {
+    border-color: #27ae60;
+    background-color: rgba(39, 174, 96, 0.05);
+}
+
+.form-control:focus.error {
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
+}
+
+.form-control:focus.success {
+    box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.15);
+}
+
+/* ----- Validation Messages ----- */
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #e74c3c;
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+    animation: slideDown 0.2s ease;
+}
+
+.error-message i {
+    font-size: 0.75rem;
+}
+
+.success-message {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #27ae60;
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+    animation: slideDown 0.2s ease;
+}
+
+.checking-message {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #7f8c8d;
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+    animation: slideDown 0.2s ease;
+}
+
+.checking-message i {
+    color: #3498db;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ----- Form-Level Alerts ----- */
+.form-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    animation: slideDown 0.3s ease;
+}
+
+.form-alert i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.form-alert-success {
+    background-color: rgba(39, 174, 96, 0.1);
+    border: 1px solid rgba(39, 174, 96, 0.3);
+    color: #27ae60;
+}
+
+.form-alert-error {
+    background-color: rgba(231, 76, 60, 0.1);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    color: #c0392b;
+}
+
+/* ----- Password Strength Indicator ----- */
+.password-strength {
+    margin-top: 0.5rem;
+    display: none;
+}
+
+.strength-bar {
+    height: 4px;
+    background-color: #e0e0e0;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.3rem;
+}
+
+.strength-bar-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 2px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strength-text {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: right;
+    transition: color 0.3s ease;
+}
+
+/* ----- Consent Section Error ----- */
+.consent-section.error {
+    border-color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.05);
+}
+
+.consent-section.error .consent-error {
+    display: flex;
+}
+
+.consent-error {
+    display: none;
+    align-items: center;
+    gap: 0.4rem;
+    color: #e74c3c;
+    font-size: 0.8rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+/* ----- Submit Button States ----- */
+button[type="submit"]:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+button[type="submit"] i.fa-spinner {
+    margin-right: 0.5rem;
+}
+
+/* ----- Input Wrapper with Validation Icon ----- */
+.input-wrapper {
+    position: relative;
+}
+
+/* Add validation icon inside input */
+.form-group.validated .input-wrapper::after {
+    content: '';
+    position: absolute;
+    right: 45px; /* Account for password toggle */
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 0.9rem;
+}
+
+.form-group.validated.valid .input-wrapper::after {
+    content: '\f00c'; /* checkmark */
+    color: #27ae60;
+}
+
+.form-group.validated.invalid .input-wrapper::after {
+    content: '\f00d'; /* x mark */
+    color: #e74c3c;
+}
