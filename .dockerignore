@@ -1,0 +1,70 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv/
+ENV/
+env/
+.conda
+
+# Data files (big!)
+data/
+*.csv
+*.sqlite3
+*.db
+*.pkl
+*.h5
+*.pt
+*.pth
+*.model
+*.joblib
+
+# ML models
+*.onnx
+*.bin
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+debug.log
+
+# Docker
+docker-compose.yml
+Dockerfile
+
+# Kubernetes
+k8s/
+
+# Docs
+docs/
+*.md
+LICENSE
+
+# Tests
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Other
+staticfiles/
+media/
+*.zip
+*.tar
+*.gz

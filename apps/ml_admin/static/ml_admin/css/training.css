@@ -443,7 +443,7 @@
     white-space: nowrap;
     z-index: 100;
     margin-bottom: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .param-hint[title]:hover::before {
@@ -569,10 +569,17 @@ select.param-input {
     background-color: #e9ecef !important;
     color: #868e96 !important;
 }
+
 @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-4px); }
-    75% { transform: translateX(4px); }
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-4px);
+    }
+    75% {
+        transform: translateX(4px);
+    }
 }
 
 /* Error message */
@@ -857,6 +864,33 @@ select.param-input {
     color: var(--gray-600);
 }
 
+.test-set-breakdown {
+    display: flex;
+    gap: .5rem
+}
+
+.test-pipeline {
+    padding: .2rem .5rem;
+    border-radius: 4px;
+    font-size: .75rem;
+    font-weight: 600
+}
+
+.test-pipeline.full {
+    background: rgba(74, 124, 89, 0.1);
+    color: var(--primary);
+}
+
+.test-pipeline.partial {
+    background: rgba(243, 156, 18, 0.1);
+    color: #D68910;
+}
+
+.test-pipeline.raw {
+    background: rgba(142, 68, 173, 0.1);
+    color: #8E44AD;
+}
+
 .chart-wrap {
     position: relative;
 }
@@ -996,6 +1030,11 @@ select.param-input {
     color: #E74C3C;
 }
 
+.badge.cancelled {
+    background-color: #6c757d;
+    color: white;
+}
+
 .badge.running {
     background: rgba(243, 156, 18, 0.1);
     color: #F39C12;
@@ -1004,6 +1043,38 @@ select.param-input {
 .badge.pending {
     background: rgba(149, 165, 166, 0.2);
     color: #7F8C8D;
+}
+
+.epoch-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.epoch-bar {
+    width: 60px;
+    height: 6px;
+    background: var(--gray-200);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.epoch-fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.3s ease;
+}
+
+.epoch-text {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+.duration.small {
+    font-size: 0.7rem;
+    display: block;
+    margin-top: 2px;
 }
 
 /* ================================
@@ -1062,6 +1133,18 @@ select.param-input {
     font-size: var(--font-xs);
     color: var(--gray-500);
     margin-top: 0.125rem;
+}
+
+.job-progress-log {
+    background: var(--gray-100);
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 0.5rem;
 }
 
 .job-error-box {
@@ -1205,6 +1288,7 @@ select.param-input {
         width: 100%;
     }
 }
+
 /* ================================
    Job Parameters Display
 ================================ */

@@ -16,10 +16,8 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.contrib.staticfiles.storage import staticfiles_storage
 from django.urls import include, path
 from django.views.generic import TemplateView
-from django.views.generic.base import RedirectView
 
 from . import views
 
@@ -37,11 +35,5 @@ urlpatterns = [
     path(
         'management/', include(('apps.ml_admin.urls', 'ml_admin'), namespace='ml_admin')
     ),
-    path(
-        'favicon.ico',
-        RedirectView.as_view(
-            url=staticfiles_storage.url('images/favicon.svg'),
-            permanent=True,
-        ),
-    ),
+    path('favicon.ico', views.favicon_redirect, name='favicon'),
 ]

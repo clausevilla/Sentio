@@ -29,8 +29,9 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-GCS_BUCKET = None  # Google Cloud Storage
+GCS_BUCKET = 'sentio-m_l-models'  # Google Cloud Storage
 MODEL_DIR = './ml-models'
+USE_GCS = False
 
 INSTALLED_APPS = [
     'apps.accounts',
@@ -53,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.accounts.middleware.ConsentMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'sentio.urls'

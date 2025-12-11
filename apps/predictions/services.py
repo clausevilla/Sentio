@@ -1,36 +1,57 @@
-# Author: Karl Byland, Claudia Sevilla
+# Author: Karl Byland, Claudia Sevilla, Lian Shi
 
 import json
+import logging
 import re
 
-import joblib
 import pandas as pd
+from django.conf import settings
 
 from apps.ml_admin.models import ModelVersion
 from apps.predictions.models import PredictionResult, TextSubmission
 from ml_pipeline.data_cleaning.cleaner import DataCleaningPipeline
+from ml_pipeline.inference.predictor import Predictor
 from ml_pipeline.preprocessing.preprocessor import DataPreprocessingPipeline
+from ml_pipeline.storage.handler import StorageHandler
 
-# Loads the model
-MODEL_PATH = 'ml_pipeline/toy_models/LRmodel.pkl'  # Path to model used to predict
-MODEL = joblib.load(MODEL_PATH)
-DATA_PATH = 'apps/predictions/data/strings.json'
+logger = logging.getLogger(__name__)
+
+_predictor = None
+_loaded_model_id = None
 
 
 def load_json():
+    DATA_PATH = 'apps/predictions/data/strings.json'
     with open(DATA_PATH, 'r', encoding='utf-8') as f:
         text_data = json.load(f)
     return text_data
 
 
-def analyze_text(analyzed_text):
-    predictions = MODEL.predict([analyzed_text])
+def get_predictor(active_model):
+    """
+    Get or create predictor with the active model loaded.
 
-    prediction = predictions[0]
-    proba = MODEL.predict_proba([analyzed_text])[0]
-    confidence = max(proba)
+    Caches the predictor to avoid reloading on every request.
+    Reloads if the active model changes.
+    """
+    global _predictor, _loaded_model_id
 
-    return (prediction, confidence)
+    if active_model is None:
+        raise RuntimeError('No active model configured')
+
+    if _predictor is None or _loaded_model_id != active_model.id:
+        storage = StorageHandler(
+            model_dir=settings.MODEL_DIR,
+            # Determined by runtime settings
+            gcs_bucket=getattr(settings, 'GCS_BUCKET', None),
+            use_gcs=getattr(settings, 'USE_GCS', False),
+        )
+        _predictor = Predictor(storage)
+        _predictor.load(active_model.model_file_path)
+        _loaded_model_id = active_model.id
+        logger.info(f'Loaded model: {active_model.version_name}')
+
+    return _predictor
 
 
 def clean_user_input(text):
@@ -41,12 +62,25 @@ def clean_user_input(text):
     return df
 
 
+def analyze_text(text, model_version):
+    """
+    Analyze text and return prediction results.
+
+    Returns:
+        Tuple of (label, confidence, model_version)
+    """
+    predictor = get_predictor(model_version)
+    result = predictor.predict(text)
+
+    return result['label'], result['confidence']
+
+
 def preprocess_user_input(df, model_type):
     pipeline = DataPreprocessingPipeline()
     pipeline_version = ''
     model_to_pipeline = {
         'lstm': 'rnn',
-        'random_forest': 'rnn',
+        'random_forest': 'traditional',
         'transformer': 'transformer',
         'logistic_regression': 'traditional',
     }
@@ -63,13 +97,23 @@ def preprocess_user_input(df, model_type):
 
 
 def get_prediction_result(user, user_text):
+    """
+    Get prediction and optionally save to database.
+
+    Returns:
+        Tuple of (prediction_label, confidence_percentage, recommendations,
+                  anxiety_level, negativity_level, emotional_intensity,
+                  word_count, char_count)
+    """
+
     model_version = ModelVersion.objects.filter(
         is_active=True
-    ).first()  # Takes the active model
+    ).first()  # First and only available model
 
     df = clean_user_input(user_text)
     processed_text = preprocess_user_input(df, model_version.model_type)
-    prediction, confidence = analyze_text(processed_text.iloc[0])
+
+    label, confidence = analyze_text(processed_text.iloc[0], model_version)
 
     text_data = load_json()
 
@@ -79,25 +123,26 @@ def get_prediction_result(user, user_text):
     )
 
     # Generate recommendations
-    recommendations = get_recommendations(
-        prediction, confidence, anxiety_level, text_data['recommendations']
-    )
+    recommendations = get_recommendations(label, confidence, anxiety_level)
 
     if user:
         save_prediction_to_database(
-            user,
-            user_text,
-            prediction,
-            confidence,
-            model_version,
-            recommendations,
-            text_data,
+            user=user,
+            user_text=user_text,
+            prediction=label,
+            confidence=confidence,
+            text_data=text_data,
+            model_version=model_version,
+            recommendations=recommendations,
+            anxiety_level=anxiety_level,
+            negativity_level=negativity_level,
+            emotional_intensity=emotional_intensity,
         )
 
     confidence_percentage = round(confidence * 100)
 
     return (
-        prediction,
+        label,
         confidence_percentage,
         recommendations,
         anxiety_level,
@@ -215,16 +260,78 @@ def calculate_metrics(text: str, negative_words):
 
 
 def save_prediction_to_database(
-    user, user_text, prediction, confidence, model_version, recommendations, text_data
+    user,
+    user_text,
+    prediction,
+    confidence,
+    model_version,
+    recommendations,
+    text_data,
+    anxiety_level=None,
+    negativity_level=None,
+    emotional_intensity=None,
 ):
+    """
+    Save the prediction result and associated metrics to the database.
+
+    Excludes template/example texts from being saved to avoid cluttering
+    the user's history with demonstration data.
+
+    Args:
+        user: The authenticated user making the prediction
+        user_text: The original text submitted for analysis
+        prediction: The predicted mental state label
+        confidence: Model confidence score (0-1)
+        model_version: The ModelVersion instance used for prediction
+        recommendations: List of recommendation strings
+        anxiety_level: Calculated anxiety metric (0-100)
+        negativity_level: Calculated negativity metric (0-100)
+        emotional_intensity: Calculated emotional intensity metric (0-100)
+    """
+    template_texts = [
+        (
+            'I feel so empty inside. Nothing brings me joy anymore.'
+            " I wake up each day wondering what's the point."
+            " I used to love painting but now I can't even pick up a brush."
+            ' My friends invite me out but I just make excuses.'
+            " I'm tired all the time but can't sleep properly. Everything feels gray and meaningless."
+        ),
+        (
+            'I have so much on my plate right now.'
+            ' Work deadlines are piling up, bills need to be paid, and I barely have time to breathe.'
+            " I feel overwhelmed and like I'm drowning."
+            ' My body feels tense all the time and I get headaches every day.'
+            " I snap at people I care about because I'm so on edge."
+        ),
+        (
+            'I have been feeling pretty good lately. '
+            'I finished my tasks for the day and even had time to grab coffee with a friend. '
+            'The weather was really nice! So I took a short walk and it really boosted my mood. '
+            'Nothing overly extraordinary happened, but it felt like a genuinely pleasant day!'
+        ),
+    ]
+
     template_texts = text_data['example_texts']
+
     if user_text not in template_texts:
+        # Create the text submission record
         submission = TextSubmission.objects.create(user=user, text_content=user_text)
-        # Save to database
+
+        # Convert recommendations list to string for storage
+        recommendations_text = (
+            '\n'.join(recommendations)
+            if isinstance(recommendations, list)
+            else recommendations
+        )
+
+        # Create the prediction result with all metrics
         PredictionResult.objects.create(
             submission=submission,
             model_version=model_version,
             mental_state=prediction,
             confidence=confidence,
-            recommendations=recommendations,
+            recommendations=recommendations_text,
+            anxiety_level=anxiety_level,
+            negativity_level=negativity_level,
+            emotional_intensity=emotional_intensity,
         )

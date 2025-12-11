@@ -19,6 +19,14 @@ urlpatterns = [
     path('api/delete-all-data/', views.delete_all_data_api, name='delete_all_data_api'),
     path('api/delete-account/', views.delete_account_api, name='delete_account_api'),
     path('api/export-data/', views.export_data_api, name='export_data_api'),
+    # API endpoint for chart data
+    path('api/chart-data/', views.chart_data_api, name='chart_data_api'),
+    # API endpoint for deleting a single analysis
+    path(
+        'api/delete-analysis/<int:analysis_id>/',
+        views.delete_analysis_api,
+        name='delete_analysis_api',
+    ),
     # Consent and privacy URLs
     path('consent/', views.consent_view, name='consent'),
     path('privacy/', views.privacy_policy_view, name='privacy_policy'),

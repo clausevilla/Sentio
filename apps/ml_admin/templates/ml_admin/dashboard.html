@@ -1,7 +1,8 @@
-<!-- Author: Lian Shi-->
+<!-- Author: Lian Shi, Marcus Berggren-->
 
 {% extends 'ml_admin/base_admin.html' %}
 {% load static %}
+{% load filters %}
 {% block title %}Dashboard{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 {% block page_css %}
@@ -25,13 +26,26 @@
             <div class="stat-label">Datasets</div>
         </div>
     </div>
-    <div class="stat-card clickable" onclick="location.href='{% url 'ml_admin:data' %}'">
-        <div class="stat-icon purple"><i class="fas fa-table"></i></div>
-        <div class="stat-info">
-            <div class="stat-value">{{ stats.records|default:0 }}</div>
-            <div class="stat-label">Records</div>
+
+    <!-- Pipeline Data Group -->
+    <div class="stat-card-group clickable" onclick="location.href='{% url 'ml_admin:data' %}'">
+        <div class="stat-group-header">Pipeline Data</div>
+        <div class="stat-group-items">
+            <div class="stat-group-item full">
+                <span class="stat-label"><i class="fas fa-broom"></i> Full</span>
+                <span class="stat-value">{{ stats.full|default:0 }}</span>
+            </div>
+            <div class="stat-group-item partial">
+                <span class="stat-label"><i class="fas fa-adjust"></i> Partial</span>
+                <span class="stat-value">{{ stats.partial|default:0 }}</span>
+            </div>
+            <div class="stat-group-item raw">
+                <span class="stat-label"><i class="fas fa-feather"></i> Raw</span>
+                <span class="stat-value">{{ stats.raw|default:0 }}</span>
+            </div>
         </div>
     </div>
+
     <div class="stat-card clickable" onclick="location.href='{% url 'ml_admin:training' %}'">
         <div class="stat-icon coral"><i class="fas fa-flask"></i></div>
         <div class="stat-info">
@@ -54,7 +68,7 @@
                 <div class="active-model-header">
                     <div class="active-model-icon">
                         {% if active_model.model_type == 'lstm' or active_model.model_type == 'transformer' %}
-                        <i class="fas fa-brain"></i>
+                        <i class="fas fa-microchip"></i>
                         {% elif active_model.model_type == 'random_forest' %}
                         <i class="fas fa-tree"></i>
                         {% else %}
@@ -73,19 +87,19 @@
                 <!-- Metrics Grid -->
                 <div class="model-metrics-grid">
                     <div class="metric-box">
-                        <span class="value">{% if active_model.accuracy %}{{ active_model.accuracy|floatformat:1 }}{% else %}—{% endif %}</span>
+                        <span class="value">{% if active_model.accuracy %}{{ active_model.accuracy|percentage }}{% else %}—{% endif %}</span>
                         <span class="label">Accuracy</span>
                     </div>
                     <div class="metric-box">
-                        <span class="value">{% if active_model.f1_score %}{{ active_model.f1_score|floatformat:3 }}{% else %}—{% endif %}</span>
+                        <span class="value">{% if active_model.f1_score %}{{ active_model.f1_score|percentage }}{% else %}—{% endif %}</span>
                         <span class="label">F1 Score</span>
                     </div>
                     <div class="metric-box">
-                        <span class="value">{% if active_model.precision %}{{ active_model.precision|floatformat:3 }}{% else %}—{% endif %}</span>
+                        <span class="value">{% if active_model.precision %}{{ active_model.precision|percentage }}{% else %}—{% endif %}</span>
                         <span class="label">Precision</span>
                     </div>
                     <div class="metric-box">
-                        <span class="value">{% if active_model.recall %}{{ active_model.recall|floatformat:3 }}{% else %}—{% endif %}</span>
+                        <span class="value">{% if active_model.recall %}{{ active_model.recall|percentage }}{% else %}—{% endif %}</span>
                         <span class="label">Recall</span>
                     </div>
                 </div>
@@ -105,7 +119,7 @@
                     {% if active_model_job %}
                     <div class="model-meta-item">
                         <i class="fas fa-database"></i>
-                        <span>Dataset: <strong>{{ active_model_job.data_upload.file_name|truncatechars:20 }}</strong></span>
+                        <span>Dataset: <strong>{{ active_model_job.data_uploads.first.file_name|truncatechars:50 }}</strong></span>
                     </div>
                     {% endif %}
                 </div>
@@ -151,8 +165,8 @@
                         <span class="status-dot {{ job.status|lower }}"></span>
                         <div class="recent-item-info">
                             <span class="recent-item-title">Job #{{ job.id }} · {{ job.get_model_type_display|default:job.model_type }}</span>
-                            {% if job.data_upload %}
-                            <span class="recent-item-subtitle">{{ job.data_upload.file_name|truncatechars:25 }}</span>
+                            {% if job.data_uploads.exists %}
+                                <span class="recent-item-subtitle">{{ job.data_uploads.first.file_name|truncatechars:50 }}</span>
                             {% endif %}
                         </div>
                     </div>
