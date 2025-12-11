@@ -66,7 +66,8 @@
 .card-content {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: space-between;
     gap: var(--spacing-xl);
     max-width: 1000px;
     margin: 0 auto;
@@ -100,14 +101,14 @@
 /* Circular Progress */
 .score-container {
     position: relative;
-    width: 350px;
-    height: 350px;
+    width: 360px;
+    height: 360px;
 }
 
 .circular-progress {
     transform: rotate(-90deg);
-    width: 350px;
-    height: 350px;
+    width: 360px;
+    height: 360px;
 }
 
 .progress-header {
@@ -453,7 +454,7 @@
 
     .card-title {
         text-align: center;
-        font-size: 2.2rem;
+        font-size: 2.5rem;
     }
 
     .card-content {
@@ -474,6 +475,10 @@
     .recommendations {
         text-align: justify;
     }
+
+    .progress-column {
+        margin-right: 60px !important;
+    }
 }
 
 @media (max-width: 768px) {
@@ -485,7 +490,7 @@
 
     .card-title {
         text-align: center;
-        font-size: 2rem;
+        font-size: 2.2rem;
     }
 
     .text-column, .progress-column {
@@ -550,7 +555,6 @@
         width: 100%;
     }
 
-
     .mental-state-badge {
         font-size: var(--font-lg);
         padding: var(--spacing-sm) var(--spacing-lg);
@@ -558,10 +562,6 @@
 
     .state-icon {
         font-size: 1.5rem;
-    }
-
-    .score-text {
-        font-size: 2.5rem;
     }
 
     .card-title {
