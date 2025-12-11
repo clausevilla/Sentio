@@ -1065,7 +1065,7 @@ def models_view(request):
 
 
 @staff_member_required
-@require_http_methods(['PATCH']) 
+@require_http_methods(['PATCH'])
 def activate_model_api(request, model_id):
     try:
         model = get_object_or_404(ModelVersion, id=model_id)
