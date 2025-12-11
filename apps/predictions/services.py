@@ -123,7 +123,9 @@ def get_prediction_result(user, user_text):
     )
 
     # Generate recommendations
-    recommendations = get_recommendations(label, confidence, anxiety_level)
+    recommendations = get_recommendations(
+        label, confidence, anxiety_level, text_data['recommendations']
+    )
 
     if user:
         save_prediction_to_database(
@@ -288,28 +290,6 @@ def save_prediction_to_database(
         negativity_level: Calculated negativity metric (0-100)
         emotional_intensity: Calculated emotional intensity metric (0-100)
     """
-    template_texts = [
-        (
-            'I feel so empty inside. Nothing brings me joy anymore.'
-            " I wake up each day wondering what's the point."
-            " I used to love painting but now I can't even pick up a brush."
-            ' My friends invite me out but I just make excuses.'
-            " I'm tired all the time but can't sleep properly. Everything feels gray and meaningless."
-        ),
-        (
-            'I have so much on my plate right now.'
-            ' Work deadlines are piling up, bills need to be paid, and I barely have time to breathe.'
-            " I feel overwhelmed and like I'm drowning."
-            ' My body feels tense all the time and I get headaches every day.'
-            " I snap at people I care about because I'm so on edge."
-        ),
-        (
-            'I have been feeling pretty good lately. '
-            'I finished my tasks for the day and even had time to grab coffee with a friend. '
-            'The weather was really nice! So I took a short walk and it really boosted my mood. '
-            'Nothing overly extraordinary happened, but it felt like a genuinely pleasant day!'
-        ),
-    ]
 
     template_texts = text_data['example_texts']
 
