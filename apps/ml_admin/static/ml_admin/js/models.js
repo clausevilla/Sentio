@@ -76,34 +76,10 @@ function openCompareModal() {
 function buildCompareContent(models) {
     // Metrics to compare
     const metrics = [
-        {
-            key: 'accuracy',
-            label: 'Accuracy',
-            icon: 'fa-bullseye',
-            format: v => v !== null ? (v * 100).toFixed(2) : '—',
-            isPercent: false
-        },
-        {
-            key: 'precision',
-            label: 'Precision',
-            icon: 'fa-crosshairs',
-            format: v => v !== null ? (v * 100).toFixed(2) : '—',
-            isPercent: false
-        },
-        {
-            key: 'recall',
-            label: 'Recall',
-            icon: 'fa-redo',
-            format: v => v !== null ? (v * 100).toFixed(2) : '—',
-            isPercent: false
-        },
-        {
-            key: 'f1',
-            label: 'F1 Score',
-            icon: 'fa-chart-line',
-            format: v => v !== null ? (v * 100).toFixed(2) : '—',
-            isPercent: false
-        },
+        { key: 'accuracy', label: 'Accuracy', icon: 'fa-bullseye', format: v => v !== null ? v.toFixed(1) : 'â€”', isPercent: true },
+        { key: 'precision', label: 'Precision', icon: 'fa-crosshairs', format: v => v !== null ? v.toFixed(3) : 'â€”', isPercent: false },
+        { key: 'recall', label: 'Recall', icon: 'fa-redo', format: v => v !== null ? v.toFixed(3) : 'â€”', isPercent: false },
+        { key: 'f1', label: 'F1 Score', icon: 'fa-chart-line', format: v => v !== null ? v.toFixed(3) : 'â€”', isPercent: false },
     ];
 
     // Find best for each metric
@@ -148,7 +124,7 @@ function buildCompareContent(models) {
                             ${leading}/${metrics.length}
                         </span>
                         <span class="leading-label">leading</span>
-                    ` : '<span class="leading-label">—</span>'}
+                    ` : '<span class="leading-label">â€”</span>'}
                 </div>
             </div>
         `;
@@ -159,6 +135,7 @@ function buildCompareContent(models) {
     let tableHtml = `
         <div class="compare-metrics-section">
             <h4><i class="fas fa-bullseye"></i> Performance Metrics</h4>
+            <div class="compare-table-wrap">
             <table class="compare-table">
                 <thead>
                     <tr>
@@ -198,12 +175,13 @@ function buildCompareContent(models) {
         tableHtml += '</tr>';
     });
 
-    tableHtml += '</tbody></table></div>';
+    tableHtml += '</tbody></table></div></div>';
 
     // Build info comparison
     let infoHtml = `
         <div class="compare-info-section">
             <h4><i class="fas fa-info-circle"></i> Model Details</h4>
+            <div class="compare-table-wrap">
             <table class="compare-info-table">
                 <thead>
                     <tr>
@@ -231,7 +209,7 @@ function buildCompareContent(models) {
                     </tr>
                     <tr>
                         <td class="info-label">Dataset</td>
-                        ${models.map(m => `<td>${m.job_datasets}</td>`).join('')}
+                        ${models.map(m => `<td>${m.job_dataset}</td>`).join('')}
                     </tr>
                     <tr>
                         <td class="info-label">Status</td>
@@ -258,6 +236,7 @@ function buildCompareContent(models) {
                     </tr>
                 </tbody>
             </table>
+            </div>
         </div>
     `;
 
@@ -290,7 +269,7 @@ async function deployModel(id, name) {
     });
     if (!confirmed) return;
 
-    const {ok, data} = await apiCall(`/management/api/models/${id}/activate/`, {
+    const { ok, data } = await apiCall(`/management/api/models/${id}/activate/`, {
         method: 'POST'
     });
 
@@ -313,7 +292,7 @@ async function deleteModel(id, name) {
     });
     if (!confirmed) return;
 
-    const {ok, data} = await apiCall(`/management/api/models/${id}/delete/`, {
+    const { ok, data } = await apiCall(`/management/api/models/${id}/delete/`, {
         method: 'POST'
     });
 

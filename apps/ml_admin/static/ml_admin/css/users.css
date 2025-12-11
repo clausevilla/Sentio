@@ -20,3 +20,245 @@
     justify-content: center;
     color: var(--gray-400);
 }
+
+/* Mobile cards hidden by default */
+.mobile-user-cards {
+    display: none;
+}
+
+/* ========================================
+   Responsive - Tablet
+   ======================================== */
+@media (max-width: 768px) {
+    /* Stats row - force 3 columns */
+    .stats-row.small,
+    .stats-row {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        flex-direction: row !important;
+        gap: 0.5rem !important;
+    }
+
+    .stats-row.small .stat-card,
+    .stats-row .stat-card {
+        width: auto !important;
+        padding: 0.75rem 0.5rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 0.25rem;
+    }
+
+    .stats-row.small .stat-icon,
+    .stats-row .stat-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
+
+    .stats-row.small .stat-value,
+    .stats-row .stat-value {
+        font-size: 1.1rem;
+    }
+
+    .stats-row.small .stat-label,
+    .stats-row .stat-label {
+        font-size: 0.65rem;
+    }
+
+    /* Hide less important columns */
+    .data-table th:nth-child(4),
+    .data-table td:nth-child(4),
+    .data-table th:nth-child(5),
+    .data-table td:nth-child(5) {
+        display: none;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .user-cell {
+        gap: 8px;
+    }
+
+    .user-avatar-sm {
+        width: 28px;
+        height: 28px;
+        font-size: 0.7rem;
+    }
+}
+
+/* ========================================
+   Responsive - Mobile
+   ======================================== */
+@media (max-width: 480px) {
+    /* Stats row - force 3 columns with smaller cards */
+    .stats-row.small,
+    .stats-row {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        flex-direction: row !important;
+        gap: 0.35rem !important;
+    }
+
+    .stats-row.small .stat-card,
+    .stats-row .stat-card {
+        width: auto !important;
+        padding: 0.4rem 0.2rem !important;
+        flex-direction: column !important;
+        text-align: center !important;
+        gap: 0.15rem !important;
+        min-width: 0 !important;
+    }
+
+    .stats-row.small .stat-icon,
+    .stats-row .stat-icon {
+        width: 26px !important;
+        height: 26px !important;
+        min-width: 26px !important;
+        font-size: 0.7rem !important;
+    }
+
+    .stats-row.small .stat-value,
+    .stats-row .stat-value {
+        font-size: 0.95rem !important;
+    }
+
+    .stats-row.small .stat-label,
+    .stats-row .stat-label {
+        font-size: 0.5rem !important;
+    }
+
+    /* Filter bar */
+    .filter-bar {
+        padding: 0.5rem;
+    }
+
+    .filter-bar .form-select {
+        font-size: 0.8rem;
+        padding: 0.5rem;
+    }
+
+    /* Hide table, show cards */
+    .users-table-wrap {
+        display: none;
+    }
+
+    .mobile-user-cards {
+        display: block;
+    }
+
+    /* ===== MOBILE USER CARDS ===== */
+    .mobile-user-card {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .mobile-user-card:hover {
+        background: var(--gray-50);
+    }
+
+    /* Header: Avatar + Name + Status */
+    .mobile-user-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .mobile-user-header .user-avatar-sm {
+        width: 24px;
+        height: 24px;
+        font-size: 0.6rem;
+        flex-shrink: 0;
+    }
+
+    .mobile-user-name {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        min-width: 0;
+    }
+
+    .mobile-user-name strong {
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mobile-user-name .badge {
+        font-size: 0.55rem;
+        padding: 0.1rem 0.3rem;
+        flex-shrink: 0;
+    }
+
+    .mobile-user-header > .badge {
+        font-size: 0.55rem;
+        padding: 0.15rem 0.4rem;
+        flex-shrink: 0;
+    }
+
+    /* Details */
+    .mobile-user-details {
+        padding-left: 32px;
+    }
+
+    .mobile-user-row {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.75rem;
+        color: var(--gray-600);
+        margin-bottom: 0.35rem;
+    }
+
+    .mobile-user-row i {
+        color: var(--gray-400);
+        width: 14px;
+        font-size: 0.65rem;
+    }
+
+    .mobile-user-row span {
+        word-break: break-all;
+    }
+
+    /* Meta row: Joined, Last Login, Predictions */
+    .mobile-user-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        font-size: 0.65rem;
+        color: var(--gray-500);
+    }
+
+    .mobile-user-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .mobile-user-meta i {
+        font-size: 0.65rem;
+        color: var(--gray-400);
+    }
+
+    /* Pagination */
+    .pagination {
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+
+    .page-info {
+        font-size: 0.7rem;
+    }
+
+    .page-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.7rem;
+    }
+}

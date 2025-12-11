@@ -37,10 +37,12 @@
     </select>
 </div>
 
-<!-- Users Table -->
+<!-- Users Table (Desktop) -->
 <div class="card">
     <div class="card-body no-pad">
         {% if page_obj %}
+        <!-- Desktop Table -->
+        <div class="users-table-wrap">
         <table class="data-table">
             <thead>
                 <tr>
@@ -99,6 +101,48 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
+
+        <!-- Mobile Cards -->
+        <div class="mobile-user-cards">
+            {% for user in page_obj %}
+            <div class="mobile-user-card">
+                <div class="mobile-user-header">
+                    <div class="user-avatar-sm">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="mobile-user-name">
+                        <strong>{{ user.username }}</strong>
+                        {% if user.is_superuser %}
+                        <span class="badge info">Admin</span>
+                        {% elif user.is_staff %}
+                        <span class="badge info">Staff</span>
+                        {% endif %}
+                    </div>
+                    {% if user.is_active %}
+                    <span class="badge success">Active</span>
+                    {% else %}
+                    <span class="badge danger">Inactive</span>
+                    {% endif %}
+                </div>
+                <div class="mobile-user-details">
+                    <div class="mobile-user-row">
+                        <i class="fas fa-envelope"></i>
+                        {% if user.email %}
+                        <span>{{ user.email }}</span>
+                        {% else %}
+                        <span class="text-muted">No email</span>
+                        {% endif %}
+                    </div>
+                    <div class="mobile-user-meta">
+                        <span><i class="fas fa-calendar"></i> {{ user.date_joined|date:"M d, Y" }}</span>
+                        <span><i class="fas fa-clock"></i> {% if user.last_login %}{{ user.last_login|date:"M d, Y" }}{% else %}Never{% endif %}</span>
+                        <span><i class="fas fa-chart-bar"></i> <span class="prediction-count" data-user-id="{{ user.id }}">0</span></span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
 
         {% if page_obj.has_other_pages %}
         <div class="pagination">

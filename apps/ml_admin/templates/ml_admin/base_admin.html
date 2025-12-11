@@ -107,6 +107,13 @@
                 </div>
 
                 <div class="topbar-right">
+
+                    <!-- Active Model Badge -->
+                    {% if active_model %}
+                    <div class="active-badge"><i class="fas fa-check-circle"></i> {{ active_model.version_name }}</div>
+                    {% else %}
+                    <div class="active-badge warning"><i class="fas fa-exclamation-triangle"></i> No Model</div>
+                    {% endif %}
                     <!-- Notification Bell -->
                     <div class="notification-wrapper">
                         <button class="notification-bell" onclick="toggleNotificationDropdown()" title="Notifications">
@@ -123,12 +130,7 @@
                         </div>
                     </div>
 
-                    <!-- Active Model Badge -->
-                    {% if active_model %}
-                    <div class="active-badge"><i class="fas fa-check-circle"></i> {{ active_model.version_name }}</div>
-                    {% else %}
-                    <div class="active-badge warning"><i class="fas fa-exclamation-triangle"></i> No Model</div>
-                    {% endif %}
+
                 </div>
             </header>
 

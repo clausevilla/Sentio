@@ -926,6 +926,7 @@ select.param-input {
 
 .baseline-metrics {
     display: flex;
+    flex-wrap: wrap;
     gap: 2rem;
 }
 
@@ -1273,22 +1274,341 @@ select.param-input {
         width: 100%;
         justify-content: space-between;
     }
-}
+@media (max-width: 768px) {
+    /* Fix params modal structure */
+    #paramsModal .modal-content {
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+        overflow: hidden;
+    }
 
-@media (max-width: 480px) {
-    .params-grid {
-        grid-template-columns: 1fr;
+    #paramsModal .modal-header {
+        flex-shrink: 0;
+    }
+
+    #paramsModal .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;  /* Important for flex scroll */
     }
 
     #paramsModal .modal-footer {
+        flex-shrink: 0;
+        order: 999;  /* Force to end */
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding: 1rem;
+        border-top: 1px solid var(--gray-200);
+        margin-top: auto;
+        z-index: 10;
+    }
+
+    /* Params grid inside body */
+    #paramsModal .params-grid {
+        padding-bottom: 0;
+    }
+
+    /* Smaller text in model selection */
+    .model-option {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .model-name {
+        font-size: 1.5rem;
+    }
+
+    .model-meta {
+        font-size: 0.85rem;
+    }
+
+    .model-type-tag {
+        font-size: 0.65rem;
+        padding: 0.1rem 0.25rem;
+    }
+
+    .badge.sm {
+        font-size: 0.5rem;
+        padding: 0.1rem 0.25rem;
+    }
+
+    /* Smaller text in dataset selection */
+    .dataset-option {
+        padding: 0.4rem 0.6rem;
+    }
+
+    .dataset-name {
+        font-size: 1rem;
+    }
+
+    .dataset-meta {
+        font-size: 0.8rem;
+    }
+
+    .pipeline-badge {
+        font-size: 0.55rem;
+        padding: 0.1rem 0.3rem;
+    }
+
+    /* Hint tooltips */
+    .param-hint[title]:hover::after {
+        white-space: normal;
+        max-width: 180px;
+        text-align: left;
+        left: auto;
+        right: 0;
+        transform: none;
+    }
+
+    .param-hint[title]:hover::before {
+        left: auto;
+        right: 10px;
+        transform: none;
+    }
+    /* Current Baseline - smaller text */
+    .baseline-name {
+        font-size: 0.85rem;
+    }
+
+    .baseline-metrics {
+        gap: 0.5rem;
+    }
+
+    .metric {
+        min-width: 0;
+    }
+
+    .metric-val {
+        font-size: 0.9rem;
+    }
+
+    .metric-lbl {
+        font-size: 0.55rem;
+    }
+
+    .model-option {
+        flex-wrap: wrap;
+        padding-right: 2.5rem;  /* Space for config button */
+        position: relative;
+    }
+
+    .model-option .algo-config-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        transform: none;
+    }
+
+    .model-info {
+        width: 100%;
+    }
+
+    .model-name {
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .model-meta {
+        font-size: 0.7rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        line-height: 1.4;
+    }
+     /* Training History table - hide less important columns */
+    #trainingJobsTable th:nth-child(3),
+    #trainingJobsTable td:nth-child(3),
+    #trainingJobsTable th:nth-child(5),
+    #trainingJobsTable td:nth-child(5),
+    #trainingJobsTable th:nth-child(6),
+    #trainingJobsTable td:nth-child(6) {
+        display: none;  /* Hide Datasets, Duration, Progress */
+    }
+
+    #trainingJobsTable th,
+    #trainingJobsTable td {
+        padding: 0.5rem 0.35rem;
+        font-size: 0.7rem;
+    }
+
+    #trainingJobsTable .job-user {
+        font-size: 0.6rem;
+    }
+
+    #trainingJobsTable .model-type-tag {
+        font-size: 0.45rem;
+        padding: 0.1rem 0.2rem;
+    }
+
+    #trainingJobsTable .badge {
+        font-size: 0.45rem;
+        padding: 0.15rem 0.3rem;
+    }
+
+    #trainingJobsTable .btn-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+    }
+        #jobDetailsModal .modal-content {
+        max-height: 85vh;
+        overflow-y: auto;
+        margin: 1rem;
+    }
+
+    #jobDetailsModal .modal-body {
+        padding: 1rem;
+    }
+
+    .job-info-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .job-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    .job-metric {
+        padding: 0.5rem;
+    }
+
+    .job-metric-value {
+        font-size: 1rem;
+    }
+
+    .job-metric-label {
+        font-size: 0.6rem;
+    }
+
+    .job-detail-label {
+        font-size: 0.65rem;
+    }
+
+    .job-detail-value {
+        font-size: 0.75rem;
+    }
+
+    .job-params-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    .job-param-item {
+        padding: 0.4rem 0.6rem;
+    }
+
+    .job-param-label {
+        font-size: 0.6rem;
+    }
+
+    .job-param-value {
+        font-size: 0.75rem;
+    }
+
+    .job-progress-log {
+        font-size: 0.65rem;
+        max-height: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    #paramsModal .modal-footer {
         flex-direction: column;
+        gap: 0.5rem;
     }
 
     #paramsModal .modal-footer .btn {
         width: 100%;
     }
-}
 
+    .params-grid {
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+    }
+
+    .model-name {
+        font-size: 0.9rem;
+    }
+
+    .model-meta {
+        font-size: 0.8rem;
+    }
+
+    .dataset-name {
+        font-size: 0.9rem;
+    }
+
+    .dataset-meta {
+        font-size: 0.65rem;
+    }
+
+    .param-hint[title]:hover::after {
+        max-width: 150px;
+        font-size: 0.65rem;
+    }
+
+    .baseline-name {
+        font-size: 0.85rem;
+    }
+
+    .metric-val {
+        font-size: 0.8rem;
+    }
+
+    .metric-lbl {
+        font-size: 0.5rem;
+    }
+    .model-name {
+        font-size: 0.85rem;
+    }
+
+    .model-meta {
+        font-size: 0.65rem;
+    }
+
+    /* Hide more columns on very small screens - keep Job, Algorithm, Status, F1, Actions */
+    #trainingJobsTable th:nth-child(4),
+    #trainingJobsTable td:nth-child(4) {
+        display: none;  /* Also hide Started */
+    }
+
+    /* Always show actions column (last column) */
+    #trainingJobsTable th:last-child,
+    #trainingJobsTable td:last-child {
+        display: table-cell !important;
+    }
+
+    #trainingJobsTable th,
+    #trainingJobsTable td {
+        padding: 0.5rem 0.5rem;
+        font-size: 0.65rem;
+    }
+
+    #trainingJobsTable .btn-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 0.65rem;
+    }
+        #jobDetailsModal .modal-content {
+        max-height: 90vh;
+        margin: 0.5rem;
+    }
+
+    .job-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .job-params-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .job-metric-value {
+        font-size: 0.9rem;
+    }
+}
 /* ================================
    Job Parameters Display
 ================================ */

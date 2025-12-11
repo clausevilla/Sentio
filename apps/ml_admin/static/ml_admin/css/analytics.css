@@ -40,6 +40,25 @@
     overflow: hidden;
 }
 
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    background: rgba(74, 124, 89, 0.1);
+    color: var(--primary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.stat-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+.stat-icon.blue { background: rgba(59, 130, 246, 0.1); color: var(--info); }
+.stat-icon.purple { background: rgba(123, 104, 166, 0.1); color: var(--purple); }
+.stat-icon.coral { background: rgba(224, 122, 95, 0.1); color: var(--coral); }
+
 .stat-info {
     flex: 1;
     min-width: 0;
@@ -57,6 +76,9 @@
 .stat-label {
     font-size: 0.85rem;
     color: var(--gray-500);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Section Headers */
@@ -96,6 +118,13 @@
     .stats-row {
         grid-template-columns: repeat(3, 1fr);
     }
+
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        font-size: 1.1rem;
+    }
 }
 
 @media (max-width: 992px) {
@@ -106,30 +135,87 @@
     .stats-row {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    .stats-row.small {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media (max-width: 768px) {
     .stats-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
     }
 
     .stats-row.small {
         grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        font-size: 1rem;
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
     }
 
     .chart-wrap,
     .chart-wrap.chart-wide {
         height: 220px;
     }
+
+    .section-header {
+        margin: 1.5rem 0 0.75rem;
+    }
+
+    .section-header h2 {
+        font-size: 1rem;
+    }
 }
 
 @media (max-width: 480px) {
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
     .stats-row.small {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
     }
 
     .stat-card {
-        padding: 1rem;
+        padding: 0.75rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+
+    .stat-icon {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        font-size: 0.9rem;
+    }
+
+    .stat-value {
+        font-size: 1.1rem;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
     }
 
     .chart-wrap,
