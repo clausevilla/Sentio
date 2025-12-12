@@ -339,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     // Redirect after short delay
                     setTimeout(() => {
-                        window.location.href = data.redirect || '/predictions/input/';
+                        window.location.href = data.redirect || '/predictions/input';
                     }, 1000);
                 } else {
                     // Show errors from server

@@ -1,7 +1,7 @@
 # Author: Marcus Berggren, Lian Shi, Karl Byland, Claudia Sevilla
 
-import logging
 import json
+import logging
 from pathlib import Path
 
 from django.conf import settings
@@ -41,7 +41,7 @@ def result_view(request):
         emotional_intensity,
         word_count,
         char_count,
-        all_confidences,  # ← ADD THIS
+        all_confidences,
     ) = get_prediction_result(user, user_text)
 
     return render(
