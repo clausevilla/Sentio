@@ -32,34 +32,48 @@ def result_view(request):
 
     user = request.user if request.user.is_authenticated else None
 
-    (
-        prediction,
-        confidence_percentage,
-        recommendations,
-        anxiety_level,
-        negativity_level,
-        emotional_intensity,
-        word_count,
-        char_count,
-        all_confidences,
-    ) = get_prediction_result(user, user_text)
+    try:
+        (
+            prediction,
+            confidence_percentage,
+            recommendations,
+            anxiety_level,
+            negativity_level,
+            emotional_intensity,
+            word_count,
+            char_count,
+            all_confidences,
+        ) = get_prediction_result(user, user_text)
 
-    return render(
-        request,
-        'predictions/result.html',
-        {
-            'analyzed_text': user_text,
-            'mental_state_label': prediction,
-            'confidence': confidence_percentage,
-            'recommendations': recommendations,
-            'anxiety_level': anxiety_level,
-            'negativity_level': negativity_level,
-            'emotional_intensity': emotional_intensity,
-            'word_count': word_count,
-            'char_count': char_count,
-            'all_confidences': all_confidences,
-        },
-    )
+        return render(
+            request,
+            'predictions/result.html',
+            {
+                'analyzed_text': user_text,
+                'mental_state_label': prediction,
+                'confidence': confidence_percentage,
+                'recommendations': recommendations,
+                'anxiety_level': anxiety_level,
+                'negativity_level': negativity_level,
+                'emotional_intensity': emotional_intensity,
+                'word_count': word_count,
+                'char_count': char_count,
+                'all_confidences': all_confidences,
+            },
+        )
+
+    except Exception as e:
+        logger.error(f'Prediction failed: {e}', exc_info=True)
+
+        # Show friendly "service busy" page
+        return render(
+            request,
+            'predictions/service_busy.html',
+            {
+                'error_message': 'Our prediction service is currently experiencing high demand.',
+            },
+            status=503,  # Service Unavailable
+        )
 
 
 def strings(request):
