@@ -19,10 +19,13 @@ logger = logging.getLogger(__name__)
 _predictor = None
 _loaded_model_id = None
 
+
 # Exception when server overloads
 class ServiceOverloaded(Exception):
     """Raised when system is too busy to process requests"""
+
     pass
+
 
 def load_json():
     DATA_PATH = 'apps/predictions/data/strings.json'
@@ -61,8 +64,9 @@ def get_predictor(active_model):
     except ServiceOverloaded:
         raise
     except Exception as e:
-        logger.error(f"Error in get_predictor: {str(e)}")
+        logger.error(f'Error in get_predictor: {str(e)}')
         raise
+
 
 def clean_user_input(text):
     data = {'text': [text]}
@@ -83,14 +87,20 @@ def analyze_text(text, model_version):
         predictor = get_predictor(model_version)
         result = predictor.predict(text)
 
-        return result['label'], result['confidence'], result['probabilities'], model_version
+        return (
+            result['label'],
+            result['confidence'],
+            result['probabilities'],
+            model_version,
+        )
 
     except ServiceOverloaded:
         raise
 
     except Exception as e:
-        logger.error(f"Error in analyze_text: {str(e)}")
+        logger.error(f'Error in analyze_text: {str(e)}')
         raise
+
 
 def preprocess_user_input(df, model_type):
     pipeline = DataPreprocessingPipeline()
@@ -180,12 +190,12 @@ def get_prediction_result(user, user_text):
         )
 
     except ServiceOverloaded as e:
-        logger.warning(f"Service overloaded: {str(e)}")
+        logger.warning(f'Service overloaded: {str(e)}')
         raise
 
-    except Exception as e:      # Catch-all unexpected errors
-        logger.error(f"Unexpected error in prediction result: {str(e)}")
-        raise ServiceOverloaded("An unexpected error occurred. We have been notified.")
+    except Exception as e:  # Catch-all unexpected errors
+        logger.error(f'Unexpected error in prediction result: {str(e)}')
+        raise ServiceOverloaded('An unexpected error occurred. We have been notified.')
 
 
 def get_recommendations(prediction, confidence, anxiety_level, recommendations_strings):
