@@ -1,0 +1,164 @@
+{
+  "recommendations": {
+    "low_model_confidence": "Model confidence is low. Consider these general wellness suggestions:",
+    "normal": {
+      "high_confidence": [
+        "You seem to present an undoubtedly healthy mental state. Continue your balanced lifestyle and prioritize good habits like sleep, nutrition, and regular wellness checks."
+      ],
+      "medium_confidence": [
+        "You seem to have a healthy mental state. Keep maintaining your wellbeing through activities that bring you balance and calm."
+      ],
+      "low_confidence": [
+        "Your mental state seems normal. Keep watching your emotional wellbeing and maintain habits like regular sleep, breaks, and social connections."
+      ]
+    },
+    "stress": {
+      "high_confidence": [
+        "You show strong indicators of stress. Try practices like deep breathing, reducing caffeine, exercising, or speaking to someone you trust about what\u2019s affecting you."
+      ],
+      "medium_confidence": [
+        "You show moderate indicators of stress. Consider organizing your tasks, taking breaks, hydrating well, and practicing mindfulness techniques."
+      ],
+      "low_confidence": [
+        "If you feel stressed, try limiting caffeine, taking short walks, or slowing down your pace. Small moments of rest can help significantly."
+      ]
+    },
+    "depression": {
+      "high_confidence": [
+        "You show strong indicators of depression. It might help to consider reaching out to a mental health professional, trusted friend, or support line."
+      ],
+      "medium_confidence": [
+        "There are indications of depressive feelings. Reflecting on your emotions, staying connected with others, and seeking support may help."
+      ],
+      "low_confidence": [
+        "Even mild depressive thoughts can benefit from reflection and support. Try maintaining routines, engaging in hobbies, and talking with someone you trust."
+      ]
+    },
+    "suicidal": {
+      "high_confidence": [
+        "You are not alone. If you are having thoughts of harming yourself, please contact your local suicide hotline immediately. If you are in immediate danger, call your local emergency number."
+      ],
+      "medium_confidence": [
+        "Your text suggests you may be experiencing harmful thoughts. Please connect with a suicide hotline or professional support service right away."
+      ],
+      "low_confidence": [
+        "Even if the indicators are low, if you have any self-harm thoughts, please consider contacting a professional or suicide prevention hotline."
+      ]
+    },
+    "anxiety": [
+      "Additionally, your text shows indicators of anxiety. Consider breathing exercises, grounding techniques, or limiting stimulants like caffeine."
+    ]
+  },
+
+  "example_texts":  [
+    "I feel so empty inside. Nothing brings me joy anymore. I wake up each day wondering what's the point. I used to love painting but now I can't even pick up a brush. My friends invite me out but I just make excuses. I'm tired all the time but can't sleep properly. Everything feels gray and meaningless.",
+    "I have so much on my plate right now. Work deadlines are piling up, bills need to be paid, and I barely have time to breathe. I feel overwhelmed and like I'm drowning. My body feels tense all the time and I get headaches every day. I snap at people I care about because I'm so on edge.",
+    "I am happy and feeling good. Life is great. I had a good day today."
+],
+      "negative_words": [
+        "sad",
+        "depressed",
+        "hopeless",
+        "empty",
+        "numb",
+        "lonely",
+        "miserable",
+        "worthless",
+        "useless",
+        "helpless",
+        "despair",
+        "grief",
+        "heartbroken",
+        "unhappy",
+        "down",
+        "low",
+        "blue",
+        "gloomy",
+        "melancholy",
+        "dejected",
+        "angry",
+        "mad",
+        "furious",
+        "rage",
+        "hate",
+        "frustrated",
+        "irritated",
+        "annoyed",
+        "bitter",
+        "resentful",
+        "hostile",
+        "agitated",
+        "outraged",
+        "anxious",
+        "worried",
+        "nervous",
+        "scared",
+        "afraid",
+        "fear",
+        "panic",
+        "terrified",
+        "dread",
+        "uneasy",
+        "tense",
+        "restless",
+        "overwhelmed",
+        "paranoid",
+        "insecure",
+        "uncertain",
+        "stress",
+        "stressed",
+        "exhausted",
+        "tired",
+        "drained",
+        "burned",
+        "burnout",
+        "overwhelmed",
+        "pressured",
+        "overloaded",
+        "fatigued",
+        "bad",
+        "terrible",
+        "awful",
+        "horrible",
+        "worst",
+        "painful",
+        "suffering",
+        "struggling",
+        "failing",
+        "broken",
+        "damaged",
+        "ruined",
+        "destroyed",
+        "pessimistic",
+        "negative",
+        "dark",
+        "lost",
+        "stuck",
+        "trapped",
+        "stupid",
+        "dumb",
+        "idiot",
+        "failure",
+        "loser",
+        "pathetic",
+        "weak",
+        "ugly",
+        "fat",
+        "disgusting",
+        "ashamed",
+        "embarrassed",
+        "guilty",
+        "suicide",
+        "suicidal",
+        "die",
+        "dying",
+        "death",
+        "kill",
+        "end",
+        "goodbye",
+        "harm",
+        "hurt",
+        "cutting",
+        "selfharm"
+    ]
+}
