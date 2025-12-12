@@ -1,9 +1,36 @@
-# Locust Load Test for Sentio ML Platform
-# Tests BOTH anonymous and registered users
-#
-# Usage:
-#   locust -f locustfile.py --host=http://34.51.186.204 \
-#       --users 50 --spawn-rate 10 --run-time 2m --headless --html=report.html
+"""
+Locust Load Test for Sentio ML Platform
+Tests both anonymous and registered users.
+
+Setup:
+    pip install locust
+
+Usage:
+    cd tests
+
+
+
+    # Headless (command line only)
+    locust -f locustfile.py --host=http://34.51.186.204 \
+        --users 50 --spawn-rate 10 --run-time 2m \
+        --headless --html=report.html
+
+    # Alternative with web UI (interactive)
+    locust -f locustfile.py --host=http://34.51.186.204
+
+    # Local testing
+    locust -f locustfile.py --host=http://localhost:8000
+
+    Options:
+    --users         Number of concurrent users (default: 50)
+    --spawn-rate    Users spawned per second (default: 10)
+    --run-time      Test duration, e.g., 30s, 2m, 1h
+    --html          Generate HTML report
+"""
+
+import random
+import re
+# ... rest of your code
 
 import random
 import re
