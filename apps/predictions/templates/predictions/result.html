@@ -15,13 +15,13 @@
     <div class="container">
         <div class="page-header">
             <h1>Analysis Results</h1>
-            <p>Mental state classification is based on NLP analysis of your text</p>
+            <p>Mental state classification is based on natural language processing (NLP) analysis of your text</p>
         </div>
 
         <!-- Alert Box (if needed) -->
         {% if mental_state_label|lower != 'normal' and confidence >= 70 %}
         <div class="alert alert-warning">
-            <h3><i class="fas fa-exclamation-triangle"></i>Mental Health Indicator Detected</h3>
+            <h3><i class="fas fa-exclamation-triangle"></i>Concern Indicator Detected</h3>
             <p>Your text shows patterns associated with {{ mental_state_label }}.
                 Please review the personalized recommendation below and
                 consider reaching out to a mental health professional if
