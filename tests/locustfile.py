@@ -32,8 +32,6 @@ import random
 import re
 # ... rest of your code
 
-import random
-import re
 import string
 
 from locust import HttpUser, task, between

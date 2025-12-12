@@ -1,7 +1,7 @@
 # Author: Marcus Berggren, Lian Shi, Karl Byland, Claudia Sevilla
 
-import logging
 import json
+import logging
 from pathlib import Path
 
 from django.conf import settings
