@@ -135,7 +135,7 @@ def get_prediction_result(user, user_text):
             user_text=user_text,
             prediction=label,
             confidence=confidence,
-            text_data=text_data,
+            example_texts=text_data['example_texts'],
             model_version=model_version,
             recommendations=recommendations,
             anxiety_level=anxiety_level,
@@ -167,7 +167,7 @@ def get_recommendations(prediction, confidence, anxiety_level, recommendations_s
     prediction_lower = str(prediction).lower()
     confidence_percentage = confidence * 100 if confidence < 1 else confidence
 
-    if confidence_percentage > 0.70:  # high confidence results
+    if confidence_percentage > 70:  # high confidence results
         if prediction == 'normal':
             recommendations.append(  # Index 0 because maybe we want to add random recs in future
                 recommendations_strings['normal']['high_confidence'][0]
@@ -279,7 +279,7 @@ def save_prediction_to_database(
     confidence,
     model_version,
     recommendations,
-    text_data,
+    example_texts,
     anxiety_level=None,
     negativity_level=None,
     emotional_intensity=None,
@@ -302,9 +302,7 @@ def save_prediction_to_database(
         emotional_intensity: Calculated emotional intensity metric (0-100)
     """
 
-    template_texts = text_data['example_texts']
-
-    if user_text not in template_texts:
+    if user_text not in example_texts:
         # Create the text submission record
         submission = TextSubmission.objects.create(user=user, text_content=user_text)
 
