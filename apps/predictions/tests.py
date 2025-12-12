@@ -193,21 +193,20 @@ class PredictionTests(TestCase):
 
         self.assertEqual(res.recommendations, '\n'.join(recommendations))
 
+    def test_save_prediction_ignores_template_text(self):
+        user = User.objects.create(username='testuser')
+        mv = MagicMock()
 
-def test_save_prediction_ignores_template_text(self):
-    user = User.objects.create(username='testuser')
-    mv = MagicMock()
+        for example_text in text_data['example_texts']:
+            services.save_prediction_to_database(
+                user,
+                example_text,
+                'depression',
+                0.9,
+                mv,
+                [],
+                text_data['example_texts'],  # <-- pass the full list
+            )
 
-    for example_text in text_data['example_texts']:
-        services.save_prediction_to_database(
-            user,
-            example_text,
-            'depression',
-            0.9,
-            mv,
-            [],
-            text_data['example_texts'],  # <-- pass the full list
-        )
-
-    # Ensure none of the template texts were saved
-    self.assertEqual(TextSubmission.objects.count(), 0)
+        # Ensure none of the template texts were saved
+        self.assertEqual(TextSubmission.objects.count(), 0)
