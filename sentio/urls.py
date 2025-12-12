@@ -19,6 +19,8 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
 
+from sentio import health
+
 from . import views
 
 urlpatterns = [
@@ -36,4 +38,7 @@ urlpatterns = [
         'management/', include(('apps.ml_admin.urls', 'ml_admin'), namespace='ml_admin')
     ),
     path('favicon.ico', views.favicon_redirect, name='favicon'),
+    # health check urls, no auth required
+    path('health/live/', health.liveness, name='health-live'),
+    path('health/ready/', health.readiness, name='health-ready'),
 ]

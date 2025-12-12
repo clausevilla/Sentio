@@ -14,6 +14,41 @@ from nltk.tokenize import word_tokenize
 
 logger = logging.getLogger(__name__)
 
+# NLTK RESOURCES - DOWNLOAD ONCE AT MODULE LOAD
+
+_nltk_initialized = False
+
+
+def _ensure_nltk_resources():
+    """Download NLTK resources once at module load."""
+    global _nltk_initialized
+    if _nltk_initialized:
+        return
+
+    # Just download quietly - nltk.download handles duplicates gracefully
+    resources = [
+        'punkt',
+        'punkt_tab',
+        'stopwords',
+        'wordnet',
+        'omw-1.4',
+        'averaged_perceptron_tagger',
+        'averaged_perceptron_tagger_eng',
+    ]
+
+    for resource in resources:
+        try:
+            nltk.download(resource, quiet=True)
+        except Exception as e:
+            logger.warning(f'Failed to download NLTK resource {resource}: {e}')
+
+    _nltk_initialized = True
+    logger.info('NLTK resources initialized')
+
+
+# Download immediately when module is imported
+_ensure_nltk_resources()
+
 
 class DataPreprocessingPipeline:
     """
@@ -24,7 +59,7 @@ class DataPreprocessingPipeline:
     """
 
     def __init__(self):
-        self._download_nltk_resources()
+        # NLTK resources already downloaded at module level
         self.lemmatizer = WordNetLemmatizer()
         self.stop_words = set(stopwords.words('english'))
 
@@ -48,16 +83,6 @@ class DataPreprocessingPipeline:
             'avg_tokens_before': 0,
             'avg_tokens_after': 0,
         }
-
-    def _download_nltk_resources(self):
-        """Downloads required NLTK data if not already present."""
-        resources = ['punkt', 'stopwords', 'wordnet', 'omw-1.4']
-        for resource in resources:
-            try:
-                nltk.data.find(f'tokenizers/{resource}')
-            except LookupError:
-                logger.info(f'Downloading NLTK resource: {resource}')
-                nltk.download(resource, quiet=True)
 
     def preprocess_dataframe(
         self, df: pd.DataFrame, model_type: str

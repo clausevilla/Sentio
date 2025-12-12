@@ -106,9 +106,9 @@ def preprocess_user_input(df, model_type):
     pipeline = DataPreprocessingPipeline()
     pipeline_version = ''
     model_to_pipeline = {
-        'lstm': 'rnn',
+        'lstm': 'traditional',  # Seems to work better with full preprocessing
         'random_forest': 'traditional',
-        'transformer': 'transformer',
+        'transformer': 'traditional',  # Seems to work better with full preprocessing
         'logistic_regression': 'traditional',
     }
 
@@ -204,7 +204,7 @@ def get_recommendations(prediction, confidence, anxiety_level, recommendations_s
     confidence_percentage = confidence * 100 if confidence < 1 else confidence
 
     if confidence_percentage > 70:  # high confidence results
-        if prediction == 'normal':
+        if prediction_lower == 'normal':
             recommendations.append(  # Index 0 because maybe we want to add random recs in future
                 recommendations_strings['normal']['high_confidence'][0]
             )

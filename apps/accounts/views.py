@@ -2,22 +2,175 @@
 # Disclaimer: LLM has been used to help generate changepassword and delete account API endpoints.
 
 import json
+import re
 from collections import defaultdict
 from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
 from apps.predictions.models import PredictionResult, TextSubmission
 
 from .forms import LoginForm, RegisterForm
 from .models import UserConsent
+
+
+@require_http_methods(['POST'])
+@csrf_protect
+def check_username_api(request):
+    """
+    API endpoint to check if a username is available.
+    Used for real-time validation during registration.
+    """
+    try:
+        data = json.loads(request.body)
+        username = data.get('username', '').strip()
+
+        errors = []
+
+        # Check if empty
+        if not username:
+            return JsonResponse({'available': False, 'error': 'Username is required'})
+
+        # Check length
+        if len(username) < 3:
+            errors.append('Username must be at least 3 characters')
+
+        # Check valid characters
+        if not re.match(r'^[a-zA-Z0-9_]+$', username):
+            errors.append('Username can only contain letters, numbers, and underscores')
+
+        # Check if already exists
+        if User.objects.filter(username__iexact=username).exists():
+            errors.append('This username is already taken')
+
+        if errors:
+            return JsonResponse({'available': False, 'error': errors[0]})
+
+        return JsonResponse({'available': True, 'message': 'Username is available'})
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {'available': False, 'error': 'Invalid request'}, status=400
+        )
+
+
+@require_http_methods(['POST'])
+@csrf_protect
+def check_email_api(request):
+    """
+    API endpoint to check if an email is available.
+    Used for real-time validation during registration.
+    """
+    try:
+        data = json.loads(request.body)
+        email = data.get('email', '').strip().lower()
+
+        # Check if empty
+        if not email:
+            return JsonResponse({'available': False, 'error': 'Email is required'})
+
+        # Check valid format
+        email_pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+        if not re.match(email_pattern, email):
+            return JsonResponse(
+                {'available': False, 'error': 'Please enter a valid email address'}
+            )
+
+        # Check if already exists
+        if User.objects.filter(email__iexact=email).exists():
+            return JsonResponse(
+                {
+                    'available': False,
+                    'error': 'An account with this email already exists',
+                }
+            )
+
+        return JsonResponse({'available': True, 'message': 'Email is available'})
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {'available': False, 'error': 'Invalid request'}, status=400
+        )
+
+
+@require_http_methods(['POST'])
+@csrf_protect
+def register_api(request):
+    """
+    API endpoint for AJAX registration.
+    Returns JSON response instead of redirecting.
+    """
+    try:
+        data = json.loads(request.body)
+
+        # Build form data
+        form_data = {
+            'username': data.get('username', ''),
+            'email': data.get('email', ''),
+            'password1': data.get('password1', ''),
+            'password2': data.get('password2', ''),
+            'consent': data.get('consent', False),
+        }
+
+        form = RegisterForm(form_data)
+
+        if form.is_valid():
+            # Create the user
+            user = form.save()
+
+            # Create UserConsent record
+            UserConsent.objects.create(
+                user=user, has_consented=True, consent_at=timezone.now()
+            )
+
+            # Log the user in
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=password)
+
+            if user is not None:
+                login(request, user)
+                return JsonResponse(
+                    {
+                        'success': True,
+                        'message': f'Welcome {username}! Your account has been created successfully.',
+                        'redirect': '/predictions/input',
+                    }
+                )
+
+            return JsonResponse(
+                {
+                    'success': True,
+                    'message': 'Account created successfully. Please log in.',
+                    'redirect': '/accounts/login',
+                }
+            )
+        else:
+            # Collect all errors
+            errors = {}
+            for field, error_list in form.errors.items():
+                errors[field] = [str(e) for e in error_list]
+
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {'success': False, 'errors': {'__all__': ['Invalid request data']}},
+            status=400,
+        )
+    except Exception as e:
+        return JsonResponse(
+            {'success': False, 'errors': {'__all__': [str(e)]}}, status=500
+        )
 
 
 def register_view(request):
@@ -757,3 +910,89 @@ def export_data_api(request):
         return JsonResponse(
             {'success': False, 'error': 'server_error', 'message': str(e)}, status=500
         )
+
+
+@login_required(login_url='accounts:login')
+@require_http_methods(['GET'])
+def analyses_list_api(request):
+    """
+    API endpoint to fetch paginated analyses for AJAX pagination.
+
+    Query parameters:
+        - page: Page number (default: 1)
+        - state: Filter by mental state (optional, 'all' for no filter)
+
+    Returns JSON with:
+        - analyses: List of analysis objects
+        - pagination: Pagination metadata
+    """
+    page_number = request.GET.get('page', 1)
+    state_filter = request.GET.get('state', 'all')
+
+    # Get all submissions for the user, ordered by date descending
+    submissions = (
+        TextSubmission.objects.filter(user=request.user)
+        .select_related('predictionresult')
+        .order_by('-submitted_at')
+    )
+
+    # Build analyses list
+    analyses = []
+    for submission in submissions:
+        try:
+            prediction = submission.predictionresult
+            raw_state = prediction.mental_state or ''
+            mental_state = raw_state.lower().strip()
+
+            # Apply state filter if specified
+            if state_filter != 'all' and mental_state != state_filter:
+                continue
+
+            # Format display name for mental state
+            state_display_map = {
+                'normal': 'Normal',
+                'depression': 'Depression',
+                'stress': 'Stress',
+                'suicidal': 'Suicidal',
+            }
+
+            analyses.append(
+                {
+                    'id': prediction.id,
+                    'text': submission.text_content,
+                    'mental_state': mental_state,
+                    'mental_state_display': state_display_map.get(
+                        mental_state, mental_state.title()
+                    ),
+                    'confidence': round(prediction.confidence * 100),
+                    'anxiety_level': prediction.anxiety_level or 0,
+                    'negativity_level': prediction.negativity_level or 0,
+                    'emotional_intensity': prediction.emotional_intensity or 0,
+                    'created_at': submission.submitted_at.strftime('%b %d, %Y - %H:%M'),
+                    'recommendations': prediction.recommendations,
+                }
+            )
+        except PredictionResult.DoesNotExist:
+            continue
+
+    # Pagination - 10 items per page
+    paginator = Paginator(analyses, 10)
+    page_obj = paginator.get_page(page_number)
+
+    # Build response
+    response_data = {
+        'analyses': list(page_obj),
+        'pagination': {
+            'current_page': page_obj.number,
+            'total_pages': paginator.num_pages,
+            'has_previous': page_obj.has_previous(),
+            'has_next': page_obj.has_next(),
+            'previous_page': page_obj.previous_page_number()
+            if page_obj.has_previous()
+            else None,
+            'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
+            'total_count': len(analyses),
+        },
+    }
+
+    return JsonResponse(response_data)

@@ -15,13 +15,13 @@
     <div class="container">
         <div class="page-header">
             <h1>Analysis Results</h1>
-            <p>Mental state classification is based on NLP analysis of your text</p>
+            <p>Mental state classification is based on natural language processing (NLP) analysis of your text</p>
         </div>
 
         <!-- Alert Box (if needed) -->
         {% if mental_state_label|lower != 'normal' and confidence >= 70 %}
-        <div class="alert alert-warning">
-            <h3><i class="fas fa-exclamation-triangle"></i>Mental Health Indicator Detected</h3>
+        <div class="alert alert-warning alert-persistent">
+            <h3><i class="fas fa-exclamation-triangle"></i>Concern Indicator Detected</h3>
             <p>Your text shows patterns associated with {{ mental_state_label }}.
                 Please review the personalized recommendation below and
                 consider reaching out to a mental health professional if
@@ -37,42 +37,37 @@
                     <div class="progress-header">
                         <h2 class="card-title" id="mentalStateTitle">{{ mental_state_label }}</h2>
                         <div class="score-container">
-                            <svg class="circular-progress" width="360" height="360">
+                            <svg class="circular-progress" viewBox="0 0 360 360">
                                 <circle class="progress-background" cx="180" cy="180" r="145"></circle>
                                 <circle class="progress-bar" id="progressBar" cx="180" cy="180" r="145"></circle>
                             </svg>
                             <div class="score-content">
                                 <div class="score-text" id="scoreText">{{ confidence }}%</div>
-                                <div class="score-subtitle">Model Confidence</div>
+                                <div class="score-subtitle">Model Confidence*</div>
                             </div>
                         </div>
+                        <p class="confidence-hint">* How certain the AI model is about this classification</p>
                     </div>
                 </div>
 
                 <!-- Right Column: Confidence for the rest of the labels-->
                 <div class="text-column">
                     <h3>All Categories:</h3>
-                    {% for label, conf in all_confidences.items %}
-                        {% if label != mental_state_label %}
-                            <div class="indicator-item" style="padding-bottom: 24px;">
-                                <div class="indicator-header" style="margin-bottom: 10px;">
-                                    <span class="indicator-name">{{ label|title }}:</span>
-                                    <div class="indicator-name">{{ conf }}%</div>
-                                </div>
-                                <div class="indicator-bar-container" style="background: #E9ECEF; height: 10px; border-radius: 4px; overflow:hidden; width: 80%; margin-bottom: 8px;">
-                                    <!-- Different color for each label -->
-                                    <div class="indicator-bar"
-                                        style="width: {{ conf }}%; height: 100%; background:
-                                            {% if label == 'normal' or label == 'Normal' %}#f7e154
-                                            {% elif label == 'stress' or label == 'Stress' %}#F39C12
-                                            {% elif label == 'depression' or label == 'Depression' %}#9B59B6
-                                            {% elif label == 'suicidal' or label == 'Suicidal' %}#88a3a5
-                                            {% endif %} !important;">
+                    <div class="categories-list">
+                        {% for label, conf in all_confidences.items %}
+                            {% if label != mental_state_label %}
+                                <div class="category-item category-{{ label|lower }}">
+                                    <div class="category-header">
+                                        <span class="category-label">{{ label|title }}:</span>
+                                        <span class="category-value">{{ conf }}%*</span>
+                                    </div>
+                                    <div class="category-bar-container">
+                                        <div class="category-bar" style="width: {{ conf }}%;"></div>
                                     </div>
                                 </div>
-                            </div>
-                        {% endif %}
-                    {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -83,7 +78,7 @@
             <div class="text-content">{{ analyzed_text }}</div>
             <div class="text-meta">
                 <span>Word count: <strong>{{ word_count }}</strong></span>
-                <span>|</span>
+                <span class="meta-separator">|</span>
                 <span>Character count: <strong>{{ char_count }}</strong></span>
             </div>
         </div>
@@ -103,10 +98,12 @@
                         <i class="fas fa-heartbeat"></i>
                         <span class="indicator-name">Anxiety Level</span>
                     </div>
-                    <div class="indicator-bar-container">
-                        <div class="indicator-bar anxiety-bar" style="width: {{ anxiety_level }}%;"></div>
+                    <div class="indicator-row">
+                        <div class="indicator-bar-container">
+                            <div class="indicator-bar anxiety-bar" style="width: {{ anxiety_level }}%;"></div>
+                        </div>
+                        <div class="indicator-value">{{ anxiety_level }}%</div>
                     </div>
-                    <div class="indicator-value">{{ anxiety_level }}%</div>
                     <p class="indicator-desc">Anxious language patterns based on ellipses and word density.</p>
                 </div>
 
@@ -115,10 +112,12 @@
                         <i class="fas fa-weight-hanging"></i>
                         <span class="indicator-name">Negative Emotions</span>
                     </div>
-                    <div class="indicator-bar-container">
-                        <div class="indicator-bar negativity-bar" style="width: {{ negativity_level }}%;"></div>
+                    <div class="indicator-row">
+                        <div class="indicator-bar-container">
+                            <div class="indicator-bar negativity-bar" style="width: {{ negativity_level }}%;"></div>
+                        </div>
+                        <div class="indicator-value">{{ negativity_level }}%</div>
                     </div>
-                    <div class="indicator-value">{{ negativity_level }}%</div>
                     <p class="indicator-desc">Pessimistic emotional content based on key negative words.</p>
                 </div>
 
@@ -127,10 +126,12 @@
                         <i class="fas fa-bullhorn"></i>
                         <span class="indicator-name">Emotional Intensity</span>
                     </div>
-                    <div class="indicator-bar-container">
-                        <div class="indicator-bar intensity-bar" style="width: {{ emotional_intensity }}%;"></div>
+                    <div class="indicator-row">
+                        <div class="indicator-bar-container">
+                            <div class="indicator-bar intensity-bar" style="width: {{ emotional_intensity }}%;"></div>
+                        </div>
+                        <div class="indicator-value">{{ emotional_intensity }}%</div>
                     </div>
-                    <div class="indicator-value">{{ emotional_intensity }}%</div>
                     <p class="indicator-desc">Emotional strength based on punctuation and capitalization.</p>
                 </div>
             </div>
@@ -143,22 +144,20 @@
             <p>Create a free account to track your mental state over time, view
                 historical trends, and get personalized insights!</p>
             <div class="cta-buttons">
-                <a href="{% url 'accounts:register' %}" class="btn btn-primary">Create Free
-                    Account</a>
-                <a href="{% url 'accounts:login' %}" class="btn btn-secondary">Already have
-                    an account? Sign In</a>
+                <a href="{% url 'accounts:register' %}" class="btn btn-primary">Register Free</a>
+                <a href="{% url 'accounts:login' %}" class="btn btn-secondary">Sign In</a>
             </div>
         </div>
         {% endif %}
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <a href="{% url 'predictions:input' %}" class="btn btn-large-action">
-                <i class="fas fa-redo" style="margin-right: 15px;"></i>
+            <a href="{% url 'predictions:input' %}" class="btn btn-large-action btn-full-width">
+                <i class="fas fa-redo"></i>
                 <span>Analyze New Text</span>
             </a>
             <a href="{% url 'accounts:history' %}" class="btn btn-large-action">
-                <i class="fas fa-history" style="margin-right: 15px;"></i>
+                <i class="fas fa-history"></i>
                 <span>View History</span>
             </a>
             <button class="btn btn-large" onclick="window.print()">

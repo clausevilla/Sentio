@@ -19,7 +19,7 @@ DATABASES = {
     }
 }  # PostgreSQL database configuration
 GCS_BUCKET = os.environ.get('GCS_BUCKET', 'sentio-m_l-models')  # Google Cloud Storage
-MODEL_DIR = '/app/media/ml-models'  # Points to internal Docker path
+MODEL_DIR = '/app/ml-models'  # Points to internal Docker path
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

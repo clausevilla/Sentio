@@ -1,6 +1,7 @@
 /* Author: Lian Shi, Claudia Sevilla */
 /* Disclaimer: LLM has been used to help generate initial styles and manual adjustments were made later */
 
+
 /* ===================================
    Mental State Analysis Results Page
    =================================== */
@@ -51,6 +52,7 @@
 .alert p {
     color: var(--color-text);
     line-height: 1.6;
+    font-size: 1.1rem;
     margin: 0;
 }
 
@@ -76,10 +78,9 @@
 .text-column h3 {
     margin-top: 0;
     padding-top: 0;
-    height: 140px;
-    display: flex;
-    align-items: flex-end;
-    margin-bottom: 40px;
+    margin-bottom: 1.5rem;
+    font-size: 1.3rem;
+    color: var(--color-text-dark);
 }
 
 .card-title {
@@ -95,7 +96,10 @@
     flex: 1;
     min-width: 300px;
     text-align: left;
-    margin-left: 50px;
+    margin-left: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 /* Circular Progress */
@@ -107,8 +111,8 @@
 
 .circular-progress {
     transform: rotate(-90deg);
-    width: 360px;
-    height: 360px;
+    width: 100%;
+    height: 100%;
 }
 
 .progress-header {
@@ -153,9 +157,17 @@
 }
 
 .score-subtitle {
-    font-size: var(--font-base);
+    font-size: 1.1rem;
     color: var(--color-text-light);
     margin-top: 0;
+}
+
+.confidence-hint {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    margin-top: 0.75rem;
+    text-align: center;
+    font-style: italic;
 }
 
 /* Mental State Badge */
@@ -212,6 +224,7 @@
     text-align: justify;
     margin-bottom: var(--spacing-md);
     line-height: 1.6;
+    font-size: 1.1rem;
 }
 
 .recommendations p:last-child {
@@ -247,7 +260,7 @@
 }
 
 .indicator-name {
-    font-size: var(--font-lg);
+    font-size: 1.15rem;
     font-weight: 600;
     color: var(--color-text-dark);
 }
@@ -295,19 +308,125 @@
 }
 
 .indicator-value {
-    font-size: var(--font-xl);
+    font-size: 1.35rem;
     font-weight: 700;
     color: var(--color-primary);
     margin-bottom: var(--spacing-xs);
 }
 
 .indicator-desc {
-    font-size: var(--font-sm);
+    font-size: 1.1rem;
     color: var(--color-text-light);
     line-height: 1.5;
     margin: 0;
 }
 
+/* Indicator Row - bar and percentage on same line */
+.indicator-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.indicator-row .indicator-bar-container {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.indicator-row .indicator-value {
+    flex-shrink: 0;
+    margin-bottom: 0;
+    min-width: 45px;
+    text-align: right;
+}
+
+/* All Categories List - Original layout with name:percentage and bar below */
+.categories-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.category-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 500px;
+}
+
+.category-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.category-label {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+
+.category-value {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+
+.category-item .category-bar-container {
+    width: 100%;
+    height: 12px;
+    background: #E9ECEF;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.category-item .category-bar {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.5s ease;
+}
+
+/* Category Color Themes - matching base.css mental state colors */
+.category-normal .category-bar { background: linear-gradient(90deg, var(--color-state-normal, #3DA37A) 0%, var(--color-state-normal-light, #5BBC95) 100%); }
+
+.category-depression .category-bar { background: linear-gradient(90deg, var(--color-state-depression, #5A8BBF) 0%, var(--color-state-depression-light, #7BA5D0) 100%); }
+
+.category-stress .category-bar { background: linear-gradient(90deg, var(--color-state-stress, #E8924B) 0%, var(--color-state-stress-light, #F0A86D) 100%); }
+
+.category-suicidal .category-bar { background: linear-gradient(90deg, var(--color-state-suicidal, #9D6DC4) 0%, var(--color-state-suicidal-light, #B48AD5) 100%); }
+
+/* All Categories indicator items (legacy - keeping for compatibility) */
+.indicator-item {
+    padding-bottom: 1rem;
+}
+
+.indicator-item .indicator-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.indicator-item .indicator-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+
+.indicator-item .indicator-percent {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+
+.indicator-item .indicator-bar-container {
+    background: #E9ECEF;
+    height: 10px;
+    border-radius: 4px;
+    overflow: hidden;
+    width: 100%;
+}
 
 /* Analyzed Text Card */
 .analyzed-text-card {
@@ -329,7 +448,7 @@
     padding: var(--spacing-lg);
     border-radius: var(--radius-sm);
     border-left: 4px solid var(--color-primary);
-    font-size: var(--font-base);
+    font-size: 1.15rem;
     line-height: 1.8;
     color: var(--color-text);
     margin-bottom: var(--spacing-md);
@@ -339,7 +458,7 @@
 .text-meta {
     display: flex;
     gap: var(--spacing-md);
-    font-size: var(--font-sm);
+    font-size: 1.1rem;
     color: var(--color-text-light);
 }
 
@@ -372,12 +491,13 @@
     padding-left: 3rem;
     position: relative;
     line-height: 1.6;
+    font-size: 1.1rem;
     color: var(--color-text);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .recommendation-list li:before {
-    content: "✓";
+    content: "✔";
     position: absolute;
     left: var(--spacing-md);
     color: var(--color-primary);
@@ -418,21 +538,48 @@
     font-size: var(--font-lg);
     font-weight: 700;
     cursor: pointer;
-    transition: all var(--transition-base);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 0.5rem;
     text-decoration: none;
 }
 
+.btn-large-action i {
+    font-size: 1rem;
+}
+
 .btn-large-action:hover {
-    background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+    background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary) 100%);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+    color: white;
     text-decoration: none !important;
 }
 
-/* Responsive Design */
+.btn-large {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: white;
+    color: var(--color-text);
+    border: 2px solid #D4E1DD;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-large:hover {
+    background: var(--color-bg-mint);
+    border-color: var(--color-primary-light);
+    color: var(--color-primary);
+}
+
+/* ===================================
+   Responsive Design
+   =================================== */
+
 @media (max-width: 968px) {
     .classification-card {
         padding: var(--spacing-xl);
@@ -444,8 +591,8 @@
     }
 
     .score-container {
-        width: 350px;
-        height: 350px;
+        width: 300px;
+        height: 300px;
     }
 
     .score-text {
@@ -466,10 +613,12 @@
     .text-column {
         text-align: center;
         width: 100%;
+        margin-left: 0;
     }
 
     .text-column h3 {
         height: auto;
+        justify-content: center;
     }
 
     .recommendations {
@@ -477,20 +626,32 @@
     }
 
     .progress-column {
-        margin-right: 60px !important;
+        margin-right: 0 !important;
     }
 }
 
 @media (max-width: 768px) {
+    .results-section {
+        padding: 1.5rem 0;
+    }
+
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .page-header p {
+        font-size: 0.9rem;
+    }
+
     .card-content {
         flex-direction: column;
         align-items: center;
-        gap: var(--spacing-lg);
+        gap: 1rem;
     }
 
     .card-title {
         text-align: center;
-        font-size: 2.2rem;
+        font-size: 1.75rem;
     }
 
     .text-column, .progress-column {
@@ -498,11 +659,37 @@
     }
 
     .text-column {
-        text-align: center;
+        margin-left: 0;
+        min-width: unset;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     .text-column h3 {
         height: auto;
+        text-align: left;
+        margin-bottom: 1rem;
+        width: 100%;
+        max-width: 350px;
+        padding-left: 1.25rem;
+    }
+
+    .categories-list {
+        width: 100%;
+        max-width: 350px;
+        padding: 1.25rem;
+        background: rgba(248, 250, 252, 0.5);
+        border-radius: 12px;
+    }
+
+    .category-item {
+        width: 100%;
+        text-align: left;
+    }
+
+    .category-item .category-bar-container {
+        width: 100%;
     }
 
     .progress-column {
@@ -513,89 +700,885 @@
         margin: 0;
     }
 
+    /* Tablet circular progress */
+    .score-container {
+        width: 260px;
+        height: 260px;
+    }
+
+    .score-text {
+        font-size: 2.2rem;
+    }
+
     .action-buttons {
-        flex-direction: column;
-        gap: var(--spacing-sm);
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .btn-full-width {
+        flex: 1 1 100% !important;
+        width: 100%;
     }
 
     .btn-large-action {
-        flex: none;
-        width: 100%;
+        flex: 1 1 45%;
+        min-width: 0;
+        padding: 0.65rem 0.9rem;
+        font-size: 0.9rem;
+        gap: 0.5rem;
     }
 
-    .btn {
-        width: 100%;
-        justify-content: center;
+    .btn-large {
+        flex: 1 1 45%;
+        min-width: 0;
+        padding: 0.65rem 0.9rem;
+        font-size: 0.9rem;
+    }
+
+    /* Alert improvements */
+    .alert {
+        padding: 0.875rem;
+    }
+
+    .alert h3 {
+        font-size: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .alert p {
+        font-size: 0.85rem;
+    }
+
+    /* Indicator items compact */
+    .indicator-item {
+        padding-bottom: 0.75rem;
+    }
+
+    .indicator-item .indicator-header {
+        margin-bottom: 0.4rem;
+    }
+
+    .indicator-item .indicator-bar-container {
+        height: 8px;
     }
 }
 
 @media (max-width: 640px) {
     .results-section {
-        padding: var(--spacing-xl) 0;
+        padding: 1.25rem 0;
     }
 
-    .classification-card,
-    .probabilities-card,
-    .analyzed-text-card,
-    .recommendations-card {
-        padding: var(--spacing-lg);
+    .container {
+        padding: 0 1rem;
+    }
+
+    .page-header {
+        margin-bottom: 1rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.4rem;
+    }
+
+    .page-header p {
+        font-size: 0.875rem;
+    }
+
+    .classification-card {
+        padding: 1.25rem 1rem;
+        border-radius: 12px;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    /* BIGGER circular progress on phone */
+    .progress-header {
+        gap: 8px;
+    }
+
+    .score-container {
+        width: 240px;
+        height: 240px;
+    }
+
+    .score-text {
+        font-size: 2.2rem;
+    }
+
+    .score-subtitle {
+        font-size: 0.9rem;
+    }
+
+    /* Compact indicator cards */
+    .indicators-grid {
+        gap: 0.75rem;
+    }
+
+    .indicator-card {
+        padding: 1rem;
+    }
+
+    .indicator-header {
+        margin-bottom: 0.5rem;
+        gap: 0.4rem;
+    }
+
+    .indicator-header i {
+        font-size: 1.1rem;
+    }
+
+    .indicator-name {
+        font-size: 0.9rem;
+    }
+
+    /* Horizontal bar + percentage layout */
+    .indicator-row {
+        gap: 0.5rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .indicator-row .indicator-bar-container {
+        height: 8px;
+    }
+
+    .indicator-row .indicator-value {
+        font-size: 0.875rem;
+        min-width: 35px;
+    }
+
+    .indicator-desc {
+        font-size: 0.8rem;
+        line-height: 1.4;
+    }
+
+    /* All Categories - centered container on mobile */
+    .text-column {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .text-column h3 {
+        width: 100%;
+        max-width: 320px;
+        text-align: left;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        padding-left: 0.75rem;
+    }
+
+    .categories-list {
+        gap: 0.5rem;
+        width: 100%;
+        max-width: 320px;
+        padding: 0.75rem;
+        background: rgba(248, 250, 252, 0.5);
+        border-radius: 10px;
+    }
+
+    /* Single row layout: Name | Percentage | Bar */
+    .category-item {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .category-header {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        flex-shrink: 0;
+    }
+
+    .category-label {
+        font-size: 0.85rem;
+        min-width: 85px;
+        text-align: left;
+    }
+
+    .category-value {
+        font-size: 0.85rem;
+        min-width: 40px;
+        text-align: right;
+    }
+
+    .category-item .category-bar-container {
+        flex: 1;
+        height: 6px;
+    }
+
+    /* Analyzed Text Card */
+    .analyzed-text-card {
+        padding: 1rem;
+    }
+
+    .analyzed-text-card h3 {
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .text-content {
+        padding: 0.65rem;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        max-height: 130px;
+        overflow-y: auto;
+    }
+
+    .text-meta {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+    }
+
+    .meta-separator {
+        display: none;
+    }
+
+    /* Recommendations */
+    .recommendations {
+        padding: 1rem;
+        margin-top: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .recommendations p {
+        font-size: 0.875rem;
+        line-height: 1.45;
+        text-align: left;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Save Results CTA - card style with better spacing */
+    .save-results-cta {
+        padding: 1.25rem 1rem;
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 12px;
+    }
+
+    .save-results-cta h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .save-results-cta p {
+        font-size: 0.875rem;
+        line-height: 1.45;
+        margin-bottom: 0.85rem;
+    }
+
+    .cta-buttons {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+    }
+
+    .cta-buttons .btn {
+        flex: 1 1 45%;
+        min-width: 0;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.85rem;
+        border-radius: 8px;
+    }
+
+    /* Mental State Badge */
+    .mental-state-badge {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.85rem;
+    }
+
+    .state-icon {
+        font-size: 1.1rem;
+    }
+
+    /* Confidence hint on mobile */
+    .confidence-hint {
+        font-size: 0.72rem;
+        margin-top: 0.5rem;
+    }
+
+    /* Action buttons - with better spacing */
+    .action-buttons {
+        margin-top: 0;
+        gap: 0.75rem;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    /* Analyze New Text - full width */
+    .btn-full-width {
+        flex: 1 1 100% !important;
+        width: 100%;
+    }
+
+    .btn-large-action {
+        flex: 1 1 45%;
+        min-width: 0;
+        padding: 0.85rem 0.75rem;
+        font-size: 0.95rem;
+        border-radius: 10px;
+        gap: 0.5rem;
+    }
+
+    .btn-large-action i {
+        font-size: 0.9rem;
+    }
+
+    .btn-large {
+        flex: 1 1 45%;
+        min-width: 0;
+        padding: 0.85rem 0.75rem;
+        font-size: 0.95rem;
+        border-radius: 10px;
+    }
+
+    /* Alert box */
+    .alert {
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .alert h3 {
+        font-size: 0.9rem;
+        gap: 0.4rem;
+    }
+
+    .alert h3 i {
+        font-size: 1rem;
+    }
+
+    .alert p {
+        font-size: 0.85rem;
+        line-height: 1.45;
+    }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 400px) {
+    .results-section {
+        padding: 1rem 0;
+    }
+
+    .container {
+        padding: 0 0.875rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.35rem;
+    }
+
+    .page-header p {
+        font-size: 0.8rem;
+    }
+
+    .classification-card {
+        padding: 1rem 0.875rem;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+    }
+
+    /* Circle still reasonably sized on very small phones */
+    .score-container {
+        width: 210px;
+        height: 210px;
+    }
+
+    .score-text {
+        font-size: 1.9rem;
+    }
+
+    .score-subtitle {
+        font-size: 0.85rem;
+    }
+
+    .text-column h3 {
+        font-size: 0.9rem;
+        margin-bottom: 0.35rem;
+        max-width: 280px;
+        padding-left: 0.5rem;
+    }
+
+    /* Categories list */
+    .categories-list {
+        gap: 0.4rem;
+        max-width: 280px;
+        padding: 0.5rem;
+    }
+
+    .category-item {
+        gap: 0.4rem;
+    }
+
+    .category-label {
+        font-size: 0.78rem;
+        min-width: 75px;
+    }
+
+    .category-value {
+        font-size: 0.78rem;
+        min-width: 35px;
+    }
+
+    .category-item .category-bar-container {
+        height: 5px;
+    }
+
+    .indicator-card {
+        padding: 0.875rem;
+    }
+
+    .indicator-name {
+        font-size: 0.85rem;
+    }
+
+    .indicator-row .indicator-value {
+        font-size: 0.85rem;
+    }
+
+    .indicator-desc {
+        font-size: 0.78rem;
+    }
+
+    .analyzed-text-card {
+        padding: 0.875rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .text-content {
+        padding: 0.65rem;
+        max-height: 150px;
+        font-size: 0.85rem;
     }
 
     .action-buttons {
-        flex-direction: column;
-        gap: var(--spacing-sm);
+        gap: 0.6rem;
+    }
+
+    .btn-full-width {
+        flex: 1 1 100% !important;
+        width: 100%;
+    }
+
+    .btn-large-action {
+        font-size: 0.85rem;
+        padding: 0.7rem 0.6rem;
+        gap: 0.4rem;
+    }
+
+    .btn-large-action i {
+        font-size: 0.8rem;
+    }
+
+    .btn-large {
+        font-size: 0.85rem;
+        padding: 0.7rem 0.6rem;
+    }
+
+    .save-results-cta {
+        padding: 1rem 0.875rem;
+        margin-top: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .save-results-cta h3 {
+        font-size: 1rem;
+    }
+
+    .save-results-cta p {
+        font-size: 0.8rem;
+    }
+
+    .cta-buttons .btn {
+        padding: 0.5rem 0.6rem;
+        font-size: 0.8rem;
+        border-radius: 5px;
+    }
+
+    .confidence-hint {
+        font-size: 0.7rem;
+        margin-top: 0.4rem;
+    }
+
+    .recommendations {
+        padding: 0.6rem;
+    }
+
+    .recommendations p {
+        font-size: 0.85rem;
+    }
+
+    .alert h3 {
+        font-size: 0.85rem;
+    }
+
+    .alert p {
+        font-size: 0.85rem;
+    }
+}
+
+/* Landscape Mode on Mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+    .results-section {
+        padding: 0.75rem 0;
+    }
+
+    .page-header {
+        margin-bottom: 0.6rem;
+    }
+
+    .classification-card {
+        padding: 0.75rem;
+    }
+
+    .card-content {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 0.875rem;
+    }
+
+    .progress-column {
+        flex: 0 0 auto;
+    }
+
+    .text-column {
+        flex: 1;
+        text-align: left;
+    }
+
+    .score-container {
+        width: 120px;
+        height: 120px;
+    }
+
+    .score-text {
+        font-size: 1.2rem;
+    }
+
+    .card-title {
+        font-size: 1.1rem;
+        text-align: left;
     }
 
     .text-column h3 {
         height: auto;
+        margin-bottom: 0.35rem;
+        justify-content: flex-start;
+        font-size: 0.78rem;
+    }
+
+    .indicator-item {
+        padding-bottom: 0.4rem;
+    }
+
+    .action-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
     }
 
     .btn-large-action {
-        flex: none;
-        width: 100%;
-    }
-
-    .mental-state-badge {
-        font-size: var(--font-lg);
-        padding: var(--spacing-sm) var(--spacing-lg);
-    }
-
-    .state-icon {
-        font-size: 1.5rem;
-    }
-
-    .card-title {
-        text-align: center;
-        font-size: 1.8rem;
+        flex: 1 1 auto;
+        min-width: 100px;
     }
 }
 
 /* Print Styles */
 @media print {
+    /* Hide non-essential elements */
     .action-buttons,
+    .save-results-cta,
+    .cta-buttons,
     nav,
-    footer {
-        display: none;
+    .navbar,
+    .mobile-nav,
+    footer,
+    .alert,
+    .btn,
+    .no-print {
+        display: none !important;
     }
 
-    .classification-card,
-    .indicators-grid,
-    .analyzed-text-card,
-    .recommendations-card {
+    /* Reset page */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        background: white !important;
+        font-size: 12pt;
+        line-height: 1.4;
+        color: #333 !important;
+    }
+
+    .container {
+        max-width: 100%;
+        padding: 0 1cm;
+    }
+
+    .results-section {
+        padding: 0.5cm 0;
+    }
+
+    /* Page header */
+    .page-header {
+        text-align: center;
+        margin-bottom: 0.5cm;
+        border-bottom: 2px solid #3DA37A;
+        padding-bottom: 0.3cm;
+    }
+
+    .page-header h1 {
+        font-size: 18pt;
+        color: #2C3E50 !important;
+        margin-bottom: 0.2cm;
+    }
+
+    .page-header p {
+        font-size: 10pt;
+        color: #666 !important;
+    }
+
+    /* Classification card */
+    .classification-card {
+        background: white !important;
+        box-shadow: none !important;
+        border: 1px solid #ddd;
+        padding: 0.5cm;
+        margin-bottom: 0.5cm;
         break-inside: avoid;
         page-break-inside: avoid;
     }
 
-    .no-print {
-        display: none !important;
-    }
-    body {
-        margin: 0;
-        padding: 0;
-    }
-
     .card-content {
         display: flex;
-        align-items: flex-start;
+        flex-direction: row;
+        align-items: center;
+        gap: 1cm;
+    }
+
+    .progress-column {
+        flex: 0 0 auto;
+    }
+
+    .card-title {
+        font-size: 16pt;
+        color: #2C3E50 !important;
+        text-align: center;
+        margin-bottom: 0.3cm;
+    }
+
+    /* Circular progress for print */
+    .score-container {
+        width: 200px;
+        height: 200px;
+        margin: 0 auto;
+    }
+
+    .circular-progress {
+        width: 200px;
+        height: 200px;
+    }
+
+    .progress-background {
+        stroke: #E9ECEF !important;
+    }
+
+    .score-text {
+        font-size: 28pt !important;
+        color: #3DA37A !important;
+    }
+
+    .score-subtitle {
+        font-size: 10pt !important;
+        color: #666 !important;
+    }
+
+    .confidence-hint {
+        font-size: 8pt;
+        color: #888 !important;
+        margin-top: 0.2cm;
+    }
+
+    /* Categories list */
+    .text-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .text-column h3 {
+        font-size: 12pt;
+        color: #2C3E50 !important;
+        margin-bottom: 0.3cm;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 0.1cm;
+    }
+
+    .categories-list {
+        gap: 0.4cm;
+    }
+
+    .category-item {
+        gap: 0.15cm;
+    }
+
+    .category-header {
+        gap: 0.2cm;
+    }
+
+    .category-item {
+        max-width: 300px;
+    }
+
+    .category-label,
+    .category-value {
+        font-size: 11pt;
+        color: #333 !important;
+    }
+
+    .category-item .category-bar-container {
+        width: 100%;
+        height: 8px;
+        background: #E9ECEF !important;
+        border: 1px solid #ddd;
+    }
+
+    .category-item .category-bar {
+        height: 100%;
+    }
+
+    /* Indicator cards */
+    .indicators-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3cm;
+        margin-bottom: 0.5cm;
+    }
+
+    .indicator-card {
+        flex: 1 1 30%;
+        background: white !important;
+        border: 1px solid #ddd;
+        padding: 0.3cm;
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+
+    .indicator-name {
+        font-size: 10pt;
+        color: #2C3E50 !important;
+    }
+
+    .indicator-value {
+        font-size: 11pt;
+        color: #3DA37A !important;
+    }
+
+    .indicator-bar-container {
+        height: 6px;
+        background: #E9ECEF !important;
+    }
+
+    .indicator-desc {
+        font-size: 8pt;
+        color: #666 !important;
+    }
+
+    /* Analyzed text */
+    .analyzed-text-card {
+        background: white !important;
+        border: 1px solid #ddd;
+        padding: 0.4cm;
+        margin-bottom: 0.5cm;
+        box-shadow: none !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .analyzed-text-card h3 {
+        font-size: 12pt;
+        color: #2C3E50 !important;
+        margin-bottom: 0.2cm;
+    }
+
+    .text-content {
+        background: #f9f9f9 !important;
+        border: 1px solid #eee;
+        padding: 0.3cm;
+        font-size: 10pt;
+        max-height: none !important;
+        overflow: visible !important;
+        color: #333 !important;
+    }
+
+    .text-meta {
+        font-size: 9pt;
+        color: #666 !important;
+        margin-top: 0.2cm;
+    }
+
+    /* Recommendations */
+    .recommendations {
+        background: white !important;
+        border: 1px solid #ddd;
+        padding: 0.4cm;
+        box-shadow: none !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .recommendations h3 {
+        font-size: 12pt;
+        color: #2C3E50 !important;
+        margin-bottom: 0.2cm;
+    }
+
+    .recommendations p {
+        font-size: 10pt;
+        color: #333 !important;
+    }
+
+    .recommendation-list li {
+        font-size: 10pt;
+        color: #333 !important;
+        margin-bottom: 0.15cm;
+    }
+
+    .recommendation-list li::before {
+        color: #3DA37A !important;
+    }
+
+    /* Page breaks */
+    .classification-card,
+    .indicators-grid,
+    .analyzed-text-card,
+    .recommendations {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    /* Footer for print */
+    .results-section::after {
+        content: "Generated by Sentio - Mental Health Text Analysis";
+        display: block;
+        text-align: center;
+        font-size: 8pt;
+        color: #999;
+        margin-top: 1cm;
+        padding-top: 0.3cm;
+        border-top: 1px solid #eee;
     }
 }
