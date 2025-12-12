@@ -350,7 +350,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
             } catch (error) {
-                console.error('Registration error:', error);
                 setSubmitLoading(false);
                 showFormError('An error occurred. Please try again.');
             }
@@ -412,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 showError(usernameInput, data.error || 'Username not available');
             }
         } catch (error) {
-            console.error('Username check error:', error);
+
             clearChecking(usernameInput);
             showError(usernameInput, 'Could not verify username');
         }
@@ -479,7 +478,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 showError(emailInput, data.error || 'Email not available');
             }
         } catch (error) {
-            console.error('Email check error:', error);
             clearChecking(emailInput);
             showError(emailInput, 'Could not verify email');
         }

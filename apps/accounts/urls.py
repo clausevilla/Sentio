@@ -1,16 +1,17 @@
 # Author: Marcus Berggren, Lian Shi
 
+from django.shortcuts import render
 from django.urls import path
 
 from apps.accounts import views
-from django.shortcuts import render
+
 
 def test_error_page(request):
     return render(
         request,
         'accounts/error.html',
         {'message': 'This is a test error message!', 'retry_url': '/'},
-        status=503
+        status=503,
     )
 
 
@@ -46,6 +47,3 @@ urlpatterns = [
     path('privacy/', views.privacy_policy_view, name='privacy_policy'),
     path('test-error/', test_error_page, name='test_error'),  # For test only
 ]
-
-
-
