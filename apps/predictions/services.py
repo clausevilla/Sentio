@@ -135,7 +135,7 @@ def get_prediction_result(user, user_text):
             user_text=user_text,
             prediction=label,
             confidence=confidence,
-            text_data=text_data,
+            example_texts=text_data['example_texts'],
             model_version=model_version,
             recommendations=recommendations,
             anxiety_level=anxiety_level,
@@ -279,7 +279,7 @@ def save_prediction_to_database(
     confidence,
     model_version,
     recommendations,
-    text_data,
+    example_texts,
     anxiety_level=None,
     negativity_level=None,
     emotional_intensity=None,
@@ -302,9 +302,7 @@ def save_prediction_to_database(
         emotional_intensity: Calculated emotional intensity metric (0-100)
     """
 
-    template_texts = text_data['example_texts']
-
-    if user_text not in template_texts:
+    if user_text not in example_texts:
         # Create the text submission record
         submission = TextSubmission.objects.create(user=user, text_content=user_text)
 

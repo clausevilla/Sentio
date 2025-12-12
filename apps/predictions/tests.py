@@ -10,6 +10,8 @@ from apps.ml_admin.models import ModelVersion
 from apps.predictions import services
 from apps.predictions.models import PredictionResult, TextSubmission
 
+text_data = services.load_json()
+
 
 class PredictionTests(TestCase):
     # ----- Text statistics -----
@@ -17,7 +19,7 @@ class PredictionTests(TestCase):
         text = 'I am feeling sad, anxious, and angry today.'
 
         anxiety_level, negativity_level, emotional_intensity, _, _ = (
-            services.calculate_metrics(text)
+            services.calculate_metrics(text, text_data['negative_words'])
         )
 
         self.assertGreater(anxiety_level, 0)
@@ -27,14 +29,18 @@ class PredictionTests(TestCase):
     def test_calculate_metrics_high_anxiety(self):
         text = "I don't know... maybe... it is just hard..."
 
-        anxiety, _, _, _, _ = services.calculate_metrics(text)
+        anxiety, _, _, _, _ = services.calculate_metrics(
+            text, text_data['negative_words']
+        )
 
         self.assertGreaterEqual(anxiety, 50)  # because of ellipses
 
     def test_calculate_metrics_emotional_intensity(self):
         text = 'I HATE THIS! WHY IS IT HAPPENING?!'
 
-        _, _, emotional, _, _ = services.calculate_metrics(text)
+        _, _, emotional, _, _ = services.calculate_metrics(
+            text, text_data['negative_words']
+        )
 
         self.assertGreater(emotional, 50)  # ! and all caps
 
@@ -58,12 +64,16 @@ class PredictionTests(TestCase):
 
         for prediction, confidence, anxiety, expected_fragment in test_cases:
             with self.subTest(prediction=prediction, confidence=confidence):
-                recs = services.get_recommendations(prediction, confidence, anxiety)
+                recs = services.get_recommendations(
+                    prediction, confidence, anxiety, text_data['recommendations']
+                )
                 full_text = ' '.join(recs)
                 self.assertIn(expected_fragment, full_text)
 
     def test_get_recommendations_adds_anxiety_tip(self):
-        recs = services.get_recommendations('normal', 0.9, 60)
+        recs = services.get_recommendations(
+            'normal', 0.9, 60, text_data['recommendations']
+        )
         full_text = ' '.join(recs)
         self.assertIn('grounding techniques', full_text)
 
@@ -171,7 +181,7 @@ class PredictionTests(TestCase):
         recommendations = ['Do yoga']
 
         services.save_prediction_to_database(
-            user, text, 'stress', 0.8, mv, recommendations
+            user, text, 'stress', 0.8, mv, recommendations, text_data['example_texts']
         )
 
         self.assertEqual(TextSubmission.objects.count(), 1)
@@ -186,16 +196,10 @@ class PredictionTests(TestCase):
         user = User.objects.create(username='testuser')
         mv = MagicMock()
 
-        template_text = (
-            'I feel so empty inside. Nothing brings me joy anymore.'
-            " I wake up each day wondering what's the point."
-            " I used to love painting but now I can't even pick up a brush."
-            ' My friends invite me out but I just make excuses.'
-            " I'm tired all the time but can't sleep properly. Everything feels gray and meaningless."
-        )
+        example_text = text_data['example_texts']
 
         services.save_prediction_to_database(
-            user, template_text, 'depression', 0.9, mv, []
+            user, example_text, 'depression', 0.9, mv, [], text_data['example_texts']
         )
 
         self.assertEqual(TextSubmission.objects.count(), 0)
