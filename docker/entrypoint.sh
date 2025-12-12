@@ -69,4 +69,4 @@ PYTHON_END
 fi
 
 echo "Starting Gunicorn"
-exec gunicorn sentio.wsgi:application --bind 0.0.0.0:8000 --timeout 300
+exec gunicorn sentio.wsgi:application --bind 0.0.0.0:8000 --timeout 300 --workers 4 --threads 2 --worker-class gthread --max-requests 1000 --max-requests-jitter 100
