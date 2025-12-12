@@ -19,6 +19,10 @@ logger = logging.getLogger(__name__)
 _predictor = None
 _loaded_model_id = None
 
+# Exception when server overloads
+class ServiceOverloaded(Exception):
+    """Raised when system is too busy to process requests"""
+    pass
 
 def load_json():
     DATA_PATH = 'apps/predictions/data/strings.json'
@@ -39,20 +43,26 @@ def get_predictor(active_model):
     if active_model is None:
         raise RuntimeError('No active model configured')
 
-    if _predictor is None or _loaded_model_id != active_model.id:
-        storage = StorageHandler(
-            model_dir=settings.MODEL_DIR,
-            # Determined by runtime settings
-            gcs_bucket=getattr(settings, 'GCS_BUCKET', None),
-            use_gcs=getattr(settings, 'USE_GCS', False),
-        )
-        _predictor = Predictor(storage)
-        _predictor.load(active_model.model_file_path)
-        _loaded_model_id = active_model.id
-        logger.info(f'Loaded model: {active_model.version_name}')
+    try:
+        if _predictor is None or _loaded_model_id != active_model.id:
+            storage = StorageHandler(
+                model_dir=settings.MODEL_DIR,
+                # Determined by runtime settings
+                gcs_bucket=getattr(settings, 'GCS_BUCKET', None),
+                use_gcs=getattr(settings, 'USE_GCS', False),
+            )
+            _predictor = Predictor(storage)
+            _predictor.load(active_model.model_file_path)
+            _loaded_model_id = active_model.id
+            logger.info(f'Loaded model: {active_model.version_name}')
 
-    return _predictor
+        return _predictor
 
+    except ServiceOverloaded:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_predictor: {str(e)}")
+        raise
 
 def clean_user_input(text):
     data = {'text': [text]}
@@ -69,11 +79,18 @@ def analyze_text(text, model_version):
     Returns:
         Tuple of (label, confidence, model_version, all_confidences)
     """
-    predictor = get_predictor(model_version)
-    result = predictor.predict(text)
+    try:
+        predictor = get_predictor(model_version)
+        result = predictor.predict(text)
 
-    return result['label'], result['confidence'], result['probabilities'], model_version
+        return result['label'], result['confidence'], result['probabilities'], model_version
 
+    except ServiceOverloaded:
+        raise
+
+    except Exception as e:
+        logger.error(f"Error in analyze_text: {str(e)}")
+        raise
 
 def preprocess_user_input(df, model_type):
     pipeline = DataPreprocessingPipeline()
@@ -106,60 +123,69 @@ def get_prediction_result(user, user_text):
                   word_count, char_count)
     """
 
-    model_version = ModelVersion.objects.filter(
-        is_active=True
-    ).first()  # First and only available model
+    try:
+        model_version = ModelVersion.objects.filter(
+            is_active=True
+        ).first()  # First and only available model
 
-    df = clean_user_input(user_text)
-    processed_text = preprocess_user_input(df, model_version.model_type)
+        df = clean_user_input(user_text)
+        processed_text = preprocess_user_input(df, model_version.model_type)
 
-    label, confidence, all_confidences_dict, model_version = analyze_text(
-        processed_text.iloc[0], model_version
-    )
-
-    text_data = load_json()
-
-    # Calculate metrics
-    anxiety_level, negativity_level, emotional_intensity, word_count, char_count = (
-        calculate_metrics(user_text, text_data['negative_words'])
-    )
-
-    # Generate recommendations
-    recommendations = get_recommendations(
-        label, confidence, anxiety_level, text_data['recommendations']
-    )
-
-    if user:
-        save_prediction_to_database(
-            user=user,
-            user_text=user_text,
-            prediction=label,
-            confidence=confidence,
-            example_texts=text_data['example_texts'],
-            model_version=model_version,
-            recommendations=recommendations,
-            anxiety_level=anxiety_level,
-            negativity_level=negativity_level,
-            emotional_intensity=emotional_intensity,
+        label, confidence, all_confidences_dict, model_version = analyze_text(
+            processed_text.iloc[0], model_version
         )
 
-    confidence_percentage = round(confidence * 100)
+        text_data = load_json()
 
-    all_confidences_percentage = {}
-    for class_name, prob in all_confidences_dict.items():
-        all_confidences_percentage[class_name] = round(prob * 100)
+        # Calculate metrics
+        anxiety_level, negativity_level, emotional_intensity, word_count, char_count = (
+            calculate_metrics(user_text, text_data['negative_words'])
+        )
 
-    return (
-        label,
-        confidence_percentage,
-        recommendations,
-        anxiety_level,
-        negativity_level,
-        emotional_intensity,
-        word_count,
-        char_count,
-        all_confidences_percentage,
-    )
+        # Generate recommendations
+        recommendations = get_recommendations(
+            label, confidence, anxiety_level, text_data['recommendations']
+        )
+
+        if user:
+            save_prediction_to_database(
+                user=user,
+                user_text=user_text,
+                prediction=label,
+                confidence=confidence,
+                example_texts=text_data['example_texts'],
+                model_version=model_version,
+                recommendations=recommendations,
+                anxiety_level=anxiety_level,
+                negativity_level=negativity_level,
+                emotional_intensity=emotional_intensity,
+            )
+
+        confidence_percentage = round(confidence * 100)
+
+        all_confidences_percentage = {}
+        for class_name, prob in all_confidences_dict.items():
+            all_confidences_percentage[class_name] = round(prob * 100)
+
+        return (
+            label,
+            confidence_percentage,
+            recommendations,
+            anxiety_level,
+            negativity_level,
+            emotional_intensity,
+            word_count,
+            char_count,
+            all_confidences_percentage,
+        )
+
+    except ServiceOverloaded as e:
+        logger.warning(f"Service overloaded: {str(e)}")
+        raise
+
+    except Exception as e:      # Catch-all unexpected errors
+        logger.error(f"Unexpected error in prediction result: {str(e)}")
+        raise ServiceOverloaded("An unexpected error occurred. We have been notified.")
 
 
 def get_recommendations(prediction, confidence, anxiety_level, recommendations_strings):
