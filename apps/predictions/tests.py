@@ -48,18 +48,19 @@ class PredictionTests(TestCase):
 
     def test_get_recommendations(self):
         # Test cases: (prediction, confidence, anxiety, expected_fragment)
+        recommendations = text_data['recommendations']
         test_cases = [
-            ('normal', 0.8, 10, 'undoubtedly healthy'),
-            ('stress', 0.8, 10, 'limit caffeine'),
+            ('normal', 0.8, 10, recommendations['normal']['high_confidence'][0]),
+            ('stress', 0.8, 10, recommendations['stress']['high_confidence'][0]),
             (
                 'depression',
                 0.8,
                 10,
-                'speaking with a mental health professional this week',
+                recommendations['depression']['high_confidence'][0],
             ),
-            ('suicidal', 0.8, 10, 'dialing 90101'),
-            ('normal', 0.6, 10, 'seem to have a healthy'),
-            ('stress', 0.3, 10, 'Model confidence is low'),
+            ('suicidal', 0.8, 10, recommendations['suicidal']['high_confidence'][0]),
+            ('normal', 0.6, 10, recommendations['normal']['medium_confidence'][0]),
+            ('stress', 0.3, 10, recommendations['stress']['low_confidence'][0]),
         ]
 
         for prediction, confidence, anxiety, expected_fragment in test_cases:
@@ -192,14 +193,21 @@ class PredictionTests(TestCase):
 
         self.assertEqual(res.recommendations, '\n'.join(recommendations))
 
-    def test_save_prediction_ignores_template_text(self):
-        user = User.objects.create(username='testuser')
-        mv = MagicMock()
 
-        example_text = text_data['example_texts']
+def test_save_prediction_ignores_template_text(self):
+    user = User.objects.create(username='testuser')
+    mv = MagicMock()
 
+    for example_text in text_data['example_texts']:
         services.save_prediction_to_database(
-            user, example_text, 'depression', 0.9, mv, [], text_data['example_texts']
+            user,
+            example_text,
+            'depression',
+            0.9,
+            mv,
+            [],
+            text_data['example_texts'],  # <-- pass the full list
         )
 
-        self.assertEqual(TextSubmission.objects.count(), 0)
+    # Ensure none of the template texts were saved
+    self.assertEqual(TextSubmission.objects.count(), 0)
