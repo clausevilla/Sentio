@@ -1,4 +1,4 @@
-<!-- Author: Lian Shi -->
+<!-- Author: Lian Shi, Julia McCall -->
 <!-- Disclaimer: LLM has been used to help with structuring content. Manual adjustments were done after to ensure accuracy and clarity. -->
 
 {% extends 'base.html' %}
@@ -17,7 +17,7 @@ advanced NLP and machine learning techniques.{% endblock %}
 <!-- About Hero -->
 <section class="about-hero">
     <h1><i class="fas fa-info-circle" style="margin-right: 10px;"></i> About Sentio</h1>
-    <p>Understanding the science and technology behind our AI-powered mental health text analysis system</p>
+    <p>Understanding the science and technology behind the system</p>
 </section>
 
 <!-- About Content -->
@@ -26,14 +26,14 @@ advanced NLP and machine learning techniques.{% endblock %}
     <div class="about-section">
         <h2><i class="fas fa-book-open" style="margin-right: 10px;"></i> Our Mission</h2>
         <p>
-            Our Mental Health Analysis System was developed as part of an AI research project to help individuals better
-            understand their mental health through text analysis. The system leverages natural language processing and
-            machine learning techniques to identify 4 different mental health states in written communication: Normal,
-            Depression, Suicidal and Stress.
+            This mental state analysis system was developed as part of an AI research project to help individuals better
+            understand their mental health states through text analysis. The system leverages natural language processing and
+            machine learning techniques to identify four different mental states in written communication: normal,
+            depression, suicidal, and stress.
         </p>
         <p>
-            We believe that early awareness of mental health patterns can lead to better outcomes. By providing
-            accessible, AI-powered analysis tools, we aim to help people recognize mental health indicators in their
+            We believe that early awareness of mental health patterns can lead to better outcomes in seeking professional help and diagnosis.
+            By providing this accessible, AI-powered analysis tool, we aim to help users recognize mental health indicators in their
             communication and take proactive steps toward seeking appropriate support when needed.
         </p>
     </div>
@@ -92,7 +92,7 @@ advanced NLP and machine learning techniques.{% endblock %}
             </div>
             <div class="tech-item">
                 <i class="fas fa-database"></i>
-                <h4>SQLite</h4>
+                <h4>PostgreSQL</h4>
                 <p>Database storage</p>
             </div>
         </div>
@@ -102,12 +102,13 @@ advanced NLP and machine learning techniques.{% endblock %}
     <div class="about-section">
         <h2><i class="fas fa-shield-alt" style="margin-right: 10px;"></i> Privacy & Security</h2>
         <p>
-            Your privacy is our top priority. All data is securely stored and encrypted. We never share your personal
-            information or analysis results with third parties. Only you can access your stress analysis history.
+            Your privacy is our top priority. All data is securely stored and encrypted. We do not use cookies,
+            and we never share your personal information or analysis results with third parties. Only you can
+            access your stress analysis history, and you can choose to delete your data at any time.
         </p>
         <p>
-            If you choose to create an account, you can track your progress over time. However, the system also works
-            without an account for one-time analyses.
+            If you choose to create an account, you can track your mental state patterns and trends over time.
+            However, the system also works without an account for one-time analyses.
 
         </p>
         <p>
@@ -120,7 +121,7 @@ advanced NLP and machine learning techniques.{% endblock %}
     <div class="container">
         <div class="disclaimer">
             <strong><i class="fas fa-exclamation-triangle" style="margin-right: 10px;"></i> Important Medical Disclaimer</strong><br>
-            This tool analyzes text to identify potential mental health patterns. It is NOT a medical diagnostic tool and does NOT provide medical advice. Results should not be used for self-diagnosis or to replace professional mental health care.
+            This tool analyzes text to identify potential mental state patterns. It is NOT a medical diagnostic tool and does NOT provide medical advice. Results should not be used for self-diagnosis or to replace professional mental health care.
         </div>
     </div>
 </section>
