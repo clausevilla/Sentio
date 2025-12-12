@@ -1,4 +1,4 @@
-/* Author: Lian Shi, Claudia Sevilla */
+/* Author: Lian Shi, Claudia Sevilla, Karl Byland */
 
 // predictions/input.js - Text analysis input page functionality
 
@@ -27,7 +27,7 @@ document.getElementById('alertClose')?.addEventListener('click', () => {
 });
 
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     const textInput = document.getElementById('textInput');
     const charCount = document.getElementById('charCount');
     const analyzeBtn = document.getElementById('analyzeBtn');
@@ -35,13 +35,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const analysisForm = document.getElementById('analysisForm');
     const loadingOverlay = document.getElementById('loadingOverlay');
 
+    const response = await fetch("/predictions/api/strings/");
+    const strings = await response.json();
+
+    console.log(strings)
     // Example texts for different mental states
     const examples = {
-        depression: "I feel so empty inside. Nothing brings me joy anymore. I wake up each day wondering what's the point. I used to love painting but now I can't even pick up a brush. My friends invite me out but I just make excuses. I'm tired all the time but can't sleep properly. Everything feels gray and meaningless.",
+        depression: strings["example_texts"][0],
 
-        stress: "I have so much on my plate right now. Work deadlines are piling up, bills need to be paid, and I barely have time to breathe. I feel overwhelmed and like I'm drowning. My body feels tense all the time and I get headaches every day. I snap at people I care about because I'm so on edge.",
+        stress: strings["example_texts"][1],
 
-        normal: "I have been feeling pretty good lately. I finished my tasks for the day and even had time to grab coffee with a friend. The weather was really nice! So I took a short walk and it really boosted my mood. Nothing overly extraordinary happened, but it felt like a genuinely pleasant day!",
+        normal: strings["example_texts"][2],
     };
 
     // Character counter

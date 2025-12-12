@@ -1,5 +1,6 @@
 # Author: Julia McCall
 
+import json
 import logging
 import re
 from typing import Dict, Tuple
@@ -62,106 +63,19 @@ class DataPreprocessingPipeline:
         self.lemmatizer = WordNetLemmatizer()
         self.stop_words = set(stopwords.words('english'))
 
+        DATA_PATH = 'ml_pipeline/data/strings.json'
+
+        with open(DATA_PATH, 'r', encoding='utf-8') as f:
+            TEXT_DATA = json.load(f)
+
         # Stopwords to keep to preserve mental health context
-        self.keep_words = {
-            'no',
-            'not',
-            'nor',
-            'never',
-            'always',
-            "n't",
-            'either',
-            'neither',
-            'i',
-            'me',
-            'my',
-            'myself',
-            'we',
-            'us',
-            'our',
-            'ourselves',
-        }
+        self.keep_words = set(TEXT_DATA.get('keep_words', []))
 
         # Remove the 'keep_words' from the standard stopword set
         self.refined_stop_words = self.stop_words - self.keep_words
 
         # Dictionary for mapping the most common contractions
-        self.contractions = {
-            "ain't": 'am not',
-            "aren't": 'are not',
-            "can't": 'cannot',
-            "can't've": 'cannot have',
-            "could've": 'could have',
-            "couldn't": 'could not',
-            "couldn't've": 'could not have',
-            "didn't": 'did not',
-            "doesn't": 'does not',
-            "don't": 'do not',
-            "hadn't": 'had not',
-            "hadn't've": 'had not have',
-            "hasn't": 'has not',
-            "haven't": 'have not',
-            "he'd": 'he would',
-            "he'd've": 'he would have',
-            "he'll": 'he will',
-            "he's": 'he is',
-            "how'd": 'how did',
-            "how'll": 'how will',
-            "how's": 'how is',
-            "i'd": 'i would',
-            "i'd've": 'i would have',
-            "i'll": 'i will',
-            "i'm": 'i am',
-            "i've": 'i have',
-            "isn't": 'is not',
-            "it'd": 'it would',
-            "it'd've": 'it would have',
-            "it'll": 'it will',
-            "it's": 'it is',
-            "let's": 'let us',
-            "ma'am": 'madam',
-            "might've": 'might have',
-            "mightn't": 'might not',
-            "must've": 'must have',
-            "mustn't": 'must not',
-            "needn't": 'need not',
-            "oughtn't": 'ought not',
-            "shan't": 'shall not',
-            "she'd": 'she would',
-            "she'd've": 'she would have',
-            "she'll": 'she will',
-            "she's": 'she is',
-            "should've": 'should have',
-            "shouldn't": 'should not',
-            "that'd": 'that would',
-            "that's": 'that is',
-            "there'd": 'there would',
-            "there's": 'there is',
-            "they'd": 'they would',
-            "they'll": 'they will',
-            "they're": 'they are',
-            "they've": 'they have',
-            "wasn't": 'was not',
-            "we'd": 'we would',
-            "we'll": 'we will',
-            "we're": 'we are',
-            "we've": 'we have',
-            "weren't": 'were not',
-            "what'll": 'what will',
-            "what're": 'what are',
-            "what's": 'what is',
-            "what've": 'what have',
-            "where'd": 'where did',
-            "where's": 'where is',
-            "who'll": 'who will',
-            "who's": 'who is',
-            "won't": 'will not',
-            "wouldn't": 'would not',
-            "you'd": 'you would',
-            "you'll": 'you will',
-            "you're": 'you are',
-            "you've": 'you have',
-        }
+        self.contractions = TEXT_DATA['contraction_dictionary']
 
         # Auto-generated report after preprocessing, may be useful
         self.report = {

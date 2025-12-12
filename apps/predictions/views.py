@@ -1,7 +1,11 @@
 # Author: Marcus Berggren, Lian Shi, Karl Byland, Claudia Sevilla
 
 import logging
+import json
+from pathlib import Path
 
+from django.conf import settings
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
 from apps.predictions.services import get_prediction_result
@@ -56,3 +60,10 @@ def result_view(request):
             'all_confidences': all_confidences,
         },
     )
+
+
+def strings(request):
+    path = Path(settings.BASE_DIR) / 'apps' / 'predictions' / 'data' / 'strings.json'
+    with open(path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    return JsonResponse(data)
