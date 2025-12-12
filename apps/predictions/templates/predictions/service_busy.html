@@ -1,82 +1,55 @@
+/* Author: Lian Shi */
+
 {% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Service Temporarily Unavailable - Sentio{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'predictions/css/service_busy.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="container" style="max-width: 600px; margin: 60px auto; text-align: center; padding: 40px 20px;">
+<div class="container service-busy-container">
 
     <!-- Icon -->
-    <div style="margin-bottom: 30px;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary, #4A7C59)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-        </svg>
+    <div class="service-busy-icon">
+        <i class="far fa-clock"></i>
     </div>
 
     <!-- Heading -->
-    <h1 style="color: var(--color-text-dark, #1F3D3D); font-size: 28px; margin-bottom: 16px; font-weight: 600;">
-        We're Experiencing High Demand
-    </h1>
+    <h1 class="service-busy-title">We're Experiencing High Demand</h1>
 
     <!-- Message -->
-    <p style="color: var(--color-text, #2C4A4A); font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
-        {{ error_message|default:"Our prediction service is currently busy processing many requests." }}
+    <p class="service-busy-message">
+        We're helping a lot of people right now and need a moment to catch up.
         <br><br>
-        Please wait a moment and try again. We appreciate your patience!
+        Please try again shortly. Thank you for your patience! 💚
     </p>
 
     <!-- Action Buttons -->
-    <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
-        <a href="{% url 'predictions:input' %}"
-           class="btn-retry"
-           style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px;
-                  background-color: var(--color-primary, #4A7C59); color: white; text-decoration: none;
-                  border-radius: 25px; font-weight: 500; transition: background-color 0.3s ease;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
-                <path d="M21 3v5h-5"></path>
-                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
-                <path d="M3 21v-5h5"></path>
-            </svg>
+    <div class="service-busy-buttons">
+        <a href="{% url 'predictions:input' %}" class="btn-retry">
+            <i class="fas fa-redo"></i>
             Try Again
         </a>
 
-        <a href="{% url 'home' %}"
-           class="btn-home"
-           style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px;
-                  background-color: var(--color-bg-mint, #E8F2EE); color: var(--color-text-dark, #1F3D3D);
-                  text-decoration: none; border-radius: 25px; font-weight: 500; transition: background-color 0.3s ease;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
+        <a href="{% url 'home' %}" class="btn-home">
+            <i class="fas fa-home"></i>
             Go Home
         </a>
     </div>
 
     <!-- Auto-refresh hint -->
-    <p style="color: var(--color-text-light, #3D5A5A); font-size: 14px; margin-top: 40px;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 4px;">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-        </svg>
-        This page will automatically retry in <span id="countdown" style="font-weight: 600; color: var(--color-primary, #4A7C59);">10</span> seconds
+    <p class="service-busy-hint">
+        <i class="fas fa-info-circle"></i>
+        This page will automatically retry in <span id="countdown" class="countdown">10</span> seconds
     </p>
 </div>
+{% endblock %}
 
-<style>
-    .btn-retry:hover {
-        background-color: var(--color-primary-light, #5C8A72) !important;
-    }
-    .btn-home:hover {
-        background-color: var(--color-bg-sage, #A8C9B8) !important;
-    }
-</style>
-
+{% block extra_js %}
 <script>
-    // Auto-refresh countdown
     let seconds = 10;
     const countdownEl = document.getElementById('countdown');
 
