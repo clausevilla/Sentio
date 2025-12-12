@@ -59,7 +59,7 @@ class DataPreprocessingPipeline:
     """
 
     def __init__(self):
-        # NLTK resources already downloaded at module level 
+        # NLTK resources already downloaded at module level
         self.lemmatizer = WordNetLemmatizer()
         self.stop_words = set(stopwords.words('english'))
 
