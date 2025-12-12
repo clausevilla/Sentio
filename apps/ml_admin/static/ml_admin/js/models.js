@@ -2,7 +2,6 @@
 /* Disclaimer: LLM has been used to helo set up modelc comparison modal js */
 
 
-/*--TODO : MODIFY TO REFELCT UPDATED DATABASE and methods IF NEEDED*/
 
 /**
  * ML Admin - Models Page with Compare Feature
@@ -76,34 +75,10 @@ function openCompareModal() {
 function buildCompareContent(models) {
     // Metrics to compare
     const metrics = [
-        {
-            key: 'accuracy',
-            label: 'Accuracy',
-            icon: 'fa-bullseye',
-            format: v => v !== null ? (v * 100).toFixed(2) : '—',
-            isPercent: false
-        },
-        {
-            key: 'precision',
-            label: 'Precision',
-            icon: 'fa-crosshairs',
-            format: v => v !== null ? (v * 100).toFixed(2) : '—',
-            isPercent: false
-        },
-        {
-            key: 'recall',
-            label: 'Recall',
-            icon: 'fa-redo',
-            format: v => v !== null ? (v * 100).toFixed(2) : '—',
-            isPercent: false
-        },
-        {
-            key: 'f1',
-            label: 'F1 Score',
-            icon: 'fa-chart-line',
-            format: v => v !== null ? (v * 100).toFixed(2) : '—',
-            isPercent: false
-        },
+        { key: 'accuracy', label: 'Accuracy', icon: 'fa-bullseye', format: v => v !== null ? v.toFixed(1) : '-', isPercent: true },
+        { key: 'precision', label: 'Precision', icon: 'fa-crosshairs', format: v => v !== null ? v.toFixed(3) : '-', isPercent: false },
+        { key: 'recall', label: 'Recall', icon: 'fa-redo', format: v => v !== null ? v.toFixed(3) : '-', isPercent: false },
+        { key: 'f1', label: 'F1 Score', icon: 'fa-chart-line', format: v => v !== null ? v.toFixed(3) : '-', isPercent: false },
     ];
 
     // Find best for each metric
@@ -135,7 +110,7 @@ function buildCompareContent(models) {
             <div class="compare-model-card ${model.is_active ? 'active' : ''} ${isTopPerformer ? 'top-performer' : ''}">
                 <div class="model-card-color" style="background: ${COMPARE_COLORS[i]}"></div>
                 <div class="model-card-content">
-                    <div class="model-card-name">${model.name}</div>
+                    <div class="model-card-name" title="${model.name}">${model.name}</div>
                     <div class="model-card-meta">
                         <span class="model-card-type">${model.model_type_display}</span>
                         ${model.is_active ? '<span class="model-card-active">Deployed</span>' : ''}
@@ -148,7 +123,7 @@ function buildCompareContent(models) {
                             ${leading}/${metrics.length}
                         </span>
                         <span class="leading-label">leading</span>
-                    ` : '<span class="leading-label">—</span>'}
+                    ` : '<span class="leading-label">-</span>'}
                 </div>
             </div>
         `;
@@ -159,6 +134,7 @@ function buildCompareContent(models) {
     let tableHtml = `
         <div class="compare-metrics-section">
             <h4><i class="fas fa-bullseye"></i> Performance Metrics</h4>
+            <div class="compare-table-wrap">
             <table class="compare-table">
                 <thead>
                     <tr>
@@ -198,12 +174,13 @@ function buildCompareContent(models) {
         tableHtml += '</tr>';
     });
 
-    tableHtml += '</tbody></table></div>';
+    tableHtml += '</tbody></table></div></div>';
 
     // Build info comparison
     let infoHtml = `
         <div class="compare-info-section">
             <h4><i class="fas fa-info-circle"></i> Model Details</h4>
+            <div class="compare-table-wrap">
             <table class="compare-info-table">
                 <thead>
                     <tr>
@@ -231,7 +208,7 @@ function buildCompareContent(models) {
                     </tr>
                     <tr>
                         <td class="info-label">Dataset</td>
-                        ${models.map(m => `<td>${m.job_datasets}</td>`).join('')}
+                        ${models.map(m => `<td>${m.job_dataset}</td>`).join('')}
                     </tr>
                     <tr>
                         <td class="info-label">Status</td>
@@ -258,6 +235,7 @@ function buildCompareContent(models) {
                     </tr>
                 </tbody>
             </table>
+            </div>
         </div>
     `;
 
@@ -280,7 +258,7 @@ function clearCompareSelection() {
 // Model Actions
 // ================================
 
-// Deploy model
+// Deploy model - PATCH /api/models/{id}/activate/
 async function deployModel(id, name) {
     const confirmed = await showConfirm({
         title: 'Deploy Model',
@@ -290,8 +268,8 @@ async function deployModel(id, name) {
     });
     if (!confirmed) return;
 
-    const {ok, data} = await apiCall(`/management/api/models/${id}/activate/`, {
-        method: 'POST'
+    const { ok, data } = await apiCall(`/management/api/models/${id}/activate/`, {
+        method: 'PATCH'
     });
 
     if (ok && data.success) {
@@ -302,7 +280,7 @@ async function deployModel(id, name) {
     }
 }
 
-// Delete model
+// Delete model - DELETE /api/models/{id}/delete/
 async function deleteModel(id, name) {
     const confirmed = await showConfirm({
         title: 'Delete Model',
@@ -313,8 +291,8 @@ async function deleteModel(id, name) {
     });
     if (!confirmed) return;
 
-    const {ok, data} = await apiCall(`/management/api/models/${id}/delete/`, {
-        method: 'POST'
+    const { ok, data } = await apiCall(`/management/api/models/${id}/delete/`, {
+        method: 'DELETE'
     });
 
     if (ok && data.success) {

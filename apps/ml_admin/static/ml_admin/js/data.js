@@ -44,7 +44,6 @@ function getCSRF() {
 // ================================
 // Pipeline Selection
 // ================================
-// TODO : Update pipeline types to match model later
 function selectPipeline(element, value) {
     // Update radio button
     const radio = element.querySelector('input[type="radio"]');
@@ -146,7 +145,6 @@ function hideTasksPanel() {
     }
 }
 
-//TODO: CHECK PIPELINE NAMES FROM MODEL LATER
 function addTask(fileName, datasetType, uploadId = null, pipelineType = 'full') {
     const taskId = ++taskIdCounter;
 
@@ -597,7 +595,7 @@ async function uploadFile() {
     const fileName = selectedFile.name;
     const datasetType = document.getElementById('datasetType').value;
 
-    // TODO UPDATE LATER IF NEEDED
+
     // Get selected pipeline
     const pipelineInput = document.querySelector('input[name="pipeline"]:checked');
     const pipelineType = pipelineInput ? pipelineInput.value : 'full';

@@ -27,6 +27,14 @@
         </div>
     </div>
 
+    <div class="stat-card clickable" onclick="location.href='{% url 'ml_admin:training' %}'">
+        <div class="stat-icon coral"><i class="fas fa-flask"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ jobs.total }}</div>
+            <div class="stat-label">Training Jobs</div>
+        </div>
+    </div>
+
     <!-- Pipeline Data Group -->
     <div class="stat-card-group clickable" onclick="location.href='{% url 'ml_admin:data' %}'">
         <div class="stat-group-header">Pipeline Data</div>
@@ -46,13 +54,7 @@
         </div>
     </div>
 
-    <div class="stat-card clickable" onclick="location.href='{% url 'ml_admin:training' %}'">
-        <div class="stat-icon coral"><i class="fas fa-flask"></i></div>
-        <div class="stat-info">
-            <div class="stat-value">{{ jobs.total }}</div>
-            <div class="stat-label">Training Jobs</div>
-        </div>
-    </div>
+
 </div>
 
 <div class="grid-2">

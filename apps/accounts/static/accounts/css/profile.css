@@ -7,21 +7,25 @@
 
 .profile-grid {
     display: grid;
-    grid-template-columns: 2fr;
-    gap: var(--spacing-sm);
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
     max-width: 800px;
     margin: 0 auto;
 }
 
 /* Card Styling */
+.card {
+    padding: 1.5rem;
+}
+
 .card-header {
-    padding-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-md);
     border-bottom: 1px solid var(--color-bg-mint);
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
 }
 
 .card-header h2 {
-    font-size: var(--font-xl);
+    font-size: 1.25rem;
     margin: 0;
     color: var(--color-text-dark);
 }
@@ -35,7 +39,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-md) 0;
+    padding: 1rem 0;
     border-bottom: 1px solid #f0f0f0;
 }
 
@@ -46,13 +50,93 @@
 .info-label {
     font-weight: 600;
     color: var(--color-text-light);
-    font-size: var(--font-sm);
+    font-size: 0.95rem;
 }
 
 .info-value {
     font-weight: 600;
     color: var(--color-text-dark);
-    font-size: var(--font-base);
+    font-size: 1rem;
+}
+
+/* Form Inputs */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+}
+
+.form-help {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+    margin-top: 0.35rem;
+}
+
+.form-error {
+    display: block;
+    font-size: 0.85rem;
+    color: #e74c3c;
+    margin-top: 0.35rem;
+}
+
+/* Buttons */
+.btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 48px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    color: white;
+    border: none;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(74, 124, 89, 0.3);
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--color-text);
+    border: 2px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+    background: #f8f9fa;
+    border-color: #ccc;
+}
+
+.btn-block {
+    width: 100%;
+    display: block;
 }
 
 /* Danger Zone */
@@ -62,21 +146,25 @@
 }
 
 .danger-action h3 {
-    font-size: var(--font-base);
-    margin-bottom: var(--spacing-xs);
+    font-size: 1.05rem;
+    margin-bottom: 0.5rem;
     color: var(--color-text-dark);
 }
 
 .danger-action p {
-    font-size: var(--font-sm);
+    font-size: 0.95rem;
     color: var(--color-text-light);
-    margin-bottom: var(--spacing-md);
+    margin-bottom: 1rem;
+    line-height: 1.5;
 }
 
 .btn-danger {
     background: #e74c3c;
     color: white;
     border: none;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    min-height: 48px;
 }
 
 .btn-danger:hover {
@@ -87,6 +175,21 @@
 .btn-danger:disabled {
     background: #ccc;
     cursor: not-allowed;
+}
+
+/* Export Data Section */
+.export-info {
+    background: #e8f5e9;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.export-info p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #2e7d32;
+    line-height: 1.6;
 }
 
 /* Modal Styles */
@@ -101,6 +204,8 @@
     z-index: 9999;
     align-items: center;
     justify-content: center;
+    padding: 1rem;
+    box-sizing: border-box;
 }
 
 .modal.active {
@@ -109,9 +214,9 @@
 
 .modal-content {
     background: white;
-    border-radius: var(--radius-md);
+    border-radius: 12px;
     max-width: 500px;
-    width: 90%;
+    width: 100%;
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
@@ -121,28 +226,28 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-lg);
+    padding: 1.25rem 1.5rem;
     border-bottom: 2px solid #f0f0f0;
 }
 
 .modal-header h2 {
-    font-size: var(--font-xl);
+    font-size: 1.25rem;
     margin: 0;
 }
 
 .modal-close {
     background: none;
     border: none;
-    font-size: 2rem;
+    font-size: 1.75rem;
     cursor: pointer;
     color: var(--color-text-light);
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-sm);
-    transition: all var(--transition-base);
+    border-radius: 8px;
+    transition: all 0.2s;
 }
 
 .modal-close:hover {
@@ -150,30 +255,309 @@
 }
 
 .modal-body {
-    padding: var(--spacing-lg);
+    padding: 1.5rem;
 }
 
-/* Responsive */
-@media (max-width: 640px) {
-    .container {
-        padding: 0 0.5rem;
-    }
+/* Alert Boxes */
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.alert-warning {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+}
+
+.alert-error {
+    background: #ffebee;
+    border: 1px solid #e74c3c;
+    color: #c0392b;
+}
+
+/* ===================================
+   Responsive - Tablet (768px)
+   =================================== */
+@media (max-width: 768px) {
     .profile-grid {
-        gap: var(--spacing-sm);
+        gap: 1rem;
+    }
+
+    .card {
+        padding: 1.25rem;
+    }
+
+    .card-header h2 {
+        font-size: 1.15rem;
     }
 
     .info-row {
+        padding: 0.875rem 0;
+    }
+
+    .modal-header {
+        padding: 1rem 1.25rem;
+    }
+
+    .modal-body {
+        padding: 1.25rem;
+    }
+}
+
+/* ===================================
+   Responsive - Mobile (640px)
+   =================================== */
+@media (max-width: 640px) {
+    .container {
+        padding: 0 1rem;
+    }
+
+    .section {
+        padding: 1.5rem 0;
+    }
+
+    /* Page Header */
+    .text-center h2 {
+        font-size: 1.5rem;
+    }
+
+    .text-center p {
+        font-size: 0.95rem;
+    }
+
+    .profile-grid {
+        gap: 0.875rem;
+    }
+
+    /* Cards */
+    .card {
+        padding: 1rem;
+        border-radius: 12px;
+    }
+
+    .card-header {
+        padding-bottom: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .card-header h2 {
+        font-size: 1.05rem;
+    }
+
+    .card-header h2 i {
+        margin-right: 10px !important;
+    }
+
+    /* Info Rows - Stack on mobile */
+    .info-row {
         flex-direction: column;
         align-items: flex-start;
-        gap: var(--spacing-xs);
+        gap: 0.25rem;
+        padding: 0.75rem 0;
+    }
+
+    .info-label {
+        font-size: 0.85rem;
+    }
+
+    .info-value {
+        font-size: 0.95rem;
+    }
+
+    /* Form Elements */
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .form-input {
+        padding: 0.75rem 0.875rem;
+        font-size: 16px; /* Prevents iOS zoom */
+        border-radius: 8px;
+    }
+
+    .form-help,
+    .form-error {
+        font-size: 0.8rem;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        min-height: 46px;
+        border-radius: 8px;
+    }
+
+    .btn-danger {
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    /* Danger Zone */
+    .danger-action h3 {
+        font-size: 0.95rem;
+    }
+
+    .danger-action p {
+        font-size: 0.875rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .danger-card hr {
+        margin: 1.25rem 0 !important;
+    }
+
+    /* Export Info */
+    .export-info {
+        padding: 0.875rem;
+    }
+
+    .export-info p {
+        font-size: 0.85rem;
+    }
+
+    /* Modal */
+    .modal {
+        padding: 0.75rem;
     }
 
     .modal-content {
-        width: 100%;
+        border-radius: 12px;
+        max-height: 85vh;
     }
 
-    .modal-header,
+    .modal-header {
+        padding: 1rem;
+    }
+
+    .modal-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .modal-close {
+        width: 40px;
+        height: 40px;
+        font-size: 1.5rem;
+    }
+
     .modal-body {
-        padding: var(--spacing-sm);
+        padding: 1rem;
+    }
+
+    /* Alert */
+    .alert {
+        padding: 0.875rem;
+        font-size: 0.875rem;
+    }
+
+    /* Modal Buttons */
+    .modal-body [style*="display: flex"][style*="gap"] {
+        gap: 0.75rem !important;
+        margin-top: 1.5rem !important;
+    }
+}
+
+/* ===================================
+   Responsive - Small Mobile (400px)
+   =================================== */
+@media (max-width: 400px) {
+    .container {
+        padding: 0 0.75rem;
+    }
+
+    .section {
+        padding: 1.25rem 0;
+    }
+
+    .text-center h2 {
+        font-size: 1.35rem;
+    }
+
+    .text-center p {
+        font-size: 0.9rem;
+    }
+
+    .profile-grid {
+        gap: 0.75rem;
+    }
+
+    .card {
+        padding: 0.875rem;
+    }
+
+    .card-header h2 {
+        font-size: 1rem;
+    }
+
+    .info-row {
+        padding: 0.65rem 0;
+    }
+
+    .info-label {
+        font-size: 0.82rem;
+    }
+
+    .info-value {
+        font-size: 0.9rem;
+    }
+
+    /* Form */
+    .form-label {
+        font-size: 0.85rem;
+    }
+
+    .form-input {
+        padding: 0.7rem 0.75rem;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 0.7rem 0.875rem;
+        font-size: 0.9rem;
+        min-height: 44px;
+    }
+
+    .btn-danger {
+        padding: 0.7rem 0.875rem;
+        font-size: 0.9rem;
+    }
+
+    .danger-action h3 {
+        font-size: 0.9rem;
+    }
+
+    .danger-action p {
+        font-size: 0.82rem;
+    }
+
+    /* Modal */
+    .modal-header {
+        padding: 0.875rem;
+    }
+
+    .modal-header h2 {
+        font-size: 1rem;
+    }
+
+    .modal-body {
+        padding: 0.875rem;
+    }
+
+    .alert {
+        padding: 0.75rem;
+        font-size: 0.82rem;
+    }
+
+    .export-info p {
+        font-size: 0.8rem;
     }
 }

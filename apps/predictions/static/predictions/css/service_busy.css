@@ -1,0 +1,118 @@
+
+/* Service Busy Page Styles */
+
+.service-busy-container {
+    max-width: 600px;
+    margin: 60px auto;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.service-busy-icon {
+    margin-bottom: 30px;
+    color: var(--color-primary, #4A7C59);
+}
+
+.service-busy-icon i {
+    font-size: 80px;
+}
+
+.service-busy-title {
+    color: var(--color-text-dark, #1F3D3D);
+    font-size: 28px;
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.service-busy-message {
+    color: var(--color-text, #2C4A4A);
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.service-busy-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-retry {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background-color: var(--color-primary, #4A7C59);
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.btn-retry:hover {
+    background-color: var(--color-primary-light, #5C8A72);
+    color: white;
+}
+
+.btn-home {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background-color: var(--color-bg-mint, #E8F2EE);
+    color: var(--color-text-dark, #1F3D3D);
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.btn-home:hover {
+    background-color: var(--color-bg-sage, #A8C9B8);
+}
+
+.service-busy-hint {
+    color: var(--color-text-light, #3D5A5A);
+    font-size: 14px;
+    margin-top: 40px;
+}
+
+.countdown {
+    font-weight: 600;
+    color: var(--color-primary, #4A7C59);
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+    .service-busy-container {
+        margin: 40px auto;
+        padding: 30px 16px;
+    }
+
+
+    .service-busy-icon i {
+    font-size: 50px;
+}
+
+    .service-busy-title {
+        font-size: 24px;
+    }
+
+    .service-busy-message {
+        font-size: 15px;
+    }
+
+    .service-busy-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn-retry,
+    .btn-home {
+        width: 100%;
+        max-width: 200px;
+        justify-content: center;
+    }
+}

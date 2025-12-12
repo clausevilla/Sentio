@@ -1361,6 +1361,30 @@
 }
 
 @media (max-width: 768px) {
+
+    .pipeline-stats-grid {
+    display: grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem
+}
+
+.pipeline-stat-body {
+    padding: 0.5rem;
+}
+
+.pipeline-stat-row {
+    display: flex;
+    font-size: .75rem
+}
+
+.pipeline-stat-row span:first-child {
+    font-size: 0;  /* Hide text */
+}
+
+.pipeline-stat-row span:first-child i {
+    font-size: 0.7rem;  /* Show icon at normal size */
+}
     .stats-row {
         grid-template-columns: 1fr;
     }
