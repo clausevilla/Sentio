@@ -1,0 +1,1623 @@
+/* Author: Lian Shi, Marcus Berggren */
+/* Disclaimer: LLM has used to help with implement training page functionalities to fit our database */
+
+// State
+let currentTab = 'train';
+let selectedDatasets = {};
+let datasetDistributions = {};
+let selectedModelId = null;
+let selectedModelName = null;
+let selectedModelType = null;
+// Store model's saved params
+let selectedModelSavedParams = null;
+let distChart = null;
+let testSetChart = null;
+
+// Pipeline type mapping for model types
+const MODEL_PIPELINE_MAP = {
+    'logistic_regression': 'full',
+    'random_forest': 'full',
+    'lstm': 'partial',
+    'transformer': 'raw'
+};
+
+document.addEventListener('DOMContentLoaded', function () {
+    initAlgorithmListeners();
+    initTestSetModal();
+    updateSummary();
+});
+
+// Format number with commas
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+// ================================
+// Dataset Filtering
+// ================================
+
+function filterDatasets() {
+    const algo = currentTab === 'train'
+        ? document.querySelector('input[name="algorithm"]:checked')?.value
+        : selectedModelType;
+    const pipeline = MODEL_PIPELINE_MAP[algo];
+    const dataType = currentTab === 'train' ? 'trainCount' : 'incrementCount';
+
+    document.querySelectorAll('.dataset-option').forEach(el => {
+        const show = el.dataset.pipelineType === pipeline && parseInt(el.dataset[dataType]) > 0;
+        el.style.display = show ? '' : 'none';
+        if (!show && el.classList.contains('selected')) {
+            el.querySelector('input').checked = false;
+            el.classList.remove('selected');
+            delete selectedDatasets[el.querySelector('input').dataset.id];
+        }
+    });
+    updateDistribution();
+    updateSummary();
+}
+
+// ================================
+// Tab Switching
+// ================================
+
+function switchTab(tab) {
+    currentTab = tab;
+
+    // Update tab buttons
+    document.querySelectorAll('.col-tab:not(.static)').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+
+    // Toggle content
+    document.getElementById('trainContent').style.display = (tab === 'train') ? 'flex' : 'none';
+    document.getElementById('retrainContent').style.display = (tab === 'retrain') ? 'flex' : 'none';
+
+    // Toggle summary
+    document.getElementById('trainSummary').style.display = (tab === 'train') ? 'flex' : 'none';
+    document.getElementById('retrainSummary').style.display = (tab === 'retrain') ? 'flex' : 'none';
+
+    // Toggle buttons
+    document.getElementById('trainBtn').style.display = (tab === 'train') ? 'inline-flex' : 'none';
+    document.getElementById('retrainBtn').style.display = (tab === 'retrain') ? 'inline-flex' : 'none';
+
+    // Filter datasets for new tab
+    filterDatasets();
+}
+
+// ================================
+// Algorithm Selection
+// ================================
+
+function initAlgorithmListeners() {
+    document.querySelectorAll('input[name="algorithm"]').forEach(radio => {
+        radio.addEventListener('change', function () {
+            filterDatasets();
+            updateSummary();
+        });
+    });
+    filterDatasets(); // Call once on init
+}
+
+// ================================
+// Model Selection (Retrain)
+// ================================
+
+function selectModel(element, modelId, modelType, modelName) {
+    // Update UI
+    document.querySelectorAll('.model-option').forEach(opt => {
+        opt.classList.remove('selected');
+        opt.querySelector('input').checked = false;
+    });
+
+    element.classList.add('selected');
+    element.querySelector('input').checked = true;
+
+    // Store selection
+    selectedModelId = modelId;
+    selectedModelType = modelType;
+    selectedModelName = modelName;
+
+    // Get saved params from retrainableModelsData
+    selectedModelSavedParams = null;
+    if (typeof retrainableModelsData !== 'undefined' && retrainableModelsData) {
+        const modelData = retrainableModelsData.find(m => m.id === modelId);
+        if (modelData && modelData.saved_params) {
+            selectedModelSavedParams = modelData.saved_params;
+        }
+    }
+
+    // Set algorithm for params
+    currentParamsAlgorithm = modelType;
+
+    // Filter datasets based on selected model type
+    filterDatasets();
+}
+
+// ================================
+// Dataset Selection (Shared)
+// ================================
+
+function toggleDataset(element, id, count, event) {
+    const checkbox = element.querySelector('input[type="checkbox"]');
+
+    if (!event || event.target.type !== 'checkbox') {
+        checkbox.checked = !checkbox.checked;
+    }
+    element.classList.toggle('selected', checkbox.checked);
+
+    // Get distribution data
+    let distribution = [];
+    try {
+        distribution = JSON.parse(element.dataset.distribution || '[]');
+    } catch (e) {
+        distribution = [];
+    }
+
+    if (checkbox.checked) {
+        selectedDatasets[id] = count;
+        datasetDistributions[id] = distribution;
+    } else {
+        delete selectedDatasets[id];
+        delete datasetDistributions[id];
+    }
+
+    updateDistribution();
+    updateSummary();
+}
+
+// ================================
+// Summary Update
+// ================================
+
+function updateSummary() {
+    const datasetCount = Object.keys(selectedDatasets).length;
+    let totalRecords = 0;
+    Object.values(selectedDatasets).forEach(c => totalRecords += c);
+
+    if (currentTab === 'train') {
+        // Train summary
+        const algoRadio = document.querySelector('input[name="algorithm"]:checked');
+        const algoName = algoRadio ? ALGORITHM_NAMES[algoRadio.value] : '-';
+
+        document.getElementById('sumAlgo').textContent = algoName;
+        document.getElementById('sumDatasets').textContent = datasetCount;
+        document.getElementById('sumRecords').textContent = formatNumber(totalRecords);
+
+        // Enable/disable button
+        document.getElementById('trainBtn').disabled = datasetCount === 0;
+    } else {
+        // Retrain summary
+        document.getElementById('sumModel').textContent = selectedModelName || '-';
+        document.getElementById('sumRetrainDatasets').textContent = datasetCount;
+        document.getElementById('sumRetrainRecords').textContent = formatNumber(totalRecords);
+
+        // Enable/disable button (need both model and datasets)
+        document.getElementById('retrainBtn').disabled = !selectedModelId || datasetCount === 0;
+    }
+}
+
+// ================================
+// Distribution Preview
+// ================================
+
+function updateDistribution() {
+    const distEmpty = document.getElementById('distEmpty');
+    const distContent = document.getElementById('distContent');
+    const distBars = document.getElementById('distBars');
+
+    const selectedIds = Object.keys(selectedDatasets);
+
+    if (selectedIds.length === 0) {
+        distEmpty.style.display = 'flex';
+        distContent.style.display = 'none';
+        if (distChart) {
+            distChart.destroy();
+            distChart = null;
+        }
+        return;
+    }
+
+    // Combine distributions
+    const combined = {};
+    selectedIds.forEach(id => {
+        const dist = datasetDistributions[id] || [];
+        dist.forEach(item => {
+            const label = item.label || 'Unknown';
+            combined[label] = (combined[label] || 0) + item.count;
+        });
+    });
+
+    const labels = Object.keys(combined).sort();
+    const counts = labels.map(l => combined[l]);
+    const total = counts.reduce((a, b) => a + b, 0);
+
+    if (labels.length === 0 || total === 0) {
+        distEmpty.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>No distribution data</span>';
+        distEmpty.style.display = 'flex';
+        distContent.style.display = 'none';
+        return;
+    }
+
+    // Show content
+    distEmpty.style.display = 'none';
+    distContent.style.display = 'flex';
+
+    // Mini chart
+    const ctx = document.getElementById('distChart');
+    if (distChart) {
+        distChart.data.labels = labels;
+        distChart.data.datasets[0].data = counts;
+        distChart.update();
+    } else {
+        distChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: counts,
+                    backgroundColor: CHART_COLORS.slice(0, labels.length),
+                    borderWidth: 0,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: true }
+                },
+                cutout: '55%',
+            }
+        });
+    }
+
+    // Bars
+    let barsHtml = '';
+    labels.forEach((label, i) => {
+        const pct = ((counts[i] / total) * 100).toFixed(0);
+        barsHtml += `
+            <div class="dist-bar-row">
+                <span class="dist-bar-label">${label}</span>
+                <div class="dist-bar-track">
+                    <div class="dist-bar-fill" style="width: ${pct}%; background: ${CHART_COLORS[i % CHART_COLORS.length]}"></div>
+                </div>
+                <span class="dist-bar-pct">${pct}%</span>
+            </div>
+        `;
+    });
+    distBars.innerHTML = barsHtml;
+}
+
+// ================================
+// Test Set Modal
+// ================================
+
+function initTestSetModal() {
+    if (typeof testSetDistribution === 'undefined' || !testSetDistribution || testSetDistribution.length === 0) return;
+
+    const total = testSetDistribution.reduce((sum, d) => sum + d.count, 0);
+
+    // Render bars
+    const barsDiv = document.getElementById('testSetBars');
+    if (barsDiv) {
+        let html = '';
+        testSetDistribution.forEach((item, i) => {
+            const pct = ((item.count / total) * 100).toFixed(1);
+            html += `
+                <div class="dist-bar-row">
+                    <span class="dist-bar-label">${item.label}</span>
+                    <div class="dist-bar-track">
+                        <div class="dist-bar-fill" style="width: ${pct}%; background: ${CHART_COLORS[i % CHART_COLORS.length]}"></div>
+                    </div>
+                    <span class="dist-bar-pct">${item.count} (${pct}%)</span>
+                </div>
+            `;
+        });
+        barsDiv.innerHTML = html;
+    }
+
+    // Create chart when modal opens
+    const modal = document.getElementById('testSetModal');
+    if (modal) {
+        const observer = new MutationObserver(function () {
+            if (modal.classList.contains('open') && !testSetChart) {
+                const ctx = document.getElementById('testSetChart');
+                if (ctx) {
+                    testSetChart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: testSetDistribution.map(d => d.label),
+                            datasets: [{
+                                data: testSetDistribution.map(d => d.count),
+                                backgroundColor: CHART_COLORS.slice(0, testSetDistribution.length),
+                                borderWidth: 0,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {legend: {display: false}},
+                            cutout: '60%',
+                        }
+                    });
+                }
+            }
+        });
+        observer.observe(modal, {attributes: true, attributeFilter: ['class']});
+    }
+}
+
+// ================================
+// Start Training
+// ================================
+
+async function startTraining(mode) {
+    const ids = Object.keys(selectedDatasets).map(Number);
+
+    if (ids.length === 0) {
+        toast('Select at least one dataset', 'error');
+        return;
+    }
+
+    let btn, confirmMsg, payload;
+
+    if (mode === 'retrain') {
+        if (!selectedModelId) {
+            toast('Select a model', 'error');
+            return;
+        }
+        btn = document.getElementById('retrainBtn');
+        confirmMsg = `Fine-tune ${selectedModelName} with ${ids.length} dataset(s)?`;
+        payload = {
+            upload_ids: ids,
+            mode: 'retrain',
+            base_model_id: selectedModelId,
+            params: getCurrentParams()
+        };
+    } else {
+        const algoRadio = document.querySelector('input[name="algorithm"]:checked');
+        const algorithm = algoRadio ? algoRadio.value : 'logistic_regression';
+        const algoName = ALGORITHM_NAMES[algorithm];
+
+        btn = document.getElementById('trainBtn');
+        confirmMsg = `Start training with ${algoName}?`;
+        payload = {
+            upload_ids: ids,
+            mode: 'new',
+            algorithm: algorithm,
+            params: getCurrentParams()
+        };
+    }
+
+    const confirmed = await showConfirm({
+        title: mode === 'retrain' ? 'Start Fine-tuning' : 'Start Training',
+        message: confirmMsg,
+        type: 'warning',
+        confirmText: 'Confirm'
+    });
+    if (!confirmed) return;
+
+    btn.disabled = true;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting...';
+
+    const {ok, data} = await apiCall(URLS.startTraining, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+    });
+
+    if (ok && data.success) {
+        toast(data.message);
+        setTimeout(() => location.reload(), 1500);
+    } else {
+        toast(data.error || 'Failed to start training', 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+// ================================
+// Cancel Training Job
+// ================================
+
+/**
+ * Cancels a running or pending training job.
+ * Shows a confirmation dialog before cancelling and removing.
+ */
+async function cancelJob(jobId) {
+    const confirmed = await showConfirm({
+        title: 'Cancel Training Job',
+        message: `Are you sure you want to cancel and remove training job <strong>#${jobId}</strong>? This action cannot be undone.`,
+        type: 'warning',
+        confirmText: 'Cancel Job',
+        cancelText: 'Keep Running',
+        danger: true
+    });
+
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`/management/api/training/${jobId}/cancel/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRF()
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            toast('Training job cancelled', 'success');
+            // Update the row instaed of removing it
+            updateJobRowCancelled(jobId);
+        } else {
+            toast(data.error || 'Failed to cancel job', 'error');
+        }
+    } catch (error) {
+        console.error('Cancel error:', error);
+        toast('Failed to cancel job', 'error');
+    }
+}
+
+
+function updateJobRowCancelled(jobId) {
+    const row = document.querySelector(`tr[data-job-id="${jobId}"]`);
+    if (!row) return;
+
+    // Update status badge
+    const badge = row.querySelector('.badge');
+    if (badge) {
+        badge.className = 'badge cancelled';
+        badge.innerHTML = 'CANCELLED';
+    }
+
+    // Remove cancel button
+    const cancelBtn = row.querySelector('.btn-icon.danger');
+    if (cancelBtn) {
+        cancelBtn.remove();
+    }
+
+    // Update stored jobsData
+    const jobsDataScript = document.getElementById('jobsData');
+    if (jobsDataScript) {
+        try {
+            let storedJobs = JSON.parse(jobsDataScript.textContent);
+            const job = storedJobs.find(j => j.id === jobId);
+            if (job) {
+                job.status = 'CANCELLED';
+            }
+            jobsDataScript.textContent = JSON.stringify(storedJobs);
+        } catch (e) {
+        }
+    }
+}
+
+
+/**
+ * Updates the training banner after a job is cancelled.
+ */
+function updateTrainingBannerAfterCancel() {
+    const banner = document.querySelector('.alert.info.training-banner');
+    if (!banner) return;
+
+    const spanEl = banner.querySelector('span');
+    if (!spanEl) return;
+
+    // Parse current count
+    const match = spanEl.innerHTML.match(/<strong>(\d+)<\/strong>/);
+    if (match) {
+        const currentCount = parseInt(match[1]);
+        const newCount = currentCount - 1;
+
+        if (newCount <= 0) {
+            // Remove the banner
+            banner.style.transition = 'opacity 0.3s';
+            banner.style.opacity = '0';
+            setTimeout(() => banner.remove(), 300);
+        } else {
+            // Update the count
+            const text = newCount === 1
+                ? '<strong>1</strong> training job currently running'
+                : `<strong>${newCount}</strong> training job(s) currently active`;
+            spanEl.innerHTML = text;
+        }
+    }
+}
+
+// ================================
+// Job Details Modal
+// ================================
+
+function showJobDetails(jobId) {
+    let jobsData = [];
+    try {
+        const dataEl = document.getElementById('jobsData');
+        if (dataEl) {
+            jobsData = JSON.parse(dataEl.textContent);
+        }
+    } catch (e) {
+        console.error('Failed to parse jobs data:', e);
+        return;
+    }
+
+    const job = jobsData.find(j => j.id === jobId);
+    if (!job) {
+        toast('Job not found', 'error');
+        return;
+    }
+
+    // Update modal title
+    document.getElementById('jobModalTitle').textContent = `Job #${job.id} Details`;
+
+    // Build modal content
+    let html = `
+        <div class="job-info-grid">
+            <div class="job-detail-section">
+                <div class="job-detail-label">Status</div>
+                <div class="job-detail-value">
+                    <span class="badge ${job.status.toLowerCase()}">${job.status}</span>
+                </div>
+            </div>
+            <div class="job-detail-section">
+                <div class="job-detail-label">Algorithm</div>
+                <div class="job-detail-value">
+                    <span class="model-type-tag">${getAlgorithmDisplayName(job.model_type)}</span>
+                </div>
+            </div>
+            <div class="job-detail-section">
+                <div class="job-detail-label">Initiated By</div>
+                <div class="job-detail-value">${job.initiated_by}</div>
+            </div>
+            <div class="job-detail-section">
+                <div class="job-detail-label">Started</div>
+                <div class="job-detail-value">${job.started_at}</div>
+            </div>
+            <div class="job-detail-section">
+                <div class="job-detail-label">Completed</div>
+                <div class="job-detail-value">${job.completed_at || '—'}</div>
+            </div>
+            <div class="job-detail-section">
+                <div class="job-detail-label">Datasets</div>
+                <div class="job-detail-value">${job.datasets}</div>
+            </div>
+        </div>
+    `;
+
+    // Show model info if completed
+    if (job.model) {
+        html += `
+            <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--gray-200);">
+            <div class="job-detail-section">
+                <div class="job-detail-label">Resulting Model</div>
+                <div class="job-detail-value">
+                    <span class="job-model-name"><i class="fas fa-cube"></i> ${job.model.name}</span>
+                </div>
+            </div>
+            <div class="job-detail-section" style="margin-top: 1rem;">
+                <div class="job-detail-label">Performance Metrics</div>
+                <div class="job-metrics-grid" style="margin-top: 0.5rem;">
+                    <div class="job-metric">
+                        <span class="job-metric-value">${job.model.accuracy ? (job.model.accuracy * 100).toFixed(1) + '%' : '—'}</span>
+                        <span class="job-metric-label">Accuracy</span>
+                    </div>
+                    <div class="job-metric">
+                        <span class="job-metric-value">${job.model.precision ? (job.model.precision * 100).toFixed(1) + '%' : '—'}</span>
+                        <span class="job-metric-label">Precision</span>
+                    </div>
+                    <div class="job-metric">
+                        <span class="job-metric-value">${job.model.recall ? (job.model.recall * 100).toFixed(1) + '%' : '—'}</span>
+                        <span class="job-metric-label">Recall</span>
+                    </div>
+                    <div class="job-metric">
+                        <span class="job-metric-value">${job.model.f1_score ? (job.model.f1_score * 100).toFixed(1) + '%' : '—'}</span>
+                        <span class="job-metric-label">F1 Score</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Show parameters if available
+        if (job.model.parameters) {
+            html += renderJobParameters(job.model_type || job.model.model_type, job.model.parameters);
+        }
+    }
+
+    // Show progress log if we have epoch data
+    if (job.progress_log && job.progress_log.includes('Epoch')) {
+        html += `
+            <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--gray-200);">
+            <div class="job-detail-section">
+                <div class="job-detail-label">Training Progress</div>
+                <pre class="job-progress-log">${job.progress_log.split('ERROR:')[0].trim()}</pre>
+            </div>
+        `;
+    }
+
+    // Show error message if failed
+    if (job.status === 'FAILED' && job.progress_log) {
+        const errorPart = job.progress_log.includes('ERROR:')
+            ? job.progress_log.split('ERROR:')[1].trim()
+            : job.progress_log;
+        html += `
+            <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--gray-200);">
+            <div class="job-error-box">
+                <div class="job-error-title">
+                    <i class="fas fa-exclamation-triangle"></i> Error Message
+                </div>
+                <div class="job-error-message">${errorPart}</div>
+            </div>
+        `;
+    }
+
+    document.getElementById('jobModalBody').innerHTML = html;
+    openModal('jobDetailsModal');
+}
+
+/**
+ * Gets the display name for an algorithm type.
+ */
+function getAlgorithmDisplayName(modelType) {
+    const names = {
+        'logistic_regression': 'Logistic Regression',
+        'random_forest': 'Random Forest',
+        'lstm': 'LSTM',
+        'transformer': 'Transformer'
+    };
+    return names[modelType] || modelType || '—';
+}
+
+/**
+ * Renders the parameters section for a job based on model type.
+ * Only shows parameters relevant to the specific algorithm.
+ */
+function renderJobParameters(modelType, params) {
+    if (!params) return '';
+
+    // Define which parameters to show for each model type with their display labels
+    const paramConfig = {
+        logistic_regression: [
+            {key: 'max_iter', label: 'Max Iterations'},
+            {key: 'regularization_strength', label: 'Regularization (C)'},
+            {key: 'solver', label: 'Solver'},
+            {key: 'ngram_range_min', label: 'N-gram Min'},
+            {key: 'ngram_range_max', label: 'N-gram Max'},
+            {key: 'min_df', label: 'Min Doc Frequency'},
+            {key: 'max_df', label: 'Max Doc Frequency'},
+            {key: 'tfidf_max_features', label: 'Max TF-IDF Features'}
+        ],
+        random_forest: [
+            {key: 'n_estimators', label: 'Number of Trees'},
+            {key: 'max_depth', label: 'Max Depth'},
+            {key: 'min_samples_split', label: 'Min Samples Split'},
+            {key: 'min_samples_leaf', label: 'Min Samples Leaf'},
+            {key: 'rf_max_features', label: 'Max Features'},
+            {key: 'n_jobs', label: 'Parallel Jobs'},
+            {key: 'ngram_range_min', label: 'N-gram Min'},
+            {key: 'ngram_range_max', label: 'N-gram Max'},
+            {key: 'min_df', label: 'Min Doc Frequency'},
+            {key: 'max_df', label: 'Max Doc Frequency'},
+            {key: 'tfidf_max_features', label: 'Max TF-IDF Features'}
+        ],
+        lstm: [
+            {key: 'embed_dim', label: 'Embedding Dimension'},
+            {key: 'hidden_dim', label: 'Hidden Dimension'},
+            {key: 'num_layers', label: 'Number of Layers'},
+            {key: 'dropout', label: 'Dropout'},
+            {key: 'max_seq_length', label: 'Max Sequence Length'},
+            {key: 'vocab_size', label: 'Vocabulary Size'},
+            {key: 'learning_rate', label: 'Learning Rate'},
+            {key: 'batch_size', label: 'Batch Size'},
+            {key: 'epochs', label: 'Epochs'}
+        ],
+        transformer: [
+            {key: 'd_model', label: 'Model Dimension'},
+            {key: 'n_head', label: 'Attention Heads'},
+            {key: 'dim_feedforward', label: 'Feedforward Dimension'},
+            {key: 'num_layers', label: 'Number of Layers'},
+            {key: 'dropout', label: 'Dropout'},
+            {key: 'max_seq_length', label: 'Max Sequence Length'},
+            {key: 'vocab_size', label: 'Vocabulary Size'},
+            {key: 'learning_rate', label: 'Learning Rate'},
+            {key: 'batch_size', label: 'Batch Size'},
+            {key: 'epochs', label: 'Epochs'}
+        ]
+    };
+
+    const config = paramConfig[modelType];
+    if (!config) return '';
+
+    // Filter to only parameters that have values
+    const validParams = config.filter(p => params[p.key] !== null && params[p.key] !== undefined);
+
+    if (validParams.length === 0) return '';
+
+    let html = `
+        <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--gray-200);">
+        <div class="job-detail-section">
+            <div class="job-detail-label"><i class="fas fa-sliders-h"></i> Training Parameters</div>
+            <div class="job-params-grid" style="margin-top: 0.75rem;">
+    `;
+
+    validParams.forEach(p => {
+        let value = params[p.key];
+        // Format the value for display
+        if (typeof value === 'number') {
+            // Format small decimals nicely
+            if (value < 0.01 && value > 0) {
+                value = value.toExponential(2);
+            } else if (!Number.isInteger(value)) {
+                value = value.toFixed(4).replace(/\.?0+$/, '');
+            }
+        }
+        if (value === null || value === 'None') {
+            value = 'None';
+        }
+
+        html += `
+            <div class="job-param-item">
+                <span class="job-param-label">${p.label}</span>
+                <span class="job-param-value">${value}</span>
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+        </div>
+    `;
+
+    return html;
+}
+
+
+/* ================================
+   Algorithm Parameters Modal
+================================ */
+
+// Parameters that can be fine-tuned during retraining
+const FINETUNE_PARAMS = ['learning_rate', 'epochs', 'patience', 'batch_size', 'max_seq_length', 'vocab_size'];
+
+// Algorithm parameter definitions
+// type: 'select' = dropdown, 'number' = custom input field
+const ALGORITHM_PARAMS = {
+    logistic_regression: {
+        name: 'Logistic Regression',
+        icon: 'fa-chart-line',
+        params: [
+            // Logistic Regression specific
+            {
+                key: 'max_iter',
+                label: 'Max Iterations',
+                type: 'select',
+                default: 1000,
+                options: [100, 500, 1000, 2000, 5000],
+                hint: 'Maximum iterations for solver convergence'
+            },
+            {
+                key: 'regularization_strength',
+                label: 'Regularization (C)',
+                type: 'select',
+                default: 1.0,
+                options: [0.01, 0.1, 0.5, 1.0, 2.0, 10.0],
+                hint: 'Inverse regularization strength'
+            },
+            {
+                key: 'solver',
+                label: 'Solver',
+                type: 'select',
+                default: 'lbfgs',
+                options: ['lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'],
+                hint: 'Optimization algorithm'
+            },
+            // TF-IDF shared
+            {
+                key: 'ngram_range_min',
+                label: 'N-gram Min',
+                type: 'select',
+                default: 1,
+                options: [1, 2],
+                hint: 'Minimum n-gram size'
+            },
+            {
+                key: 'ngram_range_max',
+                label: 'N-gram Max',
+                type: 'select',
+                default: 2,
+                options: [1, 2, 3],
+                hint: 'Maximum n-gram size (must be >= min)'
+            },
+            {
+                key: 'min_df',
+                label: 'Min Doc Frequency',
+                type: 'select',
+                default: 2,
+                options: [1, 2, 5, 10],
+                hint: 'Ignore terms in fewer documents'
+            },
+            {
+                key: 'max_df',
+                label: 'Max Doc Frequency',
+                type: 'select',
+                default: 0.95,
+                options: [0.8, 0.9, 0.95, 1.0],
+                hint: 'Ignore terms in more than X% docs'
+            },
+            {
+                key: 'tfidf_max_features',
+                label: 'Max Features',
+                type: 'select',
+                default: 'None',
+                options: ['None', 5000, 10000, 20000, 50000],
+                hint: 'Max vocabulary size (None = unlimited)'
+            },
+        ]
+    },
+    random_forest: {
+        name: 'Random Forest',
+        icon: 'fa-tree',
+        params: [
+            // Random Forest specific
+            {
+                key: 'n_estimators',
+                label: 'Number of Trees',
+                type: 'select',
+                default: 100,
+                options: [50, 100, 200, 500, 1000],
+                hint: 'Number of trees in the forest'
+            },
+            {
+                key: 'max_depth',
+                label: 'Max Depth',
+                type: 'select',
+                default: 'None',
+                options: ['None', 5, 10, 20, 50, 100],
+                hint: 'Max depth of trees (None = unlimited)'
+            },
+            {
+                key: 'min_samples_split',
+                label: 'Min Samples Split',
+                type: 'select',
+                default: 2,
+                options: [2, 5, 10, 20],
+                hint: 'Min samples to split a node'
+            },
+            {
+                key: 'min_samples_leaf',
+                label: 'Min Samples Leaf',
+                type: 'select',
+                default: 1,
+                options: [1, 2, 5, 10],
+                hint: 'Min samples at leaf node'
+            },
+            {
+                key: 'rf_max_features',
+                label: 'Max Features (Split)',
+                type: 'select',
+                default: 'sqrt',
+                options: ['sqrt', 'log2', 'None'],
+                hint: 'Features to consider for best split'
+            },
+            {
+                key: 'n_jobs',
+                label: 'Parallel Jobs',
+                type: 'select',
+                default: -1,
+                options: [-1, 1, 2, 4],
+                hint: '-1 = use all CPUs'
+            },
+            // TF-IDF shared
+            {
+                key: 'ngram_range_min',
+                label: 'N-gram Min',
+                type: 'select',
+                default: 1,
+                options: [1, 2],
+                hint: 'Minimum n-gram size'
+            },
+            {
+                key: 'ngram_range_max',
+                label: 'N-gram Max',
+                type: 'select',
+                default: 2,
+                options: [1, 2, 3],
+                hint: 'Maximum n-gram size (must be >= min)'
+            },
+            {
+                key: 'min_df',
+                label: 'Min Doc Frequency',
+                type: 'select',
+                default: 2,
+                options: [1, 2, 5, 10],
+                hint: 'Ignore terms in fewer documents'
+            },
+            {
+                key: 'max_df',
+                label: 'Max Doc Frequency',
+                type: 'select',
+                default: 0.95,
+                options: [0.8, 0.9, 0.95, 1.0],
+                hint: 'Ignore terms in more than X% docs'
+            },
+            {
+                key: 'tfidf_max_features',
+                label: 'Max Features',
+                type: 'select',
+                default: 'None',
+                options: ['None', 5000, 10000, 20000, 50000],
+                hint: 'Max vocabulary size'
+            },
+        ]
+    },
+    lstm: {
+        name: 'LSTM (RNN)',
+        icon: 'fa-network-wired',
+        params: [
+            // LSTM specific - architecture params (not fine-tunable)
+            {
+                key: 'embed_dim',
+                label: 'Embedding Dim',
+                type: 'select',
+                default: 64,
+                options: [32, 64, 128, 256],
+                hint: 'Word embedding dimensions'
+            },
+            {
+                key: 'hidden_dim',
+                label: 'Hidden Dim',
+                type: 'select',
+                default: 64,
+                options: [32, 64, 128, 256],
+                hint: 'LSTM hidden state size'
+            },
+            {
+                key: 'num_layers',
+                label: 'Number of Layers',
+                type: 'select',
+                default: 2,
+                options: [1, 2, 3, 4, 6],
+                hint: 'Stacked LSTM layers'
+            },
+            {
+                key: 'dropout',
+                label: 'Dropout',
+                type: 'select',
+                default: 0.1,
+                options: [0.0, 0.1, 0.2, 0.3, 0.5],
+                hint: 'Dropout rate for regularization'
+            },
+            // Fine-tunable params
+            {
+                key: 'max_seq_length',
+                label: 'Max Sequence Length',
+                type: 'select',
+                default: 256,
+                options: [128, 256, 512, 1024],
+                hint: 'Maximum input text length'
+            },
+            {
+                key: 'vocab_size',
+                label: 'Vocabulary Size',
+                type: 'select',
+                default: 30000,
+                options: [10000, 20000, 30000, 50000],
+                hint: 'Maximum vocabulary size'
+            },
+            {
+                key: 'learning_rate',
+                label: 'Learning Rate',
+                type: 'number',
+                default: 0.00001,
+                min: 0.000001,
+                max: 1,
+                step: 0.00001,
+                hint: 'Optimizer learning rate (e.g., 0.00001)'
+            },
+            {
+                key: 'batch_size',
+                label: 'Batch Size',
+                type: 'select',
+                default: 32,
+                options: [8, 16, 32, 64, 128],
+                hint: 'Training batch size'
+            },
+            {
+                key: 'epochs',
+                label: 'Epochs',
+                type: 'select',
+                default: 5,
+                options: [3, 5, 10, 20],
+                hint: 'Training epochs'
+            },
+            {
+                key: 'patience',
+                label: 'Early Stop Patience',
+                type: 'select',
+                default: 3,
+                options: [2, 3, 5, 10],
+                hint: 'Epochs to wait before early stopping'
+            },
+        ]
+    },
+    transformer: {
+        name: 'Transformer',
+        icon: 'fa-microchip',
+        params: [
+            // Transformer specific - architecture params (not fine-tunable)
+            {
+                key: 'd_model',
+                label: 'Model Dimension',
+                type: 'select',
+                default: 128,
+                options: [64, 128, 256, 512],
+                hint: 'Transformer dimension (must be divisible by n_head)'
+            },
+            {
+                key: 'n_head',
+                label: 'Attention Heads',
+                type: 'select',
+                default: 4,
+                options: [2, 4, 8],
+                hint: 'Number of attention heads'
+            },
+            {
+                key: 'dim_feedforward',
+                label: 'Feedforward Dim',
+                type: 'select',
+                default: 256,
+                options: [128, 256, 512, 1024],
+                hint: 'Feedforward network dimension'
+            },
+            {
+                key: 'num_layers',
+                label: 'Number of Layers',
+                type: 'select',
+                default: 2,
+                options: [1, 2, 3, 4, 6],
+                hint: 'Transformer encoder layers'
+            },
+            {
+                key: 'dropout',
+                label: 'Dropout',
+                type: 'select',
+                default: 0.1,
+                options: [0.0, 0.1, 0.2, 0.3, 0.5],
+                hint: 'Dropout rate'
+            },
+            // Fine-tunable params
+            {
+                key: 'max_seq_length',
+                label: 'Max Sequence Length',
+                type: 'select',
+                default: 256,
+                options: [128, 256, 512, 1024],
+                hint: 'Maximum input length'
+            },
+            {
+                key: 'vocab_size',
+                label: 'Vocabulary Size',
+                type: 'select',
+                default: 30000,
+                options: [10000, 20000, 30000, 50000],
+                hint: 'Maximum vocabulary size'
+            },
+            {
+                key: 'learning_rate',
+                label: 'Learning Rate',
+                type: 'number',
+                default: 0.00001,
+                min: 0.000001,
+                max: 1,
+                step: 0.00001,
+                hint: 'Optimizer learning rate (e.g., 0.00001)'
+            },
+            {
+                key: 'batch_size',
+                label: 'Batch Size',
+                type: 'select',
+                default: 32,
+                options: [8, 16, 32, 64, 128],
+                hint: 'Training batch size'
+            },
+            {
+                key: 'epochs',
+                label: 'Epochs',
+                type: 'select',
+                default: 5,
+                options: [3, 5, 10, 20],
+                hint: 'Training epochs'
+            },
+            {
+                key: 'patience',
+                label: 'Early Stop Patience',
+                type: 'select',
+                default: 3,
+                options: [2, 3, 5, 10],
+                hint: 'Epochs to wait before early stopping'
+            },
+        ]
+    }
+};
+
+// Fine-tuning defaults (used when retraining)
+const FINETUNE_DEFAULTS = {
+    learning_rate: 0.00001,
+    epochs: 5,
+    patience: 3,
+    batch_size: 32,
+    max_seq_length: 256,
+    vocab_size: 30000,
+};
+
+// Alias for different naming conventions
+ALGORITHM_PARAMS['rnn'] = ALGORITHM_PARAMS['lstm'];
+ALGORITHM_PARAMS['LSTM'] = ALGORITHM_PARAMS['lstm'];
+ALGORITHM_PARAMS['RNN'] = ALGORITHM_PARAMS['lstm'];
+ALGORITHM_PARAMS['Transformer'] = ALGORITHM_PARAMS['transformer'];
+
+// Current parameter values - stored per mode+algorithm
+let currentParams = {};
+let currentParamsAlgorithm = null;
+let currentParamsMode = null;
+
+// ================================
+// Open Parameters Modal
+// ================================
+function openParamsModal(algoKey) {
+    // Normalize algorithm key
+    const normalizedKey = normalizeAlgoKey(algoKey);
+    const algo = ALGORITHM_PARAMS[normalizedKey];
+
+    if (!algo) {
+        console.error('Unknown algorithm:', algoKey);
+        toast('Unknown algorithm type', 'error');
+        return;
+    }
+
+    currentParamsAlgorithm = normalizedKey;
+
+    // Check if we're in retrain mode
+    const isRetrain = currentTab === 'retrain';
+    currentParamsMode = isRetrain ? 'retrain' : 'new';
+
+    // Create unique key for this mode+algorithm combination
+    const paramsKey = `${currentParamsMode}_${normalizedKey}`;
+
+    // Initialize params
+    if (!currentParams[paramsKey]) {
+        currentParams[paramsKey] = {};
+        algo.params.forEach(p => {
+            if (isRetrain) {
+                // For retrain: use saved model params or defaults
+                if (selectedModelSavedParams && selectedModelSavedParams[p.key] !== undefined) {
+                    currentParams[paramsKey][p.key] = selectedModelSavedParams[p.key];
+                } else if (FINETUNE_PARAMS.includes(p.key) && FINETUNE_DEFAULTS[p.key] !== undefined) {
+                    currentParams[paramsKey][p.key] = FINETUNE_DEFAULTS[p.key];
+                } else {
+                    currentParams[paramsKey][p.key] = p.default;
+                }
+            } else {
+                // For new training: use defaults
+                currentParams[paramsKey][p.key] = p.default;
+            }
+        });
+    }
+
+    // Store mode info on modal
+    const modal = document.getElementById('paramsModal');
+    if (modal) {
+        modal.dataset.isRetrain = isRetrain;
+        modal.dataset.paramsKey = paramsKey;
+        modal.dataset.algorithm = normalizedKey;
+    }
+
+    // Update modal title with mode indicator
+    const modeLabel = isRetrain ? ' <span class="mode-badge retrain"><i class="fas fa-sync-alt"></i> Fine-tuning</span>' : '';
+    document.getElementById('paramsModalTitle').innerHTML = `
+        <i class="fas ${algo.icon}"></i> ${algo.name} Parameters${modeLabel}
+    `;
+
+    // Update info text based on mode
+    const infoEl = document.querySelector('.params-info');
+    if (infoEl) {
+        if (isRetrain) {
+            infoEl.innerHTML = `<i class="fas fa-info-circle"></i> <strong>Fine-tuning mode:</strong> Architecture parameters are locked. Only training parameters (highlighted) can be adjusted.`;
+            infoEl.classList.add('retrain-info');
+        } else {
+            infoEl.innerHTML = `<i class="fas fa-info-circle"></i> Adjust training parameters below or use defaults. Hover over <i class="fas fa-question-circle"></i> for hints.`;
+            infoEl.classList.remove('retrain-info');
+        }
+    }
+
+    // Build params grid
+    const grid = document.getElementById('paramsGrid');
+    let html = '';
+
+    algo.params.forEach(param => {
+        const value = currentParams[paramsKey][param.key];
+        const defaultVal = isRetrain ?
+            (FINETUNE_DEFAULTS[param.key] !== undefined ? FINETUNE_DEFAULTS[param.key] : param.default) :
+            param.default;
+        const isModified = String(value) !== String(defaultVal);
+        const isEditable = !isRetrain || FINETUNE_PARAMS.includes(param.key);
+
+        html += renderParamInput(param, value, isModified, isEditable, isRetrain);
+    });
+
+    grid.innerHTML = html;
+
+    // Add event listeners for editable inputs only
+    grid.querySelectorAll('.param-input:not([disabled])').forEach(input => {
+        input.addEventListener('change', handleParamChange);
+        input.addEventListener('input', handleParamChange);
+    });
+
+    // Show modal
+    openModal('paramsModal');
+}
+
+// ================================
+// Normalize Algorithm Key
+// ================================
+function normalizeAlgoKey(algoKey) {
+    if (!algoKey) return 'logistic_regression';
+    const key = algoKey.toLowerCase().replace(/[^a-z_]/g, '');
+    if (key === 'rnn') return 'lstm';
+    return key;
+}
+
+// ================================
+// Handle Parameter Change
+// ================================
+function handleParamChange(e) {
+    const key = e.target.dataset.key;
+    let value = e.target.value;
+
+    // For number inputs, parse the value
+    if (e.target.type === 'number') {
+        value = parseFloat(value);
+        if (isNaN(value)) return;
+    }
+
+    const modal = document.getElementById('paramsModal');
+    const paramsKey = modal?.dataset.paramsKey;
+    const algoKey = modal?.dataset.algorithm;
+    const isRetrain = modal?.dataset.isRetrain === 'true';
+
+    if (!paramsKey || !algoKey) return;
+
+    // Store the value
+    currentParams[paramsKey][key] = value;
+
+    // Update modified state
+    const defaultVal = isRetrain ?
+        (FINETUNE_DEFAULTS[key] !== undefined ? FINETUNE_DEFAULTS[key] : getParamDefault(algoKey, key)) :
+        getParamDefault(algoKey, key);
+    const isModified = String(value) !== String(defaultVal);
+    const paramItem = e.target.closest('.param-item');
+    if (paramItem) {
+        paramItem.classList.toggle('modified', isModified);
+    }
+
+    // Cross-field validation
+    validateParams(algoKey);
+}
+
+// ================================
+// Get Parameter Default
+// ================================
+function getParamDefault(algoKey, paramKey) {
+    const algo = ALGORITHM_PARAMS[algoKey];
+    if (!algo) return null;
+    const param = algo.params.find(p => p.key === paramKey);
+    return param ? param.default : null;
+}
+
+// ================================
+// Validate Parameters
+// ================================
+function validateParams(algoKey, showLearningRateError = false) {
+    const modal = document.getElementById('paramsModal');
+    const paramsKey = modal?.dataset.paramsKey;
+    if (!paramsKey) return {valid: true, errors: []};
+
+    const params = currentParams[paramsKey] || {};
+    const errors = [];
+
+    // Clear previous errors
+    document.querySelectorAll('.param-error').forEach(el => el.remove());
+    document.querySelectorAll('.param-item.error').forEach(el => el.classList.remove('error'));
+
+    // Validate ngram_range for traditional ML
+    if (params.ngram_range_min !== undefined && params.ngram_range_max !== undefined) {
+        const min = parseInt(params.ngram_range_min);
+        const max = parseInt(params.ngram_range_max);
+        if (max < min) {
+            errors.push({
+                key: 'ngram_range_max',
+                message: 'N-gram Max must be ≥ N-gram Min'
+            });
+        }
+    }
+
+    // Validate d_model % n_head == 0 for transformer
+    if (algoKey === 'transformer' && params.d_model !== undefined && params.n_head !== undefined) {
+        const dModel = parseInt(params.d_model);
+        const nHead = parseInt(params.n_head);
+        if (dModel % nHead !== 0) {
+            errors.push({
+                key: 'd_model',
+                message: `Model Dimension (${dModel}) must be divisible by Attention Heads (${nHead})`
+            });
+        }
+    }
+
+    // Validate learning rate range when clicking Done
+    if (showLearningRateError && params.learning_rate !== undefined) {
+        const lr = parseFloat(params.learning_rate);
+        if (isNaN(lr) || lr <= 0 || lr > 1) {
+            errors.push({
+                key: 'learning_rate',
+                message: 'Learning rate must be between 0 and 1'
+            });
+        }
+    }
+
+    // Show errors
+    errors.forEach(err => {
+        const input = document.querySelector(`[data-key="${err.key}"]`);
+        if (input) {
+            const paramItem = input.closest('.param-item');
+            if (paramItem) {
+                paramItem.classList.add('error');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'param-error';
+                errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${err.message}`;
+                paramItem.appendChild(errorDiv);
+            }
+        }
+    });
+
+    return {valid: errors.length === 0, errors};
+}
+
+// ================================
+// Render Parameter Input
+// ================================
+function renderParamInput(param, value, isModified = false, isEditable = true, isRetrain = false) {
+    const modifiedClass = isModified ? 'modified' : '';
+    const readonlyClass = !isEditable ? 'readonly' : '';
+    const editableClass = isRetrain && isEditable ? 'finetune-editable' : '';
+    const type = param.type || 'select';
+
+    let inputHtml = '';
+
+    if (type === 'number') {
+        inputHtml = `
+            <input type="number"
+                   class="param-input"
+                   data-key="${param.key}"
+                   value="${value}"
+                   min="${param.min || 0}"
+                   max="${param.max || 1}"
+                   step="${param.step || 0.00001}"
+                   lang="en"
+                   placeholder="${param.default}"
+                   ${!isEditable ? 'disabled' : ''}>
+        `;
+    } else {
+        const options = param.options.map(opt => {
+            const optStr = String(opt);
+            const valStr = String(value);
+            const selected = optStr === valStr ? 'selected' : '';
+            return `<option value="${opt}" ${selected}>${opt}</option>`;
+        }).join('');
+
+        inputHtml = `
+            <select class="param-input" data-key="${param.key}" ${!isEditable ? 'disabled' : ''}>
+                ${options}
+            </select>
+        `;
+    }
+
+    // Build label with lock icon for readonly params in retrain mode
+    let labelExtra = '';
+    if (isRetrain && !isEditable) {
+        labelExtra = '<i class="fas fa-lock param-lock" title="Architecture parameter - cannot be changed during fine-tuning"></i>';
+    }
+
+    return `
+        <div class="param-item ${modifiedClass} ${readonlyClass} ${editableClass}">
+            <label class="param-label">
+                ${param.label}
+                ${labelExtra}
+                <span class="param-hint" title="${param.hint}">
+                    <i class="fas fa-question-circle"></i>
+                </span>
+            </label>
+            ${inputHtml}
+        </div>
+    `;
+}
+
+// ================================
+// Close Modal
+// ================================
+function closeParamsModal() {
+    const modal = document.getElementById('paramsModal');
+    const algoKey = modal?.dataset.algorithm;
+
+    if (algoKey) {
+        const validation = validateParams(algoKey, true);
+        if (!validation.valid) {
+            toast('Please fix validation errors', 'error');
+            return;
+        }
+    }
+
+    closeModal('paramsModal');
+    updateConfigButtonState();
+}
+
+// ================================
+// Update config button modified state
+// ================================
+function updateConfigButtonState() {
+    if (!currentParamsAlgorithm) return;
+
+    const isModified = hasCustomParams(currentParamsAlgorithm);
+
+    // For train tab - find by radio value
+    const trainRadio = document.querySelector(`input[name="algorithm"][value="${currentParamsAlgorithm}"]`);
+    if (trainRadio) {
+        const btn = trainRadio.closest('.algo-option')?.querySelector('.algo-config-btn');
+        if (btn) {
+            btn.classList.toggle('modified', isModified);
+        }
+    }
+
+    // For retrain tab - find by selected model
+    const selectedModel = document.querySelector('.model-option.selected .algo-config-btn');
+    if (selectedModel) {
+        selectedModel.classList.toggle('modified', isModified);
+    }
+}
+
+// ================================
+// Reset to Defaults
+// ================================
+function resetParamsToDefaults() {
+    if (!currentParamsAlgorithm) return;
+
+    const algo = ALGORITHM_PARAMS[currentParamsAlgorithm];
+    if (!algo) return;
+
+    const modal = document.getElementById('paramsModal');
+    const isRetrain = modal?.dataset.isRetrain === 'true';
+    const paramsKey = modal?.dataset.paramsKey || `${isRetrain ? 'retrain' : 'new'}_${currentParamsAlgorithm}`;
+
+    // Reset values
+    currentParams[paramsKey] = {};
+    algo.params.forEach(param => {
+        const isEditable = !isRetrain || FINETUNE_PARAMS.includes(param.key);
+
+        let defaultVal;
+        if (isRetrain) {
+            if (isEditable && FINETUNE_DEFAULTS[param.key] !== undefined) {
+                defaultVal = FINETUNE_DEFAULTS[param.key];
+            } else if (selectedModelSavedParams && selectedModelSavedParams[param.key] !== undefined) {
+                defaultVal = selectedModelSavedParams[param.key];
+            } else {
+                defaultVal = param.default;
+            }
+        } else {
+            defaultVal = param.default;
+        }
+
+        currentParams[paramsKey][param.key] = defaultVal;
+
+        // Update input (only if editable)
+        const input = document.querySelector(`[data-key="${param.key}"]`);
+        if (input && !input.disabled) {
+            input.value = defaultVal;
+        }
+
+        // Remove modified class
+        const paramItem = input?.closest('.param-item');
+        if (paramItem) {
+            paramItem.classList.remove('modified');
+        }
+    });
+
+    // Clear any validation errors
+    document.querySelectorAll('.param-error').forEach(el => el.remove());
+    document.querySelectorAll('.param-item.error').forEach(el => el.classList.remove('error'));
+
+    const modeText = isRetrain ? 'fine-tuning' : 'training';
+    toast(`Parameters reset to ${modeText} defaults`);
+}
+
+// ================================
+// Get Current Parameters
+// ================================
+function getCurrentParams() {
+    const algoKey = currentParamsAlgorithm || getSelectedAlgorithm();
+    const isRetrain = currentTab === 'retrain';
+    const paramsKey = `${isRetrain ? 'retrain' : 'new'}_${algoKey}`;
+
+    let params = currentParams[paramsKey];
+
+    // If no custom params set, return defaults
+    if (!params) {
+        const algo = ALGORITHM_PARAMS[algoKey];
+        if (!algo) {
+            return {training_mode: isRetrain ? 'incremental' : 'full'};
+        }
+
+        params = {};
+        algo.params.forEach(p => {
+            if (isRetrain) {
+                // Use saved params or fine-tune defaults
+                if (selectedModelSavedParams && selectedModelSavedParams[p.key] !== undefined) {
+                    params[p.key] = selectedModelSavedParams[p.key];
+                } else if (FINETUNE_PARAMS.includes(p.key) && FINETUNE_DEFAULTS[p.key] !== undefined) {
+                    params[p.key] = FINETUNE_DEFAULTS[p.key];
+                } else {
+                    params[p.key] = p.default;
+                }
+            } else {
+                params[p.key] = p.default;
+            }
+        });
+    }
+
+    // Always add training_mode
+    const result = {
+        ...params,
+        training_mode: isRetrain ? 'incremental' : 'full'
+    };
+
+    // Add expand_vocab for retrain mode
+    if (isRetrain) {
+        result.expand_vocab = 'True';
+    }
+
+    return result;
+}
+
+// ================================
+// Get Selected Algorithm
+// ================================
+function getSelectedAlgorithm() {
+    if (currentTab === 'retrain' && selectedModelType) {
+        return normalizeAlgoKey(selectedModelType);
+    }
+
+    const radio = document.querySelector('input[name="algorithm"]:checked');
+    if (radio) return radio.value;
+
+    return 'logistic_regression';
+}
+
+// ================================
+// Check if params are modified from defaults
+// ================================
+function hasCustomParams(algoKey) {
+    const algo = ALGORITHM_PARAMS[algoKey];
+    if (!algo) return false;
+
+    const isRetrain = currentTab === 'retrain';
+    const paramsKey = `${isRetrain ? 'retrain' : 'new'}_${algoKey}`;
+    const params = currentParams[paramsKey];
+
+    if (!params) return false;
+
+    return algo.params.some(p => {
+        // Only check editable params for retrain mode
+        if (isRetrain && !FINETUNE_PARAMS.includes(p.key)) return false;
+
+        const defaultVal = isRetrain && FINETUNE_DEFAULTS[p.key] !== undefined ?
+            FINETUNE_DEFAULTS[p.key] : p.default;
+        return String(params[p.key]) !== String(defaultVal);
+    });
+}

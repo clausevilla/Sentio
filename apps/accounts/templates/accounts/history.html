@@ -1,10 +1,17 @@
-{% extends 'base.html' %} {% load static %}
+<!-- Author: Lian Shi -->
+<!-- Disclaimer: LLM has been used to generate chart display and manual fine tuning was done to different elements -->
 
-{% block title %}Analysis History - Sentio{% endblock %} {% block extra_css %}
+{% extends 'base.html' %}
+{% load static %}
 
-<link rel="stylesheet" href="{% static 'accounts/css/history.css' %}" />
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-{% endblock %} {% block content %}
+{% block title %}Analysis History - Sentio{% endblock %}
+
+{% block extra_css %}
+<!-- Link to external CSS file -->
+<link rel="stylesheet" href="{% static 'accounts/css/history.css' %}">
+{% endblock %}
+
+{% block content %}
 <section class="history-section">
     <div class="container">
         <div class="page-header">
@@ -16,169 +23,234 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon stat-icon-primary">
-                    <span>📊</span>
+                    <i class="fas fa-list-check"></i>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ total_analyses }}</div>
+                    <div class="stat-value" data-count="{{ total_analyses }}">{{ total_analyses }}</div>
                     <div class="stat-label">Total Analyses</div>
                 </div>
             </div>
 
             <div class="stat-card">
                 <div class="stat-icon stat-icon-success">
-                    <span>✅</span>
+                    <i class="fas fa-smile"></i>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ normal_count }}</div>
+                    <div class="stat-value" data-count="{{ normal_count }}">{{ normal_count }}</div>
                     <div class="stat-label">Normal States</div>
                 </div>
             </div>
 
             <div class="stat-card">
                 <div class="stat-icon stat-icon-warning">
-                    <span>⚠️</span>
+                    <i class="fas fa-heart-pulse"></i>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ concern_count }}</div>
+                    <div class="stat-value" data-count="{{ concern_count }}">{{ concern_count }}</div>
                     <div class="stat-label">States of Concern</div>
                 </div>
             </div>
 
             <div class="stat-card">
                 <div class="stat-icon stat-icon-info">
-                    <span>📅</span>
+                    <i class="fas fa-calendar-day"></i>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ last_analysis }}</div>
+                    <div class="stat-value stat-value-small">{{ last_analysis }}</div>
                     <div class="stat-label">Last Analysis</div>
                 </div>
             </div>
         </div>
 
-        <!-- Mental State Distribution -->
+        {% if total_analyses > 0 %}
+        <!-- State Distribution -->
         <div class="chart-card">
-            <h2 class="card-title">Mental State Distribution</h2>
-            <div class="distribution-grid">
-                {% for state, count in state_distribution.items %}
-                <div class="distribution-item">
-                    <div class="dist-header">
-                        <span class="dist-icon">{{ state.icon }}</span>
-                        <span class="dist-label">{{ state.label }}</span>
+            <h2 class="section-title"><i class="fas fa-chart-pie"></i>State Distribution</h2>
+            <div class="card-content">
+                <div class="distribution-content">
+                    <div class="distribution-chart-container">
+                        <canvas id="distributionChart"></canvas>
                     </div>
-                    <div class="dist-bar-container">
-                        <div class="dist-bar {{ state.class }}" style="width: {{ state.percentage }}%;"></div>
+                    <div class="distribution-bars">
+                        <div class="distribution-item">
+                            <div class="dist-header">
+                                <i class="fas fa-smile dist-icon" style="color: var(--color-state-normal);"></i>
+                                <span class="dist-label">Normal</span>
+                            </div>
+                            <div class="dist-bar-container">
+                                <div class="dist-bar normal" data-target="{{ state_distribution.normal.percentage }}" style="width: 0%;"></div>
+                            </div>
+                            <div class="dist-value">{{ state_distribution.normal.count }} ({{ state_distribution.normal.percentage }}%)</div>
+                        </div>
+                        <div class="distribution-item">
+                            <div class="dist-header">
+                                <i class="fas fa-sad-tear dist-icon" style="color: var(--color-state-depression);"></i>
+                                <span class="dist-label">Depression</span>
+                            </div>
+                            <div class="dist-bar-container">
+                                <div class="dist-bar depression" data-target="{{ state_distribution.depression.percentage }}" style="width: 0%;"></div>
+                            </div>
+                            <div class="dist-value">{{ state_distribution.depression.count }} ({{ state_distribution.depression.percentage }}%)</div>
+                        </div>
+                        <div class="distribution-item">
+                            <div class="dist-header">
+                                <i class="fas fa-tired dist-icon" style="color: var(--color-state-stress);"></i>
+                                <span class="dist-label">Stress</span>
+                            </div>
+                            <div class="dist-bar-container">
+                                <div class="dist-bar stress" data-target="{{ state_distribution.stress.percentage }}" style="width: 0%;"></div>
+                            </div>
+                            <div class="dist-value">{{ state_distribution.stress.count }} ({{ state_distribution.stress.percentage }}%)</div>
+                        </div>
+                        <div class="distribution-item">
+                            <div class="dist-header">
+                                <i class="fas fa-heart-broken dist-icon" style="color: var(--color-state-suicidal);"></i>
+                                <span class="dist-label">Suicidal</span>
+                            </div>
+                            <div class="dist-bar-container">
+                                <div class="dist-bar suicidal" data-target="{{ state_distribution.suicidal.percentage }}" style="width: 0%;"></div>
+                            </div>
+                            <div class="dist-value">{{ state_distribution.suicidal.count }} ({{ state_distribution.suicidal.percentage }}%)</div>
+                        </div>
                     </div>
-                    <div class="dist-value">{{ count }} ({{ state.percentage }}%)</div>
                 </div>
-                {% endfor %}
             </div>
         </div>
 
-        <!-- Trend Chart -->
+        <!-- Mental Health Trend -->
         <div class="chart-card">
             <div class="chart-header">
-                <h2>Mental Health Trend</h2>
+                <h2 class="section-title"><i class="fas fa-chart-line"></i>Mental Health Trend</h2>
                 <div class="time-filter">
                     <button class="filter-btn active" data-period="week">Week</button>
                     <button class="filter-btn" data-period="month">Month</button>
                     <button class="filter-btn" data-period="all">All Time</button>
                 </div>
             </div>
-            <div class="chart-container">
-                <canvas id="trendChart"></canvas>
+            <div class="card-content">
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+                <p class="chart-info">
+                    <i class="fas fa-info-circle"></i> Frequency of each mental state prediction over time
+                </p>
             </div>
         </div>
+        {% endif %}
 
         <!-- History List -->
         <div class="history-list-card">
             <div class="list-header">
-                <h2>Recent Analyses</h2>
+                <h2 class="section-title"><i class="fas fa-history"></i>All Analyses</h2>
                 <div class="filter-controls">
                     <select id="stateFilter" class="state-filter">
                         <option value="all">All States</option>
                         <option value="normal">Normal</option>
                         <option value="depression">Depression</option>
-                        <option value="anxiety">Anxiety</option>
                         <option value="stress">Stress</option>
                         <option value="suicidal">Suicidal</option>
-                        <option value="bipolar">Bipolar</option>
                     </select>
                 </div>
             </div>
 
-            {% if analyses %}
-            <div class="history-list">
-                {% for analysis in analyses %}
-                <div class="history-item" data-state="{{ analysis.mental_state }}">
-                    <div class="item-header">
-                        <div class="item-date">
-                            <span class="date-icon">📅</span>
-                            <span>{{ analysis.created_at|date:"M d, Y - H:i" }}</span>
+            <div class="list-content">
+                {% if total_analyses > 0 %}
+                <div class="history-list" id="historyList">
+                    {% for analysis in analyses %}
+                    <div class="history-item" data-state="{{ analysis.mental_state }}" data-id="{{ analysis.id }}">
+                        <div class="item-header">
+                            <div class="item-date">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>{{ analysis.created_at|date:"M d, Y - H:i" }}</span>
+                            </div>
+                            <div class="item-badge badge-{{ analysis.mental_state }}">
+                                <span>{{ analysis.get_mental_state_display }}</span>
+                                <span class="badge-confidence">{{ analysis.confidence }}%</span>
+                            </div>
+                            <div class="item-indicators">
+                                <div class="indicator-tag">
+                                    <i class="fas fa-heartbeat"></i>
+                                    <span>Anxiety: {{ analysis.anxiety_level }}%</span>
+                                </div>
+                                <div class="indicator-tag">
+                                    <i class="fas fa-frown"></i>
+                                    <span>Negativity: {{ analysis.negativity_level }}%</span>
+                                </div>
+                                <div class="indicator-tag">
+                                    <i class="fas fa-bolt"></i>
+                                    <span>Intensity: {{ analysis.emotional_intensity }}%</span>
+                                </div>
+                            </div>
+                            <button class="delete-analysis-btn" data-id="{{ analysis.id }}" title="Delete this analysis">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         </div>
-                        <div class="item-badge badge-{{ analysis.mental_state }}">
-                            <span>{{ analysis.get_mental_state_display }}</span>
-                            <span class="badge-confidence">{{ analysis.confidence }}%</span>
-                        </div>
+                        <div class="item-text">{{ analysis.text }}</div>
                     </div>
-
-                    <div class="item-text">{{ analysis.text|truncatewords:30 }}</div>
-
-                    <div class="item-indicators">
-                        <div class="indicator-tag">
-                            <span class="tag-icon">😰</span>
-                            <span>Anxiety: {{ analysis.anxiety_level }}%</span>
-                        </div>
-                        <div class="indicator-tag">
-                            <span class="tag-icon">😔</span>
-                            <span>Negativity: {{ analysis.negativity_level }}%</span>
-                        </div>
-                        <div class="indicator-tag">
-                            <span class="tag-icon">💬</span>
-                            <span>Intensity: {{ analysis.emotional_intensity }}%</span>
-                        </div>
-                    </div>
-
-                    <div class="item-actions">
-                        <a href="{% url 'analysis_detail' analysis.id %}" class="btn-view">
-                            <span>View Details</span>
-                            <span>→</span>
-                        </a>
-                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
 
-            <!-- Pagination -->
-            {% if is_paginated %}
-            <div class="pagination">
-                {% if page_obj.has_previous %}
-                <a href="?page=1" class="page-link">« First</a>
-                <a href="?page={{ page_obj.previous_page_number }}" class="page-link">‹ Previous</a>
+                <div class="no-results-message" id="noResultsMessage" style="display: none;">
+                    <i class="fas fa-search"></i>
+                    <p>No analyses found for the selected filter.</p>
+                </div>
+
+                {% if is_paginated %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                    <a href="?page=1" class="page-link"><i class="fas fa-angle-double-left"></i></a>
+                    <a href="?page={{ page_obj.previous_page_number }}" class="page-link"><i class="fas fa-angle-left"></i> Prev</a>
+                    {% endif %}
+                    <span class="page-current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="page-link">Next <i class="fas fa-angle-right"></i></a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}" class="page-link"><i class="fas fa-angle-double-right"></i></a>
+                    {% endif %}
+                </div>
                 {% endif %}
 
-                <span class="page-current">
-                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-                </span>
-
-                {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" class="page-link">Next ›</a>
-                <a href="?page={{ page_obj.paginator.num_pages }}" class="page-link">Last »</a>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3>No Analysis History</h3>
+                    <p>You haven't analyzed any text yet. Start by analyzing your first text to begin tracking your mental health patterns over time!</p>
+                    <a href="{% url 'predictions:input' %}" class="btn-primary">
+                        <i class="fas fa-plus-circle" style="margin-right: 8px;"></i>Analyze Text
+                    </a>
+                </div>
                 {% endif %}
             </div>
-            {% endif %} {% else %}
-            <!-- Empty State -->
-            <div class="empty-state">
-                <div class="empty-icon">📊</div>
-                <h3>No Analysis History</h3>
-                <p>
-                    You haven't analyzed any text yet. Start by analyzing your first text!
-                </p>
-                <a href="{% url 'predictions:input' %}" class="btn-primary">Analyze Text</a>
-            </div>
-            {% endif %}
         </div>
     </div>
 </section>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Configuration for JavaScript -->
+<script>
+    window.historyConfig = {
+        hasData: {% if total_analyses > 0 %}true{% else %}false{% endif %},
+        chartDataUrl: "{% url 'accounts:chart_data_api' %}",
+        deleteAnalysisUrl: "{% url 'accounts:delete_analysis_api' analysis_id=0 %}".replace('/0/', '/{id}/'),
+        csrfToken: "{{ csrf_token }}",
+        totalAnalyses: {{ total_analyses|default:0 }},
+        distribution: {
+            normal: {{ state_distribution.normal.count|default:0 }},
+            depression: {{ state_distribution.depression.count|default:0 }},
+            stress: {{ state_distribution.stress.count|default:0 }},
+            suicidal: {{ state_distribution.suicidal.count|default:0 }}
+        },
+        colors: {
+            normal: '#3DA37A',
+            depression: '#5A8BBF',
+            stress: '#E8924B',
+            suicidal: '#9D6DC4'
+        }
+    };
+</script>
 
 <script src="{% static 'accounts/js/history.js' %}"></script>
 {% endblock %}

@@ -1,5 +1,8 @@
+/*Author: Lian Shi */
+/* Disclaimer: LLM has been used to help generate initial styles and manual adjustments were made later */
+
 /* ===================================
-   OPTION 2: VIDEO BACKGROUND (RECOMMENDED!)
+    HERO SECTION WITH VIDEO BACKGROUND
    =================================== */
 
 .hero-section {
@@ -125,7 +128,7 @@
 .features-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
+    gap: 3rem;
 }
 
 .feature-card {
@@ -143,21 +146,21 @@
 }
 
 .feature-icon {
-    width: 70px;
-    height: 70px;
+    width: 50px;
+    height: 50px;
     background: linear-gradient(135deg, #4A7C59 0%, #5C8A72 100%);
-    border-radius: 20px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 1.5rem;
-    font-size: 2.2rem;
+    font-size: 2rem;
     box-shadow: 0 5px 15px rgba(74, 124, 89, 0.25);
     color: white;
 }
 
 .feature-card h3 {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     color: #1F3D3D;
     margin-bottom: 1rem;
     font-weight: 600;
@@ -165,7 +168,7 @@
 }
 
 .feature-card:hover h3 {
-    color: #4A7C59;
+    color: var(--color-text-dark);
 }
 
 .feature-card p {
@@ -301,32 +304,95 @@
     font-size: 1.2rem;
 }
 
-/* Disclaimer Section (New Position - After CTA) */
+/* ===================================
+   Disclaimer Section (Sentio style)
+   =================================== */
+
 .disclaimer-section {
-    padding: 3rem 2rem;
-    background: #F6F6E9;
-}
-
-.disclaimer-section .container {
-    margin: 0 auto;
-}
-
-.disclaimer {
+    max-width: 1200px;
+    margin: 0 auto var(--spacing-xl);
+    padding: var(--spacing-lg);
     background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
-    padding: 2rem;
-    border-radius: 20px;
-
-    color: #2C4A4A;
-    font-size: 1rem;
-    line-height: 1.8;
-    box-shadow: 0 5px 20px rgba(224, 122, 95, 0.15);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    border-left: 4px solid var(--color-coral);
 }
 
-.disclaimer strong {
-    color: #E07A5F;
-    font-size: 1.1rem;
-    display: block;
-    margin-bottom: 0.5rem;
+/* Title + icon */
+.disclaimer-section h2 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-2xl);
+    margin-bottom: var(--spacing-md);
+    color: var(--color-text-dark);
+}
+
+.disclaimer-section h2 i {
+    color: var(--color-coral);
+    font-size: 1.6rem;
+}
+
+/* Paragraphs */
+.disclaimer-section p {
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-base);
+    color: var(--color-text);
+}
+
+/* Emphasis / "lead" paragraph (first one) */
+.disclaimer-section p strong {
+    color: var(--color-text-dark);
+}
+
+
+/* Lists */
+.disclaimer-section ul {
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    margin-left: 1.3rem;
+    padding-left: 0;
+}
+
+.disclaimer-section li {
+    margin-bottom: 0.4rem;
+    color: var(--color-text);
+}
+
+/* Links */
+.disclaimer-section a {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px dashed rgba(74, 124, 89, 0.4);
+}
+
+.disclaimer-section a:hover {
+    color: var(--color-primary-light);
+    border-bottom-color: rgba(74, 124, 89, 0.7);
+}
+
+.disclaimer-section ul + p strong {
+    display: inline-block;
+    margin-top: var(--spacing-sm);
+}
+
+
+/* Mobile tweaks */
+@media (max-width: 640px) {
+    .disclaimer-section {
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .disclaimer-section h2 {
+        font-size: var(--font-xl);
+        align-items: flex-start;
+    }
+
+    .disclaimer-section h2 i {
+        margin-top: 0.15rem;
+    }
 }
 
 /* Responsive Design */

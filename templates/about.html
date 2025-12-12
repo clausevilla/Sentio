@@ -1,9 +1,13 @@
+<!-- Author: Lian Shi -->
+<!-- Disclaimer: LLM has been used to help with structuring content. Manual adjustments were done after to ensure accuracy and clarity. -->
+
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}About Sentio - AI Stress Detection System{% endblock %}
+{% block title %}About Sentio - Mental State Analysis System{% endblock %}
 
-{% block meta_description %}Learn about Sentio's AI-powered stress detection system, built on the Dreaddit dataset with advanced NLP and machine learning techniques.{% endblock %}
+{% block meta_description %}Learn about Sentio's AI-powered mental health state system, built on social media data with
+advanced NLP and machine learning techniques.{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/about.css' %}">
@@ -12,55 +16,62 @@
 {% block content %}
 <!-- About Hero -->
 <section class="about-hero">
-    <h1><i class="fas fa-info-circle"></i> About Sentio</h1>
-        <p>Understanding the science and technology behind our AI-powered mental health text analysis system</p>
+    <h1><i class="fas fa-info-circle" style="margin-right: 10px;"></i> About Sentio</h1>
+    <p>Understanding the science and technology behind our AI-powered mental health text analysis system</p>
 </section>
 
 <!-- About Content -->
 <div class="about-content">
     <!-- Overview Section -->
     <div class="about-section">
-        <h2><i class="fas fa-book-open"></i> Our Mission</h2>
+        <h2><i class="fas fa-book-open" style="margin-right: 10px;"></i> Our Mission</h2>
         <p>
-            Our Mental Health Analysis System was developed as part of an AI research project to help individuals better understand their mental health through text analysis. The system leverages natural language processing and machine learning techniques to identify seven different mental health states in written communication: Normal, Depression, Suicidal thoughts, Anxiety, Stress, Bi-Polar patterns, and Personality Disorder indicators.
+            Our Mental Health Analysis System was developed as part of an AI research project to help individuals better
+            understand their mental health through text analysis. The system leverages natural language processing and
+            machine learning techniques to identify 4 different mental health states in written communication: Normal,
+            Depression, Suicidal and Stress.
         </p>
         <p>
-            We believe that early awareness of mental health patterns can lead to better outcomes. By providing accessible, AI-powered analysis tools, we aim to help people recognize mental health indicators in their communication and take proactive steps toward seeking appropriate support when needed.
+            We believe that early awareness of mental health patterns can lead to better outcomes. By providing
+            accessible, AI-powered analysis tools, we aim to help people recognize mental health indicators in their
+            communication and take proactive steps toward seeking appropriate support when needed.
         </p>
     </div>
 
     <!-- Technology Section -->
     <div class="about-section">
-        <h2><i class="fas fa-microchip"></i> The Technology</h2>
+        <h2><i class="fas fa-microchip" style="margin-right: 10px;"></i> The Technology</h2>
 
         <h3>Training Data</h3>
         <p>
-            The underlying model was trained on a comprehensive mental health dataset from multiple social media platforms including Reddit, Twitter, and other sources. This dataset contains labeled examples of seven mental health states, providing real-world examples of how people express different mental health conditions in their communication.
+            The underlying model was trained on a comprehensive mental health dataset from multiple social media
+            platforms including Reddit, Twitter, and other sources. This dataset contains labeled examples of four
+            mental health states, providing real-world examples of how people express different mental health conditions
+            in their communication.
         </p>
 
         <h3>Machine Learning Approach</h3>
         <p>
-            Our system uses multi-class classification to identify one of seven mental health states with 75% macro F1-score accuracy. The model analyzes multiple linguistic features including:
+            Our system uses multi-class classification to identify one of four mental health states with 75% macro
+            F1-score accuracy. The model analyzes multiple linguistic features including:
         </p>
 
 
 
-<h3>Seven Mental Health Categories</h3>
-<p>Our model classifies text into one of seven mental health states, each with specific characteristics:</p>
-<ul>
-    <li><strong>Normal:</strong> Balanced emotional state with no significant mental health indicators</li>
-    <li><strong>Depression:</strong> Language reflecting sadness, hopelessness, loss of interest, and low energy</li>
-    <li><strong>Suicidal:</strong> Critical indicators of suicidal ideation requiring immediate attention</li>
-    <li><strong>Anxiety:</strong> Worry-related language, fear, uncertainty, and restlessness</li>
-    <li><strong>Stress:</strong> Expressions of feeling overwhelmed, pressured, or unable to cope</li>
-    <li><strong>Bi-Polar:</strong> Language patterns suggesting mood fluctuations or manic/depressive episodes</li>
-    <li><strong>Personality Disorder:</strong> Communication patterns associated with personality disorder characteristics</li>
-</ul>
+        <h3>Four Mental Health Categories</h3>
+        <p>Our model classifies text into one of four mental health states, each with specific characteristics:</p>
+        <ul>
+            <li><strong>Normal:</strong> Balanced emotional state with no significant mental health indicators</li>
+            <li><strong>Depression:</strong> Language reflecting sadness, hopelessness, loss of interest, and low energy
+            </li>
+            <li><strong>Suicidal:</strong> Critical indicators of suicidal ideation requiring immediate attention</li>
+            <li><strong>Stress:</strong> Expressions of feeling overwhelmed, pressured, or unable to cope</li>
+        </ul>
     </div>
 
     <!-- Tech Stack Section -->
     <div class="about-section">
-        <h2><i class="fas fa-code"></i> Technical Stack</h2>
+        <h2><i class="fas fa-code" style="margin-right: 10px;"></i> Technical Stack</h2>
         <p>Built with modern, production-ready technologies:</p>
 
         <div class="tech-stack">
@@ -89,56 +100,30 @@
 
     <!-- Privacy Section -->
     <div class="about-section">
-        <h2><i class="fas fa-shield-alt"></i> Privacy & Security</h2>
+        <h2><i class="fas fa-shield-alt" style="margin-right: 10px;"></i> Privacy & Security</h2>
         <p>
-            Your privacy is our top priority. All data is securely stored and encrypted. We never share your personal information or analysis results with third parties. Only you can access your stress analysis history.
+            Your privacy is our top priority. All data is securely stored and encrypted. We never share your personal
+            information or analysis results with third parties. Only you can access your stress analysis history.
         </p>
         <p>
-            If you choose to create an account, you can track your progress over time. However, the system also works without an account for one-time analyses.
+            If you choose to create an account, you can track your progress over time. However, the system also works
+            without an account for one-time analyses.
+
+        </p>
+        <p>
+            For more details, please review our <a href="{% url 'accounts:privacy_policy' %}">Privacy Policy</a>.
         </p>
     </div>
 
-    <!-- Use Cases Section -->
-    <div class="about-section">
-        <h2><i class="fas fa-lightbulb"></i> Who Can Benefit</h2>
-        <p>Our stress detection system is designed for:</p>
-        <ul>
-        <li><strong>Individuals:</strong> Gain awareness of mental health patterns in your written communication and track changes over time</li>            <li><strong>Mental Health Awareness:</strong> Gain insights into emotional patterns and stress indicators</li>
-            <li><strong>Researchers:</strong> Explore the application of NLP in mental health analysis</li>
-            <li><strong>Students & Educators:</strong> Learn about AI applications in healthcare and wellbeing</li>
-        </ul>
+<!-- Disclaimer Section -->
+<section class="disclaimer-section">
+    <div class="container">
+        <div class="disclaimer">
+            <strong><i class="fas fa-exclamation-triangle" style="margin-right: 10px;"></i> Important Medical Disclaimer</strong><br>
+            This tool analyzes text to identify potential mental health patterns. It is NOT a medical diagnostic tool and does NOT provide medical advice. Results should not be used for self-diagnosis or to replace professional mental health care.
+        </div>
     </div>
+</section>
 
-    <!-- Disclaimer Section -->
-    <div class="about-section" style="background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); border-left: 5px solid #E07A5F;">
-<h2><i class="fas fa-exclamation-triangle"></i> Important Disclaimer</h2>
-<p>
-    <strong>This tool is for informational and educational purposes only.</strong> It is NOT a medical diagnostic tool, does NOT provide medical advice, and should NOT be used for self-diagnosis or to make treatment decisions.
-</p>
-<p>
-    The classification results are based on text analysis and may not accurately reflect your actual mental health state. Many factors influence mental health that cannot be determined from text alone.
-</p>
-<p>
-    <strong>⚠️ If you are experiencing any of the following, please seek immediate help:</strong>
-</p>
-<ul>
-    <li>Thoughts of suicide or self-harm</li>
-    <li>Plans to hurt yourself or others</li>
-    <li>Severe depression or anxiety that interferes with daily life</li>
-    <li>Sudden mood changes or loss of touch with reality</li>
-</ul>
-<p>
-    <strong>🆘 Crisis Resources (Available 24/7):</strong>
-</p>
-<ul>
-    <li><strong>Sweden Suicide Prevention:</strong> Call 90101 or visit <a href="https://mind.se" target="_blank">mind.se</a></li>
-    <li><strong>Sweden Healthcare Advice:</strong> Call 1177</li>
-    <li><strong>Emergency (Sweden):</strong> Call 112</li>
-    <li><strong>International Crisis Lines:</strong> <a href="https://findahelpline.com" target="_blank">findahelpline.com</a></li>
-</ul>
-<p>
-    <strong>For non-emergency mental health support:</strong> Please consult with a licensed mental health professional such as a psychologist, psychiatrist, or counselor.
-</p>
-    </div>
 </div>
 {% endblock %}

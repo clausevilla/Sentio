@@ -1,3 +1,6 @@
+// Author: Lian Shi
+// Disclaimer: LLM has used to help with deleting data/user accounts API handling*/
+
 // ===================================
 // Simple Profile Page
 // ===================================
@@ -198,7 +201,7 @@ document.getElementById('deleteDataForm')?.addEventListener('submit', async func
 
     try {
         const response = await fetch('/accounts/api/delete-all-data/', {
-            method: 'POST',
+            method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrftoken
@@ -210,10 +213,14 @@ document.getElementById('deleteDataForm')?.addEventListener('submit', async func
 
         if (response.ok) {
             closeDeleteDataModal();
-            showMessage('All your data has been deleted', 'success');
+            // Show how many records were deleted in the success message
+            const deletedCount = data.deleted_count || 0;
+            showMessage(`Successfully deleted ${deletedCount} analysis record(s). Redirecting...`, 'success');
+            // Redirect to consent page for normal users since consent was revoked, but admin don't need to go to consent page
+
             setTimeout(() => {
-                window.location.reload();
-            }, 3000);
+                window.location.href = data.redirect_url || '/accounts/consent/';
+            }, 2000);
         } else {
             if (data.error === 'incorrect_password') {
                 showMessage('Incorrect password. Please try again.', 'error');
@@ -250,6 +257,7 @@ document.getElementById('deleteAccountConfirm')?.addEventListener('input', funct
 });
 
 // Delete Account Form
+// Uses DELETE HTTP method since this is a destructive operation
 document.getElementById('deleteAccountForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
@@ -264,7 +272,7 @@ document.getElementById('deleteAccountForm')?.addEventListener('submit', async f
 
     try {
         const response = await fetch('/accounts/api/delete-account/', {
-            method: 'POST',
+            method: 'DELETE', 
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrftoken

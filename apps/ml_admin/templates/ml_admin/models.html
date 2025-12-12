@@ -1,0 +1,393 @@
+<!-- Author: Lian Shi, Marcus Berggren-->
+<!-- Disclaimer: LLM has used to generate initial layout, and fine tuning was done manually to different elements -->
+
+<!--TODO : MODIFY TO REFELCT UPDATED DATABASE and methods IF NEEDED-->
+
+
+{% extends 'ml_admin/base_admin.html' %}
+{% load static %}
+{% load filters %}
+{% block title %}Models{% endblock %}
+{% block page_title %}Model Versions{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'ml_admin/css/models.css' %}">{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fas fa-cube"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ total_models }}</div>
+            <div class="stat-label">Total Models</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fas fa-rocket"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{% if active_model %}1{% else %}0{% endif %}</div>
+            <div class="stat-label">Deployed</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon purple"><i class="fas fa-bullseye"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{% if active_model and active_model.accuracy %}{{ active_model.accuracy|percentage }}{% else %}—{% endif %}</div>
+            <div class="stat-label">Active Accuracy</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon coral"><i class="fas fa-chart-line"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{% if active_model and active_model.f1_score %}{{ active_model.f1_score|percentage }}{% else %}—{% endif %}</div>
+            <div class="stat-label">Active F1</div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Model Alert -->
+{% if active_model %}
+<div class="alert success" style="margin-bottom: 1.5rem;">
+    <i class="fas fa-check-circle"></i>
+    <span><strong>Active Model:</strong> {{ active_model.version_name }} ({{ active_model.get_model_type_display }})
+    {% if active_model.accuracy %}· Accuracy: {{ active_model.accuracy|percentage }}{% endif %}
+    {% if active_model.f1_score %}· F1: {{ active_model.f1_score|percentage }}{% endif %}</span>
+</div>
+{% else %}
+<div class="alert warning" style="margin-bottom: 1.5rem;">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span><strong>No active model!</strong> Deploy a model to enable predictions.</span>
+</div>
+{% endif %}
+
+<!-- Models List -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-list"></i> All Models</h3>
+        <div class="header-actions">
+            <span class="header-count">{{ total_models }} total</span>
+            <!-- Compare Button -->
+            <button class="btn btn-secondary btn-compare" id="compareBtn" onclick="openCompareModal()" disabled>
+                <i class="fas fa-columns"></i> Compare (<span id="compareCount">0</span>)
+            </button>
+        </div>
+    </div>
+    <div class="card-body no-pad">
+        {% if models %}
+        <div class="models-table-wrap">
+            <table class="models-table">
+                <thead>
+                    <tr>
+                        <th class="col-checkbox">
+                            <span class="checkbox-header" title="Select models to compare">
+                                <i class="fas fa-check-square"></i>
+                            </span>
+                        </th>
+                        <th class="col-name">Model</th>
+                        <th class="col-type">Type</th>
+                        <th class="col-status">Status</th>
+                        <th class="col-metric">Accuracy</th>
+                        <th class="col-metric">Precision</th>
+                        <th class="col-metric">Recall</th>
+                        <th class="col-metric">F1 Score</th>
+                        <th class="col-info">Created</th>
+                        <th class="col-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in models %}
+                    <tr class="{% if item.model.is_active %}active-row{% endif %}" data-model-id="{{ item.model.id }}">
+                        <!-- Checkbox -->
+                        <td class="col-checkbox">
+                            <label class="compare-checkbox">
+                                <input type="checkbox" onchange="toggleCompare({{ item.model.id }})">
+                                <span class="checkmark"></span>
+                            </label>
+                        </td>
+
+                        <!-- Model Name -->
+                        <td class="col-name">
+                            <div class="model-name-cell">
+                                <div class="model-icon {% if item.model.is_active %}active{% endif %}">
+                                    {% if item.model.model_type == 'lstm' or item.model.model_type == 'transformer' %}
+                                    <i class="fas fa-microchip"></i>
+                                    {% elif item.model.model_type == 'random_forest' %}
+                                    <i class="fas fa-tree"></i>
+                                    {% else %}
+                                    <i class="fas fa-chart-line"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="model-name-info">
+                                    <span class="model-name">{{ item.model.version_name }}</span>
+                                    <span class="model-creator">by {{ item.model.created_by.username|default:"—" }}</span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Model Type -->
+                        <td class="col-type">
+                            <span class="type-badge type-{{ item.model.model_type }}">
+                                {{ item.model.get_model_type_display|default:item.model.model_type }}
+                            </span>
+                        </td>
+
+                        <!-- Status -->
+                        <td class="col-status">
+                            {% if item.model.is_active %}
+                            <span class="badge success"><i class="fas fa-rocket"></i> Active</span>
+                            {% else %}
+                            <span class="badge secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Metrics -->
+                        <td class="col-metric">
+                            {% if item.model.accuracy %}
+                            <span class="metric-value-cell">{{ item.model.accuracy|percentage }}</span>
+                            {% else %}
+                            <span class="metric-empty">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="col-metric">
+                            {% if item.model.precision %}
+                            <span class="metric-value-cell">{{ item.model.precision|percentage }}</span>
+                            {% else %}
+                            <span class="metric-empty">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="col-metric">
+                            {% if item.model.recall %}
+                            <span class="metric-value-cell {% if item.model.recall >= 0.8 %}good{% elif item.model.recall >= 0.6 %}okay{% else %}low{% endif %}">
+                                {{ item.model.recall|percentage }}
+                            </span>
+                            {% else %}
+                            <span class="metric-empty">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="col-metric">
+                            {% if item.model.f1_score %}
+                            <span class="metric-value-cell {% if item.model.f1_score >= 0.8 %}good{% elif item.model.f1_score >= 0.6 %}okay{% else %}low{% endif %}">
+                                {{ item.model.f1_score|percentage }}
+                            </span>
+                            {% else %}
+                            <span class="metric-empty">—</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Created -->
+                        <td class="col-info">
+                            <span class="info-cell">
+                                <i class="fas fa-calendar"></i>
+                                {{ item.model.created_at|date:"M d, Y" }}
+                            </span>
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="col-actions">
+                            <div class="action-buttons">
+                                <button class="btn-icon" onclick="showModelDetail({{ item.model.id }})" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                {% if not item.model.is_active %}
+                                <button class="btn-icon primary" onclick="deployModel({{ item.model.id }}, '{{ item.model.version_name }}')" title="Deploy">
+                                    <i class="fas fa-rocket"></i>
+                                </button>
+                                <button class="btn-icon danger" onclick="deleteModel({{ item.model.id }}, '{{ item.model.version_name }}')" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% else %}
+                                <span class="deployed-indicator" title="Currently deployed">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-cube"></i>
+            <h4>No Models Yet</h4>
+            <p>Train your first model to see it here</p>
+            <a href="{% url 'ml_admin:training' %}" class="btn btn-primary">
+                <span>Go to Training</span>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Model Detail Modal -->
+<div class="modal" id="modelModal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3><i class="fas fa-cube"></i> <span id="modalModelName">Model Details</span></h3>
+            <button class="modal-close" onclick="closeModal('modelModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="modalContent"></div>
+    </div>
+</div>
+
+<!-- Compare Models Modal -->
+<div class="modal" id="compareModal">
+    <div class="modal-content modal-xl">
+        <div class="modal-header">
+            <h3><i class="fas fa-columns"></i> Model Comparison</h3>
+            <button class="modal-close" onclick="closeModal('compareModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="compareContent">
+            <!-- Filled by JS -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const modelsData = [
+        {% for item in models %}
+        {
+            id: {{ item.model.id }},
+            name: '{{ item.model.version_name|escapejs }}',
+            model_type: '{{ item.model.model_type|default:"unknown" }}',
+            model_type_display: '{{ item.model.get_model_type_display|default:item.model.model_type|escapejs }}',
+            accuracy: {{ item.model.accuracy|default:'null' }},
+            precision: {{ item.model.precision|default:'null' }},
+            recall: {{ item.model.recall|default:'null' }},
+            f1: {{ item.model.f1_score|default:'null' }},
+            created_at: '{{ item.model.created_at|date:"M d, Y" }}',
+            created_at_full: '{{ item.model.created_at|date:"F d, Y \\a\\t H:i" }}',
+            created_by: '{{ item.model.created_by.username|default:"-"|escapejs }}',
+            file_path: '{{ item.model.model_file_path|default:"-"|escapejs }}',
+            is_active: {{ item.model.is_active|yesno:"true,false" }},
+            job_dataset: '{{ item.model.training_datasets|default:"-"|escapejs }}',
+            has_roc_plot: {{ item.model.roc_plot_base64|yesno:"true,false" }},
+            has_confusion_matrix: {{ item.model.confusion_matrix_base64|yesno:"true,false" }},
+            roc_plot: '{{ item.model.roc_plot_base64|default:""|escapejs }}',
+            confusion_matrix: '{{ item.model.confusion_matrix_base64|default:""|escapejs }}',
+        },
+        {% endfor %}
+    ];
+
+    // Create lookup by ID
+    const modelsById = {};
+    modelsData.forEach(m => modelsById[m.id] = m);
+
+    // Get model type icon
+    function getModelTypeIcon(type) {
+        switch(type) {
+            case 'lstm':
+            case 'transformer':
+                return 'fa-microchip';
+            case 'random_forest':
+                return 'fa-tree';
+            default:
+                return 'fa-chart-line';
+        }
+    }
+
+    // Show model detail in modal
+    function showModelDetail(id) {
+        const model = modelsById[id];
+        if (!model) return;
+
+        document.getElementById('modalModelName').textContent = model.name;
+
+        let plotsHtml = '';
+        if (model.has_roc_plot || model.has_confusion_matrix) {
+            plotsHtml = `
+                <div class="detail-section">
+                    <h4><i class="fas fa-chart-area"></i> Performance Visualizations</h4>
+                    <div class="plots-grid vertical">
+                        ${model.has_roc_plot ? `
+                        <div class="plot-item">
+                            <h5>ROC Curve</h5>
+                            <img src="data:image/png;base64,${model.roc_plot}" alt="ROC Curve" class="plot-image">
+                        </div>
+                        ` : ''}
+                        ${model.has_confusion_matrix ? `
+                        <div class="plot-item">
+                            <h5>Confusion Matrix</h5>
+                            <img src="data:image/png;base64,${model.confusion_matrix}" alt="Confusion Matrix" class="plot-image">
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        document.getElementById('modalContent').innerHTML = `
+            <div class="modal-status ${model.is_active ? 'active' : ''}">
+                ${model.is_active
+                    ? '<i class="fas fa-rocket"></i> Currently Deployed'
+                    : '<i class="fas fa-pause-circle"></i> Not Deployed'}
+            </div>
+
+            <div class="detail-section">
+                <h4><i class="fas fa-info-circle"></i> Model Information</h4>
+                <div class="detail-rows">
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fas fa-${getModelTypeIcon(model.model_type)}"></i> Model Type</span>
+                        <span class="detail-value"><span class="type-badge type-${model.model_type}">${model.model_type_display}</span></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fas fa-calendar"></i> Created</span>
+                        <span class="detail-value">${model.created_at_full}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fas fa-user"></i> Created By</span>
+                        <span class="detail-value">${model.created_by}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fas fa-database"></i> Training Datasets</span>
+                        <span class="detail-value">${model.job_dataset}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fas fa-file"></i> Model File</span>
+                        <span class="detail-value code">${model.file_path}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h4><i class="fas fa-bullseye"></i> Performance Metrics</h4>
+                <div class="metrics-grid-modal">
+                    <div class="metric-box-modal ${model.accuracy !== null && model.accuracy >= 80 ? 'good' : ''}">
+                        <span class="metric-value">${model.accuracy !== null ? model.accuracy.toFixed(1) : '—'}</span>
+                        <span class="metric-label">Accuracy</span>
+                    </div>
+                    <div class="metric-box-modal">
+                        <span class="metric-value">${model.precision !== null ? model.precision.toFixed(3) : '—'}</span>
+                        <span class="metric-label">Precision</span>
+                    </div>
+                    <div class="metric-box-modal">
+                        <span class="metric-value">${model.recall !== null ? model.recall.toFixed(3) : '—'}</span>
+                        <span class="metric-label">Recall</span>
+                    </div>
+                    <div class="metric-box-modal">
+                        <span class="metric-value">${model.f1 !== null ? model.f1.toFixed(3) : '—'}</span>
+                        <span class="metric-label">F1 Score</span>
+                    </div>
+                </div>
+            </div>
+
+            ${plotsHtml}
+
+            ${!model.is_active ? `
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="deployModel(${model.id}, '${model.name}'); closeModal('modelModal');">
+                    <i class="fas fa-rocket"></i> Deploy This Model
+                </button>
+                <button class="btn btn-danger" onclick="deleteModel(${model.id}, '${model.name}'); closeModal('modelModal');">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+            ` : ''}
+        `;
+        openModal('modelModal');
+    }
+</script>
+<script src="{% static 'ml_admin/js/models.js' %}"></script>
+{% endblock %}

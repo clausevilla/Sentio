@@ -1,4 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.templatetags.static import static
+
+
+def favicon_redirect(request):
+    return redirect(static('images/favicon.svg'), permanent=True)
 
 
 def home(request):

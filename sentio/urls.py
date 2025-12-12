@@ -27,10 +27,13 @@ urlpatterns = [
     path(
         'accounts/', include(('apps.accounts.urls', 'accounts'), namespace='accounts')
     ),
-    path('management/', include('apps.ml_admin.urls')),
     path(
         'predictions/',
         include(('apps.predictions.urls', 'predictions'), namespace='predictions'),
     ),
     path('admin/', admin.site.urls),
+    path(
+        'management/', include(('apps.ml_admin.urls', 'ml_admin'), namespace='ml_admin')
+    ),
+    path('favicon.ico', views.favicon_redirect, name='favicon'),
 ]

@@ -1,3 +1,6 @@
+/* Author: Lian Shi */
+/* Disclaimer: LLM has been used to help generate initial styles and manual adjustments were made later */
+
 /* ===================================
    Sentio - Base Styles
    =================================== */
@@ -26,6 +29,23 @@
     --color-purple: #7B68A6;
     --color-purple-light: #9B87B5;
     --color-blue: #5B7C99;
+    --color-amber: #FFC857;
+    --color-amber-deep: #FFB238;
+    --color-navy: #1B3A57;
+    --color-cyan-bright: #2EC5B6;
+    --color-rose-soft: #F6C5CC;
+
+    /* mental state colors - balanced palette */
+    --color-state-normal: #3DA37A;
+    --color-state-normal-light: #5BBC95;
+    --color-state-depression: #5A8BBF;
+    --color-state-depression-light: #7BA5D0;
+    --color-state-stress: #E8924B;
+    --color-state-stress-light: #F0A86D;
+    --color-state-suicidal: #9D6DC4;
+    --color-state-suicidal-light: #B48AD5;
+
+
 
     /* shadows */
     --shadow-sm: 0 2px 10px rgba(74, 124, 89, 0.1);

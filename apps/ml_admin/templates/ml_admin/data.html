@@ -1,0 +1,311 @@
+<!-- Author: Lian Shi-->
+<!-- Disclaimer: LLM has used to generate initial layout, and fine tuning was done manually to different elements -->
+
+{% extends 'ml_admin/base_admin.html' %}
+{% load static %}
+{% block title %}Data{% endblock %}
+{% block page_title %}Training Data{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'ml_admin/css/data.css' %}">{% endblock %}
+
+{% block content %}
+<!-- Toast Container -->
+<div id="toasts"></div>
+
+<!-- Stats by Pipeline Type -->
+<div class="pipeline-stats-grid">
+    {% for ptype, pdata in pipeline_stats.items %}
+    <div class="pipeline-stat-card {{ ptype }}">
+        <div class="pipeline-stat-header">
+            <i class="fas {% if ptype == 'full' %}fa-broom{% elif ptype == 'partial' %}fa-adjust{% else %}fa-feather{% endif %}"></i>
+            <span>{{ ptype|title }}</span>
+        </div>
+        <div class="pipeline-stat-body">
+            <div class="pipeline-stat-row"><span><i class="fas fa-graduation-cap"></i> Train</span><span>{{ pdata.train }}</span></div>
+            <div class="pipeline-stat-row"><span><i class="fas fa-flask"></i> Test</span><span>{{ pdata.test }}</span></div>
+            <div class="pipeline-stat-row"><span><i class="fas fa-square-plus"></i> Increment</span><span>{{ pdata.increment }}</span></div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Upload Panel -->
+<div class="card upload-panel" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <h3><i class="fas fa-upload"></i> Upload Dataset</h3>
+    </div>
+    <div class="card-body">
+        <!-- TODO: Pipeline Selection -->
+        <!--PLEASE REMEMBER LATER IF FIX IS NEEDED FOR CHANING THE NAME OF DIFFERENT PIPELINE NAMES-->
+        <div class="pipeline-section">
+            <label class="pipeline-label">Preprocessing Pipeline</label>
+            <div class="pipeline-options">
+                <label class="pipeline-option selected" onclick="selectPipeline(this, 'full')">
+                    <input type="radio" name="pipeline" value="full" checked>
+                    <div class="pipeline-header">
+                        <i class="fas fa-broom"></i>
+                        <span class="pipeline-name">Full</span>
+                    </div>
+                    <span class="pipeline-desc">Complete preprocessing</span>
+                    <div class="pipeline-tags">
+                        <span class="tag">Logistic Regression</span>
+                        <span class="tag">Random Forest</span>
+                    </div>
+                </label>
+
+                <label class="pipeline-option" onclick="selectPipeline(this, 'partial')">
+                    <input type="radio" name="pipeline" value="partial">
+                    <div class="pipeline-header">
+                        <i class="fas fa-adjust"></i>
+                        <span class="pipeline-name">Partial</span>
+                    </div>
+                    <span class="pipeline-desc">Moderate preprocessing</span>
+                    <div class="pipeline-tags">
+                        <span class="tag">LSTM</span>
+                        <span class="tag">RNN</span>
+                    </div>
+                </label>
+
+                <label class="pipeline-option" onclick="selectPipeline(this, 'raw')">
+                    <input type="radio" name="pipeline" value="raw">
+                    <div class="pipeline-header">
+                        <i class="fas fa-feather"></i>
+                        <span class="pipeline-name">Raw</span>
+                    </div>
+                    <span class="pipeline-desc">Minimal preprocessing</span>
+                    <div class="pipeline-tags">
+                        <span class="tag">Transformer</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="upload-row">
+            <div class="upload-file-section">
+                <div class="upload-zone-inline" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-file-csv"></i>
+                    <span>Choose CSV file...</span>
+                    <input type="file" id="fileInput" accept=".csv" style="display:none" onchange="fileSelected(this)">
+                </div>
+                <div class="file-selected" id="fileSelected" style="display:none">
+                    <i class="fas fa-file-csv"></i>
+                    <span id="fileName">filename.csv</span>
+                    <button class="file-clear" onclick="clearFile()">&times;</button>
+                </div>
+            </div>
+
+            <div class="upload-type-section">
+                <label>Dataset Type</label>
+                <select id="datasetType" class="form-select">
+                    <option value="train">Training Data</option>
+                    <option value="test">Test Data</option>
+                    <option value="increment">Increment</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" id="uploadBtn" onclick="uploadFile()" disabled>
+                <i class="fas fa-upload"></i> Upload & Process
+            </button>
+        </div>
+
+        <div class="upload-help">
+            <i class="fas fa-info-circle"></i>
+            Required columns: <code>text</code> and <code>label</code>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Tasks Queue -->
+<div class="upload-tasks" id="uploadTasks" style="display: none;">
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-tasks"></i> Processing Tasks</h3>
+        </div>
+        <div class="card-body no-pad">
+            <div class="task-list" id="taskList"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Overall Label Distribution -->
+{% if total_records > 0 %}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-pie"></i> Overall Label Distribution</h3>
+    </div>
+    <div class="card-body">
+        <div class="grid-2">
+            <div class="chart-wrap" style="height: 200px;"><canvas id="labelDistChart"></canvas></div>
+            <div class="label-stats">
+                {% for item in overall_distribution %}
+                <div class="label-stat-row">
+                    <span class="label-name">{{ item.label }}</span>
+                    <div class="label-bar-wrap">
+                        <div class="label-bar" style="width: {% widthratio item.count total_records 100 %}%"></div>
+                    </div>
+                    <span class="label-count">{{ item.count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Dataset List -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-list"></i> All Datasets</h3>
+        <span class="header-count">{{ total_uploads }} total</span>
+    </div>
+    <div class="card-body no-pad">
+        {% if uploads %}
+        <div class="dataset-list">
+            {% for item in uploads %}
+            <div class="dataset-row {% if not item.upload.is_validated %}pending{% endif %}" data-upload-id="{{ item.upload.id }}">
+                <!-- Main Info -->
+                <div class="dataset-main">
+                    <div class="dataset-icon">
+                        <i class="fas fa-file-csv"></i>
+                    </div>
+                    <div class="dataset-info">
+                        <div class="dataset-name">{{ item.upload.file_name }}</div>
+                        <div class="dataset-meta">
+                            <span><i class="fas fa-calendar"></i> {{ item.upload.uploaded_at|date:"M d, Y H:i" }}</span>
+                            <span><i class="fas fa-user"></i> {{ item.upload.uploaded_by.username|default:"—" }}</span>
+                            <span><i class="fas fa-table"></i> {{ item.upload.row_count|default:0 }} rows</span>
+                            <!-- TODO: Pipeline Badge (CHECK NAME LATER TO MATCH) -->
+                            {% if item.upload.pipeline_type %}
+                            <span class="pipeline-badge {{ item.upload.pipeline_type }}">
+                                {% if item.upload.pipeline_type == 'raw' %}
+                                <i class="fas fa-feather"></i> Raw
+                                {% elif item.upload.pipeline_type == 'partial' %}
+                                <i class="fas fa-adjust"></i> Partial
+                                {% else %}
+                                <i class="fas fa-broom"></i> Full
+                                {% endif %}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Split Info -->
+                <div class="dataset-split">
+                    <div class="split-badge training" title="Training records">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>{{ item.training_count|default:0 }}</span>
+                    </div>
+                    <div class="split-badge test" title="Test records">
+                        <i class="fas fa-flask"></i>
+                        <span>{{ item.test_count|default:0 }}</span>
+                    </div>
+                </div>
+
+
+                <!-- Status -->
+                <div class="dataset-status">
+                    {% if item.upload.is_validated %}
+                    <span class="badge success"><i class="fas fa-check"></i> Validated</span>
+                    {% elif item.upload.status == 'processing' %}
+                    <span class="badge running"><i class="fas fa-spinner fa-spin"></i> Processing</span>
+                    {% elif item.upload.status == 'failed' %}
+                    <span class="badge failed"><i class="fas fa-times"></i> Failed</span>
+                    {% else %}
+                    <span class="badge pending"><i class="fas fa-clock"></i> Pending</span>
+                    {% endif %}
+                </div>
+
+                <!-- Actions -->
+                <div class="dataset-actions">
+                    <button class="btn btn-sm btn-secondary" onclick="viewRecords({{ item.upload.id }}, '{{ item.upload.file_name }}')" title="View Records">
+                        <i class="fas fa-eye"></i> View
+                    </button>
+                    <button class="btn btn-sm btn-secondary" onclick="viewDistribution({{ item.upload.id }}, '{{ item.upload.file_name }}')" title="View Distribution">
+                        <i class="fas fa-chart-pie"></i> Distribution
+                    </button>
+                    <button class="btn btn-sm btn-secondary" onclick="manageSplit({{ item.upload.id }}, '{{ item.upload.file_name }}')" title="Manage Split">
+                        <i class="fas fa-random"></i> Split
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteDataset({{ item.upload.id }}, '{{ item.upload.file_name }}')" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h4>No Datasets Yet</h4>
+            <p>Upload your first CSV using the panel above</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Records Modal -->
+<div class="modal" id="recordsModal">
+    <div class="modal-content wide">
+        <div class="modal-header">
+            <h3><i class="fas fa-table"></i> <span id="recordsTitle">Records</span></h3>
+            <button class="modal-close" onclick="closeModal('recordsModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="recordsContent">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+            </div>
+            <div class="pagination" id="recordsPagination"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Distribution Modal -->
+<div class="modal" id="distributionModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-chart-pie"></i> <span id="distModalTitle">Label Distribution</span></h3>
+            <button class="modal-close" onclick="closeModal('distributionModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="distModalContent">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Split Modal -->
+<div class="modal" id="splitModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-random"></i> Manage Train/Test Split</h3>
+            <button class="modal-close" onclick="closeModal('splitModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="splitContent">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const URLS = {
+        uploadCsv: '{% url "ml_admin:upload_csv" %}'
+    };
+    const labelDistData = {{ overall_distribution_json|safe }};
+
+    // Pending uploads to resume polling
+    const pendingUploads = [
+        {% for item in uploads %}
+            {% if item.upload.status == 'processing' or item.upload.status == 'pending' %}
+            { id: {{ item.upload.id }}, file_name: '{{ item.upload.file_name }}', status: '{{ item.upload.status }}' },
+            {% endif %}
+        {% endfor %}
+    ];
+
+</script>
+<script src="{% static 'ml_admin/js/data.js' %}"></script>
+{% endblock %}

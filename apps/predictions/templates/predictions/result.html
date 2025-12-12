@@ -1,3 +1,6 @@
+<!-- Authors: Lian Shi, Claudia Sevilla -->
+ <!-- Disclaimer: LLM has been used to help with page structure setup and manual adjustments were done after -->
+
 {% extends 'base.html' %}
 {% load static %}
 
@@ -12,15 +15,15 @@
     <div class="container">
         <div class="page-header">
             <h1>Analysis Results</h1>
-            <p>Based on NLP analysis of your text</p>
+            <p>Mental state classification is based on NLP analysis of your text</p>
         </div>
 
         <!-- Alert Box (if needed) -->
-        {% if mental_state != 'normal' and confidence >= 70 %}
+        {% if mental_state_label|lower != 'normal' and confidence >= 70 %}
         <div class="alert alert-warning">
-            <h3>⚠️ Mental Health Indicator Detected</h3>
-            <p>Your text shows patterns associated with {{ mental_state_label
-                }}. Please review the personalized recommendations below and
+            <h3><i class="fas fa-exclamation-triangle"></i>Mental Health Indicator Detected</h3>
+            <p>Your text shows patterns associated with {{ mental_state_label }}.
+                Please review the personalized recommendation below and
                 consider reaching out to a mental health professional if
                 needed.</p>
         </div>
@@ -28,120 +31,138 @@
 
         <!-- Main Classification Card -->
         <div class="classification-card">
-            <h2 class="card-title">Mental State Classification</h2>
-
-            <div class="score-container">
-                <svg class="circular-progress" width="220" height="220">
-                    <circle class="progress-background" cx="110" cy="110" r="95"></circle>
-                    <circle class="progress-bar" id="progressBar" cx="110" cy="110" r="95"></circle>
-                </svg>
-                <div class="score-content">
-                    <div class="score-text" id="scoreText">{{ confidence
-                        }}%</div>
-                    <div class="score-subtitle">Confidence</div>
+            <div class="card-content">
+                <!-- Left Column: Circular Progress -->
+                <div class="progress-column">
+                    <div class="progress-header">
+                        <h2 class="card-title" id="mentalStateTitle">{{ mental_state_label }}</h2>
+                        <div class="score-container">
+                            <svg class="circular-progress" width="360" height="360">
+                                <circle class="progress-background" cx="180" cy="180" r="145"></circle>
+                                <circle class="progress-bar" id="progressBar" cx="180" cy="180" r="145"></circle>
+                            </svg>
+                            <div class="score-content">
+                                <div class="score-text" id="scoreText">{{ confidence }}%</div>
+                                <div class="score-subtitle">Model Confidence</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="mental-state-badge {{ mental_state }}" id="mentalStateBadge">
-                <span class="state-icon">{{ state_icon }}</span>
-                <span class="state-label">{{ mental_state_label }}</span>
-            </div>
-
-            <div class="state-description">
-                <p>{{ state_description }}</p>
+                <!-- Right Column: Confidence for the rest of the labels-->
+                <div class="text-column">
+                    <h3>All Categories:</h3>
+                    {% for label, conf in all_confidences.items %}
+                        {% if label != mental_state_label %}
+                            <div class="indicator-item" style="padding-bottom: 24px;">
+                                <div class="indicator-header" style="margin-bottom: 10px;">
+                                    <span class="indicator-name">{{ label|title }}:</span>
+                                    <div class="indicator-name">{{ conf }}%</div>
+                                </div>
+                                <div class="indicator-bar-container" style="background: #E9ECEF; height: 10px; border-radius: 4px; overflow:hidden; width: 80%; margin-bottom: 8px;">
+                                    <!-- Different color for each label -->
+                                    <div class="indicator-bar"
+                                        style="width: {{ conf }}%; height: 100%; background:
+                                            {% if label == 'normal' or label == 'Normal' %}#f7e154
+                                            {% elif label == 'stress' or label == 'Stress' %}#F39C12
+                                            {% elif label == 'depression' or label == 'Depression' %}#9B59B6
+                                            {% elif label == 'suicidal' or label == 'Suicidal' %}#88a3a5
+                                            {% endif %} !important;">
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
             </div>
         </div>
 
-        <!-- Key Indicators Grid -->
-        <div class="indicators-grid">
-            <div class="indicator-card">
-                <div class="indicator-header">
-                    <span class="indicator-icon">😰</span>
-                    <span class="indicator-name">Anxiety Level</span>
-                </div>
-                <div class="indicator-bar-container">
-                    <div class="indicator-bar anxiety-bar" style="width: {{ anxiety_level }}%;"></div>
-                </div>
-                <div class="indicator-value">{{ anxiety_level }}%</div>
-                <p class="indicator-desc">Measures worry, fear, and anxious
-                    language patterns</p>
+         <!-- Analyzed Text -->
+        <div class="analyzed-text-card">
+            <h3>Analyzed Text:</h3>
+            <div class="text-content">{{ analyzed_text }}</div>
+            <div class="text-meta">
+                <span>Word count: <strong>{{ word_count }}</strong></span>
+                <span>|</span>
+                <span>Character count: <strong>{{ char_count }}</strong></span>
             </div>
-
-            <div class="indicator-card">
-                <div class="indicator-header">
-                    <span class="indicator-icon">😔</span>
-                    <span class="indicator-name">Negative Emotions</span>
+        </div>
+        <div class="analyzed-text-card">
+            <h3>Mental State Analysis:</h3>
+            <div class="state-description">
+                <div class="recommendations">
+                    {% for rec in recommendations %}
+                            <p>{{ rec }}</p>
+                    {% endfor %}
                 </div>
-                <div class="indicator-bar-container">
-                    <div class="indicator-bar negativity-bar" style="width: {{ negativity_level }}%;"></div>
-                </div>
-                <div class="indicator-value">{{ negativity_level }}%</div>
-                <p class="indicator-desc">Detects sad, angry, or pessimistic
-                    emotional content</p>
             </div>
+            <!-- Key Indicators Grid -->
+            <div class="indicators-grid">
+                <div class="indicator-card">
+                    <div class="indicator-header">
+                        <i class="fas fa-heartbeat"></i>
+                        <span class="indicator-name">Anxiety Level</span>
+                    </div>
+                    <div class="indicator-bar-container">
+                        <div class="indicator-bar anxiety-bar" style="width: {{ anxiety_level }}%;"></div>
+                    </div>
+                    <div class="indicator-value">{{ anxiety_level }}%</div>
+                    <p class="indicator-desc">Anxious language patterns based on ellipses and word density.</p>
+                </div>
 
-            <div class="indicator-card">
-                <div class="indicator-header">
-                    <span class="indicator-icon">💬</span>
-                    <span class="indicator-name">Emotional Intensity</span>
+                <div class="indicator-card">
+                    <div class="indicator-header">
+                        <i class="fas fa-weight-hanging"></i>
+                        <span class="indicator-name">Negative Emotions</span>
+                    </div>
+                    <div class="indicator-bar-container">
+                        <div class="indicator-bar negativity-bar" style="width: {{ negativity_level }}%;"></div>
+                    </div>
+                    <div class="indicator-value">{{ negativity_level }}%</div>
+                    <p class="indicator-desc">Pessimistic emotional content based on key negative words.</p>
                 </div>
-                <div class="indicator-bar-container">
-                    <div class="indicator-bar intensity-bar" style="width: {{ emotional_intensity }}%;"></div>
+
+                <div class="indicator-card">
+                    <div class="indicator-header">
+                        <i class="fas fa-bullhorn"></i>
+                        <span class="indicator-name">Emotional Intensity</span>
+                    </div>
+                    <div class="indicator-bar-container">
+                        <div class="indicator-bar intensity-bar" style="width: {{ emotional_intensity }}%;"></div>
+                    </div>
+                    <div class="indicator-value">{{ emotional_intensity }}%</div>
+                    <p class="indicator-desc">Emotional strength based on punctuation and capitalization.</p>
                 </div>
-                <div class="indicator-value">{{ emotional_intensity }}%</div>
-                <p class="indicator-desc">Overall emotional expression strength
-                    in the text</p>
             </div>
         </div>
 
         <!-- Save Results CTA if not logged in -->
         {% if not user.is_authenticated %}
         <div class="save-results-cta no-print">
-            <h3>💾 Want to Save These Results?</h3>
+            <h3>Want to Save These Results?</h3>
             <p>Create a free account to track your mental state over time, view
                 historical trends, and get personalized insights!</p>
             <div class="cta-buttons">
-                <a href="03_register.html" class="btn btn-primary">✨ Create Free
+                <a href="{% url 'accounts:register' %}" class="btn btn-primary">Create Free
                     Account</a>
-                <a href="02_login.html" class="btn btn-secondary">Already have
+                <a href="{% url 'accounts:login' %}" class="btn btn-secondary">Already have
                     an account? Sign In</a>
             </div>
-        </div>
-        {% endif %}
-
-        <!-- Analyzed Text -->
-        <div class="analyzed-text-card">
-            <h3>📝 Analyzed Text</h3>
-            <div class="text-content">{{ analyzed_text }}</div>
-            <div class="text-meta">
-                <span>Word count: {{ word_count }}</span>
-                <span>•</span>
-                <span>Character count: {{ char_count }}</span>
-            </div>
-        </div>
-
-        <!-- Recommendations -->
-        {% if recommendations %}
-        <div class="recommendations-card">
-            <h2>💚 Personalized Recommendations</h2>
-            <ul class="recommendation-list">
-                {% for recommendation in recommendations %}
-                <li>{{ recommendation }}</li>
-                {% endfor %}
-            </ul>
         </div>
         {% endif %}
 
         <!-- Action Buttons -->
         <div class="action-buttons">
             <a href="{% url 'predictions:input' %}" class="btn btn-large-action">
-                <span>🔄 Analyze New Text</span>
+                <i class="fas fa-redo" style="margin-right: 15px;"></i>
+                <span>Analyze New Text</span>
             </a>
             <a href="{% url 'accounts:history' %}" class="btn btn-large-action">
-                <span>📊 View History</span>
+                <i class="fas fa-history" style="margin-right: 15px;"></i>
+                <span>View History</span>
             </a>
             <button class="btn btn-large" onclick="window.print()">
-                <span>🖨️ Print Results</span>
+                <span>Print Results</span>
             </button>
         </div>
     </div>

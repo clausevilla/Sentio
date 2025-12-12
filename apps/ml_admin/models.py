@@ -1,4 +1,6 @@
+# Author: Marcus Berggren, Claudia Sevilla Eslava, Julia McCall
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -11,6 +13,14 @@ class ModelVersion(models.Model):
     Uses SET_NULL for created_by to preserve model history even if user deleted.
     """
 
+    MODEL_TYPES = [
+        ('logistic_regression', 'Logistic Regression'),
+        ('random_forest', 'Random Forest'),
+        ('lstm', 'LSTM'),
+        ('transformer', 'Transformer'),
+    ]
+
+    model_type = models.CharField(max_length=30, choices=MODEL_TYPES)
     version_name = models.CharField(max_length=100, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     model_file_path = models.CharField(max_length=255)
@@ -18,8 +28,18 @@ class ModelVersion(models.Model):
     precision = models.FloatField(null=True, blank=True)
     recall = models.FloatField(null=True, blank=True)
     f1_score = models.FloatField(null=True, blank=True)
+    roc_plot_base64 = models.TextField(null=True, blank=True)
+    confusion_matrix_base64 = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=False)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    @property
+    def training_datasets(self):
+        """Get dataset names from the training job that created this model."""
+        try:
+            return ', '.join([u.file_name for u in self.trainingjob.data_uploads.all()])
+        except TrainingJob.DoesNotExist:
+            return None
 
 
 class DataUpload(models.Model):
@@ -38,6 +58,14 @@ class DataUpload(models.Model):
     row_count = models.IntegerField(null=True, blank=True)
     is_validated = models.BooleanField(default=False)
     validation_errors = models.TextField(null=True, blank=True)
+    PIPELINE_CHOICES = (
+        ('full', 'Full'),
+        ('partial', 'Partial'),
+        ('raw', 'Raw'),
+    )
+    pipeline_type = models.CharField(
+        max_length=20, choices=PIPELINE_CHOICES, default='full'
+    )
     PROCESSING_STATUS = (
         ('pending', 'Pending'),
         ('processing', 'Processing'),
@@ -63,7 +91,7 @@ class DatasetRecord(models.Model):
     DATASET_OPTIONS = (  # Used to separate the training data from the test data
         ('train', 'Training'),
         ('test', 'Test'),
-        ('unlabeled', 'Unlabeled'),
+        ('increment', 'Increment'),
     )
 
     text = models.TextField()
@@ -112,18 +140,147 @@ class TrainingJob(models.Model):
     OneToOne relationship with resulting_model ensures one job produces at most one model.
     """
 
+    MODEL_TYPES = [
+        ('logistic_regression', 'Logistic Regression'),
+        ('random_forest', 'Random Forest'),
+        ('lstm', 'LSTM'),
+        ('transformer', 'Transformer'),
+    ]
+
     STATUS_CHOICES = {
         'PENDING': 'Pending',
         'RUNNING': 'Running',
         'COMPLETED': 'Completed',
         'FAILED': 'Failed',
+        'CANCELLED': 'Cancelled',
     }
+    model_type = models.CharField(max_length=30, choices=MODEL_TYPES)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
     started_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
-    data_upload = models.ForeignKey(DataUpload, on_delete=models.CASCADE)
     resulting_model = models.OneToOneField(
         ModelVersion, on_delete=models.SET_NULL, null=True
     )
-    error_message = models.TextField(null=True, blank=True)
+    progress_log = models.TextField(null=True, blank=True)
     initiated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    data_uploads = models.ManyToManyField(DataUpload, related_name='training_jobs')
+    current_epoch = models.IntegerField(null=True, blank=True)
+    total_epochs = models.IntegerField(null=True, blank=True)
+
+
+class Parameter(models.Model):
+    """
+    Union of all model parameters. Each model uses relevant fields, others remain null.
+    """
+
+    SOLVER_CHOICES = [
+        ('lbfgs', 'lbfgs'),
+        ('liblinear', 'liblinear'),
+        ('newton-cg', 'newton-cg'),
+        ('newton-cholesky', 'newton-cholesky'),
+        ('sag', 'sag'),
+        ('saga', 'saga'),
+    ]
+
+    RF_MAX_FEATURES_CHOICES = [
+        ('sqrt', 'sqrt'),
+        ('log2', 'log2'),
+        ('None', 'None'),
+    ]
+
+    model_version = models.OneToOneField(
+        'ModelVersion', on_delete=models.CASCADE, related_name='parameter'
+    )
+
+    # Logistic Regression
+    max_iter = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    regularization_strength = models.FloatField(
+        null=True, blank=True, validators=[MinValueValidator(0.0)]
+    )
+    solver = models.CharField(
+        max_length=20, choices=SOLVER_CHOICES, null=True, blank=True
+    )
+
+    # Random Forest
+    n_estimators = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+
+    max_depth = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    min_samples_split = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(2)]
+    )
+    min_samples_leaf = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    rf_max_features = models.CharField(
+        max_length=20, choices=RF_MAX_FEATURES_CHOICES, null=True, blank=True
+    )
+    n_jobs = models.IntegerField(null=True, blank=True)
+
+    # TF-IDF (shared by traditional ML models)
+    ngram_range_min = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    ngram_range_max = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    min_df = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    max_df = models.FloatField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+    )
+    tfidf_max_features = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+
+    # LSTM
+    embed_dim = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    hidden_dim = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+
+    # Transformer
+    d_model = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    n_head = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    dim_feedforward = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+
+    # Shared (neural networks)
+    num_layers = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    dropout = models.FloatField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+    )
+    max_seq_length = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    vocab_size = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    learning_rate = models.FloatField(
+        null=True, blank=True, validators=[MinValueValidator(0.0)]
+    )
+    batch_size = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+    epochs = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )

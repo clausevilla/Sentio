@@ -1,3 +1,5 @@
+/* Author: Lian Shi, Claudia Sevilla, Karl Byland */
+
 // predictions/input.js - Text analysis input page functionality
 
 
@@ -25,7 +27,7 @@ document.getElementById('alertClose')?.addEventListener('click', () => {
 });
 
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     const textInput = document.getElementById('textInput');
     const charCount = document.getElementById('charCount');
     const analyzeBtn = document.getElementById('analyzeBtn');
@@ -33,15 +35,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const analysisForm = document.getElementById('analysisForm');
     const loadingOverlay = document.getElementById('loadingOverlay');
 
+    const response = await fetch("/predictions/api/strings/");
+    const strings = await response.json();
+
+    console.log(strings)
     // Example texts for different mental states
     const examples = {
-        depression: "I feel so empty inside. Nothing brings me joy anymore. I wake up each day wondering what's the point. I used to love painting but now I can't even pick up a brush. My friends invite me out but I just make excuses. I'm tired all the time but can't sleep properly. Everything feels gray and meaningless.",
+        depression: strings["example_texts"][0],
 
-        anxiety: "I can't stop worrying about everything. My heart races constantly and I feel like something terrible is about to happen. I keep checking my phone, checking locks, checking everything multiple times. I feel sick to my stomach most days. I'm scared to leave the house sometimes because what if something goes wrong?",
+        stress: strings["example_texts"][1],
 
-        stress: "I have so much on my plate right now. Work deadlines are piling up, bills need to be paid, and I barely have time to breathe. I feel overwhelmed and like I'm drowning. My body feels tense all the time and I get headaches every day. I snap at people I care about because I'm so on edge.",
-
-        bipolar: "Some days I feel on top of the world - like I can do anything, my mind races with amazing ideas and I barely need sleep. Then suddenly everything crashes and I can barely get out of bed. The highs are incredible but the lows are devastating. I feel like I'm on an emotional roller coaster I can't control."
+        normal: strings["example_texts"][2],
     };
 
     // Character counter
@@ -96,6 +100,15 @@ document.addEventListener('DOMContentLoaded', function () {
             if (textInput && textInput.value.trim().length < 10) {
                 e.preventDefault();
                 showAlert('Please enter at least 10 characters of text to analyze.');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+                return false;
+            }
+
+            if(textInput.value.trim().split(" ").length < 3) {
+                e.preventDefault();
+                showAlert('Please enter at least 3 words of text to analyze.');
                 if (loadingOverlay) {
                     loadingOverlay.style.display = 'none';
                 }
