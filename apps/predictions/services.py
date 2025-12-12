@@ -167,8 +167,8 @@ def get_recommendations(prediction, confidence, anxiety_level, recommendations_s
     prediction_lower = str(prediction).lower()
     confidence_percentage = confidence * 100 if confidence < 1 else confidence
 
-    if confidence_percentage > 0.70:  # high confidence results
-        if prediction == 'normal':
+    if confidence_percentage > 70:  # high confidence results
+        if prediction_lower == 'normal':
             recommendations.append(  # Index 0 because maybe we want to add random recs in future
                 recommendations_strings['normal']['high_confidence'][0]
             )

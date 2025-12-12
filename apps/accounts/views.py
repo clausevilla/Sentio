@@ -143,7 +143,7 @@ def register_api(request):
                     {
                         'success': True,
                         'message': f'Welcome {username}! Your account has been created successfully.',
-                        'redirect': '/predictions/input/',
+                        'redirect': '/predictions/input',
                     }
                 )
 
@@ -151,7 +151,7 @@ def register_api(request):
                 {
                     'success': True,
                     'message': 'Account created successfully. Please log in.',
-                    'redirect': '/accounts/login/',
+                    'redirect': '/accounts/login',
                 }
             )
         else:
