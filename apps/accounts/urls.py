@@ -27,6 +27,10 @@ urlpatterns = [
         views.delete_analysis_api,
         name='delete_analysis_api',
     ),
+    # Registration validation APIs (real-time validation)
+    path('api/check-username/', views.check_username_api, name='check_username_api'),
+    path('api/check-email/', views.check_email_api, name='check_email_api'),
+    path('api/register/', views.register_api, name='register_api'),
     # Consent and privacy URLs
     path('consent/', views.consent_view, name='consent'),
     path('privacy/', views.privacy_policy_view, name='privacy_policy'),

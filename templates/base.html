@@ -146,6 +146,14 @@
                     </a>
                 </li>
                 <li class="mobile-only-item">
+                        {% if user.is_staff%}
+                        <a href="{% url 'ml_admin:dashboard' %}" class="dropdown-item">
+                            <i class="fas fa-user"></i>
+                            <span>Sentio Admin Page</span>
+                        </a>
+                        {% endif %}
+                    </li>
+                <li class="mobile-only-item">
                     <a href="{% url 'accounts:logout' %}" class="logout-link">
                         <i class="fas fa-sign-out-alt"></i>
                         <span>Logout</span>

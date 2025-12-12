@@ -8,7 +8,7 @@ import joblib
 from google.cloud import storage
 
 BUCKET_NAME = os.environ.get('GCS_BUCKET', 'sentio-m_l-models')
-LOCAL_MODELS_DIR = '/app/ml_models'
+LOCAL_MODELS_DIR = '/app/ml-models'
 
 
 def upload_model(model, model_name):

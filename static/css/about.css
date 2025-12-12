@@ -133,6 +133,10 @@
 }
 
 @media (max-width: 768px) {
+    .about-hero {
+        padding: 2.5rem 1.5rem;
+    }
+
     .about-hero h1 {
         font-size: 2.2rem;
     }
@@ -147,5 +151,182 @@
 
     .about-section {
         padding: 1.5rem;
+    }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+    .about-hero {
+        padding: 2rem 1rem;
+    }
+
+    .about-hero h1 {
+        font-size: 1.6rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .about-hero h1 i {
+        font-size: 1.4rem;
+        margin-right: 8px !important;
+    }
+
+    .about-hero p {
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .about-content {
+        padding: 1.5rem 0.75rem;
+    }
+
+    .about-section {
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+        border-radius: 14px;
+    }
+
+    .about-section h2 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        gap: 0.4rem;
+    }
+
+    .about-section h2 i {
+        font-size: 1.1rem;
+        margin-right: 8px !important;
+    }
+
+    .about-section h3 {
+        font-size: 1.1rem;
+        margin-top: 1.25rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .about-section p {
+        font-size: 0.92rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+
+    .about-section ul {
+        margin-left: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .about-section li {
+        font-size: 0.92rem;
+        margin-bottom: 0.4rem;
+        line-height: 1.55;
+    }
+
+    .tech-stack {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        margin-top: 1.25rem;
+    }
+
+    .tech-item {
+        padding: 1rem;
+        border-radius: 12px;
+    }
+
+    .tech-item i {
+        font-size: 1.8rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .tech-item h4 {
+        font-size: 0.95rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .tech-item p {
+        font-size: 0.8rem;
+    }
+
+    .disclaimer {
+        padding: 1.25rem;
+        border-radius: 10px;
+    }
+
+    .disclaimer strong {
+        font-size: 0.95rem;
+    }
+
+    .disclaimer {
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 400px) {
+    .about-hero {
+        padding: 1.75rem 0.875rem;
+    }
+
+    .about-hero h1 {
+        font-size: 1.4rem;
+    }
+
+    .about-hero p {
+        font-size: 0.9rem;
+    }
+
+    .about-content {
+        padding: 1.25rem 0.5rem;
+    }
+
+    .about-section {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .about-section h2 {
+        font-size: 1.15rem;
+    }
+
+    .about-section h3 {
+        font-size: 1rem;
+    }
+
+    .about-section p {
+        font-size: 0.88rem;
+    }
+
+    .about-section li {
+        font-size: 0.88rem;
+    }
+
+    .tech-stack {
+        gap: 0.6rem;
+    }
+
+    .tech-item {
+        padding: 0.875rem;
+    }
+
+    .tech-item i {
+        font-size: 1.5rem;
+    }
+
+    .tech-item h4 {
+        font-size: 0.9rem;
+    }
+
+    .tech-item p {
+        font-size: 0.78rem;
+    }
+
+    .disclaimer {
+        padding: 1rem;
+    }
+
+    .disclaimer strong {
+        font-size: 0.9rem;
+    }
+
+    .disclaimer {
+        font-size: 0.85rem;
     }
 }

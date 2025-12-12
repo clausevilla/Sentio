@@ -95,12 +95,12 @@
     margin-bottom: 0.5rem;
     font-weight: 600;
     color: var(--color-text-dark);
-    font-size: 0.95rem;
+    font-size: 1rem;
 }
 
 .login-right .form-control {
     width: 100%;
-    padding: 0.9rem 1.2rem;
+    padding: 1rem 1.2rem;
     border: 2px solid #D4E1DD;
     border-radius: 10px;
     font-size: 1rem;
@@ -120,6 +120,8 @@
     padding: 1rem;
     font-size: 1.1rem;
     margin-top: 0.5rem;
+    min-height: 50px;
+    border-radius: 10px;
 }
 
 .login-right .register-link {
@@ -130,6 +132,7 @@
 .login-right .register-link p {
     color: var(--color-text);
     margin: 0;
+    font-size: 1rem;
 }
 
 .login-right .register-link a {
@@ -140,6 +143,21 @@
 
 .login-right .register-link a:hover {
     text-decoration: underline;
+}
+
+/* Alert Messages */
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.alert-error, .alert-danger {
+    background: #ffebee;
+    border: 1px solid #ffcdd2;
+    color: #c62828;
 }
 
 /* ===================================
@@ -155,7 +173,7 @@
     right: 12px !important;
     bottom: 40% !important;
     top: 55% !important;
-    transform: translateY(-50%) ;
+    transform: translateY(-50%);
     background: none;
     border: none;
     cursor: pointer;
@@ -164,7 +182,6 @@
     font-size: 1.2rem;
     z-index: 10;
     transition: color 0.3s;
-
 }
 
 .password-toggle:hover {
@@ -176,44 +193,200 @@
     color: #7FAF93;
 }
 
-
-/* Responsive Design */
+/* ===================================
+   Responsive - Tablet (968px)
+   =================================== */
 @media (max-width: 968px) {
+    .login-section {
+        padding: 1rem;
+        align-items: flex-start;
+    }
+
     .login-container {
         grid-template-columns: 1fr;
+        min-height: auto;
     }
 
     .login-left {
-        padding: 3rem 2rem;
+        padding: 2.5rem 2rem;
     }
 
     .login-left h1 {
         font-size: 2rem;
     }
 
-    .login-right {
-        padding: 3rem 2rem;
-    }
-}
-
-@media (max-width: 640px) {
-    .login-section {
-        padding: 1rem;
+    .login-left p {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
     }
 
-    .login-left {
-        padding: 2rem 1.5rem;
-    }
-
-    .login-left h1 {
-        font-size: 1.8rem;
+    .login-left .feature-list li {
+        font-size: 0.95rem;
+        margin-bottom: 0.75rem;
     }
 
     .login-right {
-        padding: 2rem 1.5rem;
+        padding: 2.5rem 2rem;
     }
 
     .login-right h2 {
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* ===================================
+   Responsive - Mobile (640px)
+   =================================== */
+@media (max-width: 640px) {
+    .login-section {
+        padding: 0.75rem;
+        padding-top: 0.5rem;
+        min-height: auto;
+        align-items: flex-start;
+    }
+
+    .login-container {
+        border-radius: 16px;
+    }
+
+    .login-left {
+        padding: 1.75rem 1.25rem;
+    }
+
+    .login-left h1 {
         font-size: 1.5rem;
+        margin-bottom: 0.875rem;
+    }
+
+    .login-left p {
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
+    .login-left .feature-list li {
+        font-size: 0.9rem;
+        margin-bottom: 0.6rem;
+        padding-left: 1.5rem;
+        line-height: 1.4;
+    }
+
+    .login-left .feature-list li::before {
+        font-size: 1rem;
+    }
+
+    .login-right {
+        padding: 1.75rem 1.25rem;
+    }
+
+    .login-right h2 {
+        font-size: 1.35rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .login-right .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .login-right label {
+        font-size: 0.95rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .login-right .form-control {
+        padding: 0.875rem 1rem;
+        font-size: 16px; /* Prevents iOS zoom */
+        border-radius: 8px;
+    }
+
+    .login-right .btn-primary {
+        padding: 0.875rem 1rem;
+        font-size: 1rem;
+        min-height: 48px;
+        border-radius: 8px;
+    }
+
+    .login-right .register-link {
+        margin-top: 1.25rem;
+    }
+
+    .login-right .register-link p {
+        font-size: 0.95rem;
+    }
+
+    .alert {
+        padding: 0.875rem;
+        font-size: 0.9rem;
+    }
+
+    .password-toggle {
+        padding: 10px;
+        font-size: 1.1rem;
+    }
+}
+
+/* ===================================
+   Responsive - Small Mobile (400px)
+   =================================== */
+@media (max-width: 400px) {
+    .login-section {
+        padding: 0.5rem;
+        padding-top: 0.35rem;
+    }
+
+    .login-container {
+        border-radius: 12px;
+    }
+
+    .login-left {
+        padding: 1.5rem 1rem;
+    }
+
+    .login-left h1 {
+        font-size: 1.35rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .login-left p {
+        font-size: 0.9rem;
+        margin-bottom: 0.875rem;
+    }
+
+    .login-left .feature-list li {
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .login-right {
+        padding: 1.5rem 1rem;
+    }
+
+    .login-right h2 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .login-right label {
+        font-size: 0.9rem;
+    }
+
+    .login-right .form-control {
+        padding: 0.8rem 0.875rem;
+    }
+
+    .login-right .btn-primary {
+        padding: 0.8rem;
+        font-size: 0.95rem;
+        min-height: 46px;
+    }
+
+    .login-right .register-link p {
+        font-size: 0.9rem;
+    }
+
+    .alert {
+        padding: 0.75rem;
+        font-size: 0.85rem;
     }
 }

@@ -79,9 +79,9 @@ def preprocess_user_input(df, model_type):
     pipeline = DataPreprocessingPipeline()
     pipeline_version = ''
     model_to_pipeline = {
-        'lstm': 'rnn',
+        'lstm': 'traditional',  # Seems to work better with full preprocessing
         'random_forest': 'traditional',
-        'transformer': 'transformer',
+        'transformer': 'traditional',  # Seems to work better with full preprocessing
         'logistic_regression': 'traditional',
     }
 

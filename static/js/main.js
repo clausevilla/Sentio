@@ -182,8 +182,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ========================================
     // AUTO-HIDE ALERTS (non-toast alerts)
+    // Excludes alerts with .alert-persistent class
     // ========================================
-    const alerts = document.querySelectorAll('.alert:not(.toast)');
+    const alerts = document.querySelectorAll('.alert:not(.toast):not(.alert-persistent)');
     alerts.forEach(function(alert) {
         setTimeout(function() {
             alert.style.transition = 'opacity 0.3s ease';
