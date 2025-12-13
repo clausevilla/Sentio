@@ -2,6 +2,7 @@
 # Disclaimer: LLM has been used to help generate changepassword and delete account API endpoints.
 
 import json
+import logging
 import re
 from collections import defaultdict
 from datetime import timedelta
@@ -11,6 +12,7 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
+from django.db import DatabaseError, IntegrityError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -21,6 +23,32 @@ from apps.predictions.models import PredictionResult, TextSubmission
 
 from .forms import LoginForm, RegisterForm
 from .models import UserConsent
+
+# Set up logger
+logger = logging.getLogger(__name__)
+
+
+# ==============================================================================
+# HELPER: Error Page
+# ==============================================================================
+
+
+def render_error_page(request, message, retry_url, status=503):
+    """
+    Render a simple error page that auto-redirects after 10 seconds.
+    Uses templates/accounts/error.html
+    """
+    return render(
+        request,
+        'accounts/error.html',
+        {'message': message, 'retry_url': retry_url},
+        status=status,
+    )
+
+
+# ==============================================================================
+# REGISTRATION APIs
+# ==============================================================================
 
 
 @require_http_methods(['POST'])
@@ -36,19 +64,15 @@ def check_username_api(request):
 
         errors = []
 
-        # Check if empty
         if not username:
             return JsonResponse({'available': False, 'error': 'Username is required'})
 
-        # Check length
         if len(username) < 3:
             errors.append('Username must be at least 3 characters')
 
-        # Check valid characters
         if not re.match(r'^[a-zA-Z0-9_]+$', username):
             errors.append('Username can only contain letters, numbers, and underscores')
 
-        # Check if already exists
         if User.objects.filter(username__iexact=username).exists():
             errors.append('This username is already taken')
 
@@ -60,6 +84,16 @@ def check_username_api(request):
     except json.JSONDecodeError:
         return JsonResponse(
             {'available': False, 'error': 'Invalid request'}, status=400
+        )
+    except DatabaseError as e:
+        logger.exception(f'Database error in check_username_api: {e}')
+        return JsonResponse(
+            {'available': False, 'error': 'Service temporarily unavailable'}, status=503
+        )
+    except Exception as e:
+        logger.exception(f'Unexpected error in check_username_api: {e}')
+        return JsonResponse(
+            {'available': False, 'error': 'An unexpected error occurred'}, status=500
         )
 
 
@@ -74,18 +108,15 @@ def check_email_api(request):
         data = json.loads(request.body)
         email = data.get('email', '').strip().lower()
 
-        # Check if empty
         if not email:
             return JsonResponse({'available': False, 'error': 'Email is required'})
 
-        # Check valid format
         email_pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
         if not re.match(email_pattern, email):
             return JsonResponse(
                 {'available': False, 'error': 'Please enter a valid email address'}
             )
 
-        # Check if already exists
         if User.objects.filter(email__iexact=email).exists():
             return JsonResponse(
                 {
@@ -100,6 +131,16 @@ def check_email_api(request):
         return JsonResponse(
             {'available': False, 'error': 'Invalid request'}, status=400
         )
+    except DatabaseError as e:
+        logger.exception(f'Database error in check_email_api: {e}')
+        return JsonResponse(
+            {'available': False, 'error': 'Service temporarily unavailable'}, status=503
+        )
+    except Exception as e:
+        logger.exception(f'Unexpected error in check_email_api: {e}')
+        return JsonResponse(
+            {'available': False, 'error': 'An unexpected error occurred'}, status=500
+        )
 
 
 @require_http_methods(['POST'])
@@ -112,7 +153,6 @@ def register_api(request):
     try:
         data = json.loads(request.body)
 
-        # Build form data
         form_data = {
             'username': data.get('username', ''),
             'email': data.get('email', ''),
@@ -124,15 +164,12 @@ def register_api(request):
         form = RegisterForm(form_data)
 
         if form.is_valid():
-            # Create the user
             user = form.save()
 
-            # Create UserConsent record
             UserConsent.objects.create(
                 user=user, has_consented=True, consent_at=timezone.now()
             )
 
-            # Log the user in
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password1')
             user = authenticate(username=username, password=password)
@@ -155,7 +192,6 @@ def register_api(request):
                 }
             )
         else:
-            # Collect all errors
             errors = {}
             for field, error_list in form.errors.items():
                 errors[field] = [str(e) for e in error_list]
@@ -167,111 +203,149 @@ def register_api(request):
             {'success': False, 'errors': {'__all__': ['Invalid request data']}},
             status=400,
         )
-    except Exception as e:
+    except IntegrityError as e:
+        logger.exception(f'Integrity error in register_api: {e}')
         return JsonResponse(
-            {'success': False, 'errors': {'__all__': [str(e)]}}, status=500
+            {
+                'success': False,
+                'errors': {'__all__': ['Username or email already exists']},
+            },
+            status=400,
         )
+    except DatabaseError as e:
+        logger.exception(f'Database error in register_api: {e}')
+        return JsonResponse(
+            {
+                'success': False,
+                'errors': {'__all__': ['Service temporarily unavailable']},
+            },
+            status=503,
+        )
+    except Exception as e:
+        logger.exception(f'Unexpected error in register_api: {e}')
+        return JsonResponse(
+            {'success': False, 'errors': {'__all__': ['An unexpected error occurred']}},
+            status=500,
+        )
+
+
+# ==============================================================================
+# PAGE VIEWS
+# ==============================================================================
 
 
 def register_view(request):
     """
     Handle user registration with consent
     """
-    # If user is already logged in, redirect to predictions page
-    if request.user.is_authenticated:
-        messages.info(request, 'You are already logged in.')
-        return redirect('predictions:input')
+    try:
+        if request.user.is_authenticated:
+            messages.info(request, 'You are already logged in.')
+            return redirect('predictions:input')
 
-    if request.method == 'POST':
-        form = RegisterForm(request.POST)
+        if request.method == 'POST':
+            form = RegisterForm(request.POST)
 
-        if form.is_valid():
-            # Create the user
-            user = form.save()
+            if form.is_valid():
+                user = form.save()
 
-            # Create UserConsent record with consent given
-            UserConsent.objects.create(
-                user=user, has_consented=True, consent_at=timezone.now()
-            )
-
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password1')
-            user = authenticate(username=username, password=password)
-
-            if user is not None:
-                login(request, user)
-                messages.success(
-                    request,
-                    f'Welcome {username}! Your account has been created successfully.',
+                UserConsent.objects.create(
+                    user=user, has_consented=True, consent_at=timezone.now()
                 )
-                return redirect('predictions:input')
-        else:
-            # Form has errors - they will be displayed in the template
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f'{error}')
-    else:
-        form = RegisterForm()
 
-    context = {'form': form}
-    return render(request, 'accounts/register.html', context)
+                username = form.cleaned_data.get('username')
+                password = form.cleaned_data.get('password1')
+                user = authenticate(username=username, password=password)
+
+                if user is not None:
+                    login(request, user)
+                    messages.success(
+                        request,
+                        f'Welcome {username}! Your account has been created successfully.',
+                    )
+                    return redirect('predictions:input')
+            else:
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f'{error}')
+        else:
+            form = RegisterForm()
+
+        context = {'form': form}
+        return render(request, 'accounts/register.html', context)
+
+    except DatabaseError as e:
+        logger.exception(f'Database error in register_view: {e}')
+        messages.error(request, 'Service temporarily unavailable. Please try again.')
+        return render(request, 'accounts/register.html', {'form': RegisterForm()})
+    except Exception as e:
+        logger.exception(f'Unexpected error in register_view: {e}')
+        messages.error(request, 'An unexpected error occurred. Please try again.')
+        return render(request, 'accounts/register.html', {'form': RegisterForm()})
 
 
 def login_view(request):
     """
     Handle user login with consent check
     """
-    # If user is already logged in, redirect to predictions page
-    if request.user.is_authenticated:
-        messages.info(request, 'You are already logged in.')
-        return redirect('predictions:input')
+    try:
+        if request.user.is_authenticated:
+            messages.info(request, 'You are already logged in.')
+            return redirect('predictions:input')
 
-    if request.method == 'POST':
-        form = LoginForm(request, data=request.POST)
+        if request.method == 'POST':
+            form = LoginForm(request, data=request.POST)
 
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
+            if form.is_valid():
+                username = form.cleaned_data.get('username')
+                password = form.cleaned_data.get('password')
 
-            # Authenticate user
-            user = authenticate(request, username=username, password=password)
+                user = authenticate(request, username=username, password=password)
 
-            if user is not None:
-                login(request, user)
-                if user.is_staff:
-                    messages.success(request, f'Welcome back, {username}!')
-                    return redirect('/')
+                if user is not None:
+                    login(request, user)
+                    if user.is_staff:
+                        messages.success(request, f'Welcome back, {username}!')
+                        return redirect('/')
 
-                # Check if user has consented
-                try:
-                    consent = UserConsent.objects.get(user=user)
-                    if not consent.has_consented:
+                    try:
+                        consent = UserConsent.objects.get(user=user)
+                        if not consent.has_consented:
+                            messages.warning(
+                                request,
+                                'Please review and accept our data processing terms to continue.',
+                            )
+                            return redirect('accounts:consent')
+                    except UserConsent.DoesNotExist:
+                        UserConsent.objects.create(user=user, has_consented=False)
                         messages.warning(
                             request,
                             'Please review and accept our data processing terms to continue.',
                         )
                         return redirect('accounts:consent')
-                except UserConsent.DoesNotExist:
-                    # No consent record - create one and redirect to consent page
-                    UserConsent.objects.create(user=user, has_consented=False)
-                    messages.warning(
-                        request,
-                        'Please review and accept our data processing terms to continue.',
-                    )
-                    return redirect('accounts:consent')
 
-                messages.success(request, f'Welcome back, {username}!')
+                    messages.success(request, f'Welcome back, {username}!')
 
-                # Redirect to next page if specified, otherwise to predictions
-                next_page = request.GET.get('next', 'predictions:input')
-                return redirect(next_page)
+                    next_page = request.GET.get('next', 'predictions:input')
+                    return redirect(next_page)
+            else:
+                messages.error(
+                    request, 'Invalid username or password. Please try again.'
+                )
         else:
-            messages.error(request, 'Invalid username or password. Please try again.')
-    else:
-        form = LoginForm()
+            form = LoginForm()
 
-    context = {'form': form}
-    return render(request, 'accounts/login.html', context)
+        context = {'form': form}
+        return render(request, 'accounts/login.html', context)
+
+    except DatabaseError as e:
+        logger.exception(f'Database error in login_view: {e}')
+        messages.error(request, 'Service temporarily unavailable. Please try again.')
+        return render(request, 'accounts/login.html', {'form': LoginForm()})
+    except Exception as e:
+        logger.exception(f'Unexpected error in login_view: {e}')
+        messages.error(request, 'An unexpected error occurred. Please try again.')
+        return render(request, 'accounts/login.html', {'form': LoginForm()})
 
 
 @login_required(login_url='accounts:login')
@@ -279,12 +353,17 @@ def logout_view(request):
     """
     Handle user logout and end session
     """
-    username = request.user.username
-    logout(request)
-    messages.success(
-        request, f'You have been logged out successfully. See you soon, {username}!'
-    )
-    return redirect('accounts:login')
+    try:
+        username = request.user.username
+        logout(request)
+        messages.success(
+            request, f'You have been logged out successfully. See you soon, {username}!'
+        )
+        return redirect('accounts:login')
+    except Exception as e:
+        logger.exception(f'Error in logout_view: {e}')
+        logout(request)
+        return redirect('accounts:login')
 
 
 @login_required(login_url='accounts:login')
@@ -292,22 +371,34 @@ def consent_view(request):
     """
     Handle data processing consent page
     """
-    if request.method == 'POST':
-        consent_given = request.POST.get('consent') == 'on'
+    try:
+        if request.method == 'POST':
+            consent_given = request.POST.get('consent') == 'on'
 
-        if consent_given:
-            consent, created = UserConsent.objects.get_or_create(user=request.user)
-            consent.give_consent()
+            if consent_given:
+                consent, created = UserConsent.objects.get_or_create(user=request.user)
+                consent.give_consent()
 
-            messages.success(
-                request, 'Thank you for consenting to our data processing terms.'
-            )
-            next_page = request.GET.get('next', 'predictions:input')
-            return redirect(next_page)
-        else:
-            messages.error(request, 'You must consent to continue using the service.')
+                messages.success(
+                    request, 'Thank you for consenting to our data processing terms.'
+                )
+                next_page = request.GET.get('next', 'predictions:input')
+                return redirect(next_page)
+            else:
+                messages.error(
+                    request, 'You must consent to continue using the service.'
+                )
 
-    return render(request, 'accounts/consent.html')
+        return render(request, 'accounts/consent.html')
+
+    except DatabaseError as e:
+        logger.exception(f'Database error in consent_view: {e}')
+        messages.error(request, 'Service temporarily unavailable. Please try again.')
+        return render(request, 'accounts/consent.html')
+    except Exception as e:
+        logger.exception(f'Unexpected error in consent_view: {e}')
+        messages.error(request, 'An unexpected error occurred. Please try again.')
+        return render(request, 'accounts/consent.html')
 
 
 def privacy_policy_view(request):
@@ -322,26 +413,46 @@ def profile_view(request):
     """
     Display user profile with account information and statistics
     """
-    # Get total number of analyses for this user
-    total_analyses = TextSubmission.objects.filter(user=request.user).count()
-
-    # Get consent status
-    consent_status = False
-    consent_at = None
     try:
-        consent = UserConsent.objects.get(user=request.user)
-        consent_status = consent.has_consented
-        consent_at = consent.consent_at
-    except UserConsent.DoesNotExist:
-        pass
+        total_analyses = TextSubmission.objects.filter(user=request.user).count()
 
-    context = {
-        'user': request.user,
-        'total_analyses': total_analyses,
-        'consent_status': consent_status,
-        'consent_at': consent_at,
-    }
-    return render(request, 'accounts/profile.html', context)
+        consent_status = False
+        consent_at = None
+        try:
+            consent = UserConsent.objects.get(user=request.user)
+            consent_status = consent.has_consented
+            consent_at = consent.consent_at
+        except UserConsent.DoesNotExist:
+            pass
+
+        context = {
+            'user': request.user,
+            'total_analyses': total_analyses,
+            'consent_status': consent_status,
+            'consent_at': consent_at,
+        }
+        return render(request, 'accounts/profile.html', context)
+
+    except DatabaseError as e:
+        logger.exception(f'Database error in profile_view: {e}')
+        return render_error_page(
+            request,
+            "We're having trouble loading your profile. Please try again.",
+            '/accounts/profile/',
+        )
+    except Exception as e:
+        logger.exception(f'Unexpected error in profile_view: {e}')
+        return render_error_page(
+            request,
+            'Something went wrong. Please try again.',
+            '/accounts/profile/',
+            status=500,
+        )
+
+
+# ==============================================================================
+# PASSWORD & ACCOUNT APIs
+# ==============================================================================
 
 
 @login_required(login_url='accounts:login')
@@ -351,12 +462,10 @@ def change_password_api(request):
     API endpoint to change user password
     """
     try:
-        # Parse JSON body
         data = json.loads(request.body)
         current_password = data.get('currentPassword')
         new_password = data.get('newPassword')
 
-        # Validate inputs
         if not current_password or not new_password:
             return JsonResponse(
                 {
@@ -367,7 +476,6 @@ def change_password_api(request):
                 status=400,
             )
 
-        # Check if current password is correct
         if not request.user.check_password(current_password):
             return JsonResponse(
                 {
@@ -378,7 +486,6 @@ def change_password_api(request):
                 status=400,
             )
 
-        # Check if new password is different
         if current_password == new_password:
             return JsonResponse(
                 {
@@ -389,7 +496,6 @@ def change_password_api(request):
                 status=400,
             )
 
-        # Validate new password strength
         if len(new_password) < 8:
             return JsonResponse(
                 {
@@ -400,11 +506,9 @@ def change_password_api(request):
                 status=400,
             )
 
-        # Set new password (automatically hashes it)
         request.user.set_password(new_password)
         request.user.save()
 
-        # Important: Update session to prevent logout
         update_session_auth_hash(request, request.user)
 
         return JsonResponse(
@@ -416,9 +520,25 @@ def change_password_api(request):
             {'success': False, 'error': 'invalid_json', 'message': 'Invalid JSON data'},
             status=400,
         )
-    except Exception as e:
+    except DatabaseError as e:
+        logger.exception(f'Database error in change_password_api: {e}')
         return JsonResponse(
-            {'success': False, 'error': 'server_error', 'message': str(e)}, status=500
+            {
+                'success': False,
+                'error': 'server_error',
+                'message': 'Service temporarily unavailable',
+            },
+            status=503,
+        )
+    except Exception as e:
+        logger.exception(f'Unexpected error in change_password_api: {e}')
+        return JsonResponse(
+            {
+                'success': False,
+                'error': 'server_error',
+                'message': 'An unexpected error occurred',
+            },
+            status=500,
         )
 
 
@@ -430,11 +550,9 @@ def delete_all_data_api(request):
     Also revokes consent so user needs to re-consent
     """
     try:
-        # Parse JSON body
         data = json.loads(request.body)
         password = data.get('password')
 
-        # Validate password
         if not password:
             return JsonResponse(
                 {
@@ -445,7 +563,6 @@ def delete_all_data_api(request):
                 status=400,
             )
 
-        # Check if password is correct
         if not request.user.check_password(password):
             return JsonResponse(
                 {
@@ -457,21 +574,18 @@ def delete_all_data_api(request):
             )
 
         deletion_result = TextSubmission.objects.filter(user=request.user).delete()
-        deleted_count = deletion_result[0]  # Total number of objects deleted
+        deleted_count = deletion_result[0]
 
-        # Revoke consent - user will need to re-consent
         try:
             consent = UserConsent.objects.get(user=request.user)
             consent.revoke_consent()
         except UserConsent.DoesNotExist:
-            # Create a revoked consent record
             UserConsent.objects.create(
                 user=request.user,
                 has_consented=False,
                 revoked_at=timezone.now(),
             )
 
-        # Determine redirect URL based on user type
         if request.user.is_staff:
             redirect_url = '/'
         else:
@@ -492,9 +606,25 @@ def delete_all_data_api(request):
             {'success': False, 'error': 'invalid_json', 'message': 'Invalid JSON data'},
             status=400,
         )
-    except Exception as e:
+    except DatabaseError as e:
+        logger.exception(f'Database error in delete_all_data_api: {e}')
         return JsonResponse(
-            {'success': False, 'error': 'server_error', 'message': str(e)}, status=500
+            {
+                'success': False,
+                'error': 'server_error',
+                'message': 'Service temporarily unavailable',
+            },
+            status=503,
+        )
+    except Exception as e:
+        logger.exception(f'Unexpected error in delete_all_data_api: {e}')
+        return JsonResponse(
+            {
+                'success': False,
+                'error': 'server_error',
+                'message': 'An unexpected error occurred',
+            },
+            status=500,
         )
 
 
@@ -503,14 +633,11 @@ def delete_all_data_api(request):
 def delete_account_api(request):
     """
     API endpoint to permanently delete user account and all associated data
-
     """
     try:
-        # Parse JSON body
         data = json.loads(request.body)
         password = data.get('password')
 
-        # Validate password
         if not password:
             return JsonResponse(
                 {
@@ -521,7 +648,6 @@ def delete_account_api(request):
                 status=400,
             )
 
-        # Check if password is correct
         if not request.user.check_password(password):
             return JsonResponse(
                 {
@@ -532,14 +658,10 @@ def delete_account_api(request):
                 status=400,
             )
 
-        # Store username for response
         username = request.user.username
 
-        # Delete user account (this will cascade delete all related data)
-        # including all TextSubmission and PredictionResult records due to ForeignKey
         request.user.delete()
 
-        # Logout (session is destroyed)
         logout(request)
 
         return JsonResponse(
@@ -554,133 +676,157 @@ def delete_account_api(request):
             {'success': False, 'error': 'invalid_json', 'message': 'Invalid JSON data'},
             status=400,
         )
-    except Exception as e:
+    except DatabaseError as e:
+        logger.exception(f'Database error in delete_account_api: {e}')
         return JsonResponse(
-            {'success': False, 'error': 'server_error', 'message': str(e)}, status=500
+            {
+                'success': False,
+                'error': 'server_error',
+                'message': 'Service temporarily unavailable',
+            },
+            status=503,
         )
+    except Exception as e:
+        logger.exception(f'Unexpected error in delete_account_api: {e}')
+        return JsonResponse(
+            {
+                'success': False,
+                'error': 'server_error',
+                'message': 'An unexpected error occurred',
+            },
+            status=500,
+        )
+
+
+# ==============================================================================
+# HISTORY VIEW
+# ==============================================================================
 
 
 @login_required(login_url='accounts:login')
 def history_view(request):
     """
     Display user's analysis history with charts and statistics.
-
-    This view fetches all prediction results for the logged-in user from the database
-    and calculates statistics for display on the history page.
-
-    Note: mental_state values are normalized to lowercase for consistent comparison,
-    as the database may store them with varying capitalization (e.g., 'Stress' vs 'stress').
     """
-    # Get all submissions for this user with related prediction results
-    # Using select_related for efficient database query (single JOIN instead of N+1)
-    submissions = (
-        TextSubmission.objects.filter(user=request.user)
-        .select_related('predictionresult')
-        .order_by('-submitted_at')
-    )
+    try:
+        submissions = (
+            TextSubmission.objects.filter(user=request.user)
+            .select_related('predictionresult')
+            .order_by('-submitted_at')
+        )
 
-    # Build list of analyses with all necessary data for the template
-    # IMPORTANT: Normalize mental_state to lowercase for consistent filtering and counting
-    analyses = []
-    for submission in submissions:
-        try:
-            prediction = submission.predictionresult
-            # Normalize mental_state to lowercase for consistent comparison
-            raw_mental_state = prediction.mental_state or ''
-            normalized_state = raw_mental_state.lower().strip()
+        analyses = []
+        for submission in submissions:
+            try:
+                prediction = submission.predictionresult
+                raw_mental_state = prediction.mental_state or ''
+                normalized_state = raw_mental_state.lower().strip()
 
-            analyses.append(
-                {
-                    'id': submission.id,
-                    'text': submission.text_content,
-                    'mental_state': normalized_state,  # Use normalized lowercase value
-                    'get_mental_state_display': prediction.get_mental_state_display(),
-                    'confidence': round(prediction.confidence * 100),
-                    'anxiety_level': prediction.anxiety_level or 0,
-                    'negativity_level': prediction.negativity_level or 0,
-                    'emotional_intensity': prediction.emotional_intensity or 0,
-                    'created_at': submission.submitted_at,
-                    'recommendations': prediction.recommendations,
-                }
-            )
-        except PredictionResult.DoesNotExist:
-            # Submission without a prediction result - skip it
-            continue
+                analyses.append(
+                    {
+                        'id': submission.id,
+                        'text': submission.text_content,
+                        'mental_state': normalized_state,
+                        'get_mental_state_display': prediction.get_mental_state_display(),
+                        'confidence': round(prediction.confidence * 100),
+                        'anxiety_level': prediction.anxiety_level or 0,
+                        'negativity_level': prediction.negativity_level or 0,
+                        'emotional_intensity': prediction.emotional_intensity or 0,
+                        'created_at': submission.submitted_at,
+                        'recommendations': prediction.recommendations,
+                    }
+                )
+            except PredictionResult.DoesNotExist:
+                continue
 
-    # Calculate statistics using normalized (lowercase) mental_state values
-    total_analyses = len(analyses)
-    normal_count = sum(1 for a in analyses if a['mental_state'] == 'normal')
-    concern_count = total_analyses - normal_count
+        total_analyses = len(analyses)
+        normal_count = sum(1 for a in analyses if a['mental_state'] == 'normal')
+        concern_count = total_analyses - normal_count
 
-    # Get last analysis date
-    last_analysis = 'Never'
-    if analyses:
-        last_analysis = analyses[0]['created_at'].strftime('%b %d, %Y')
+        last_analysis = 'Never'
+        if analyses:
+            last_analysis = analyses[0]['created_at'].strftime('%b %d, %Y')
 
-    # Calculate state distribution with percentages
-    # mental_state is already normalized to lowercase in the analyses list
-    state_counts = defaultdict(int)
-    for analysis in analyses:
-        state_counts[analysis['mental_state']] += 1
+        state_counts = defaultdict(int)
+        for analysis in analyses:
+            state_counts[analysis['mental_state']] += 1
 
-    # Build state distribution dictionary with counts and percentages
-    # Using a simple structure that works reliably with Django templates
-    state_distribution = {
-        'normal': {
-            'label': 'Normal',
-            'count': state_counts.get('normal', 0),
-            'percentage': round(
-                (state_counts.get('normal', 0) / total_analyses * 100)
-                if total_analyses > 0
-                else 0
-            ),
-        },
-        'depression': {
-            'label': 'Depression',
-            'count': state_counts.get('depression', 0),
-            'percentage': round(
-                (state_counts.get('depression', 0) / total_analyses * 100)
-                if total_analyses > 0
-                else 0
-            ),
-        },
-        'stress': {
-            'label': 'Stress',
-            'count': state_counts.get('stress', 0),
-            'percentage': round(
-                (state_counts.get('stress', 0) / total_analyses * 100)
-                if total_analyses > 0
-                else 0
-            ),
-        },
-        'suicidal': {
-            'label': 'Suicidal',
-            'count': state_counts.get('suicidal', 0),
-            'percentage': round(
-                (state_counts.get('suicidal', 0) / total_analyses * 100)
-                if total_analyses > 0
-                else 0
-            ),
-        },
-    }
+        state_distribution = {
+            'normal': {
+                'label': 'Normal',
+                'count': state_counts.get('normal', 0),
+                'percentage': round(
+                    (state_counts.get('normal', 0) / total_analyses * 100)
+                    if total_analyses > 0
+                    else 0
+                ),
+            },
+            'depression': {
+                'label': 'Depression',
+                'count': state_counts.get('depression', 0),
+                'percentage': round(
+                    (state_counts.get('depression', 0) / total_analyses * 100)
+                    if total_analyses > 0
+                    else 0
+                ),
+            },
+            'stress': {
+                'label': 'Stress',
+                'count': state_counts.get('stress', 0),
+                'percentage': round(
+                    (state_counts.get('stress', 0) / total_analyses * 100)
+                    if total_analyses > 0
+                    else 0
+                ),
+            },
+            'suicidal': {
+                'label': 'Suicidal',
+                'count': state_counts.get('suicidal', 0),
+                'percentage': round(
+                    (state_counts.get('suicidal', 0) / total_analyses * 100)
+                    if total_analyses > 0
+                    else 0
+                ),
+            },
+        }
 
-    # Pagination - 10 items per page
-    paginator = Paginator(analyses, 10)
-    page_number = request.GET.get('page', 1)
-    page_obj = paginator.get_page(page_number)
+        paginator = Paginator(analyses, 10)
+        page_number = request.GET.get('page', 1)
+        page_obj = paginator.get_page(page_number)
 
-    context = {
-        'total_analyses': total_analyses,
-        'normal_count': normal_count,
-        'concern_count': concern_count,
-        'last_analysis': last_analysis,
-        'state_distribution': state_distribution,
-        'analyses': page_obj,  # Paginated analyses
-        'page_obj': page_obj,
-        'is_paginated': paginator.num_pages > 1,
-    }
+        context = {
+            'total_analyses': total_analyses,
+            'normal_count': normal_count,
+            'concern_count': concern_count,
+            'last_analysis': last_analysis,
+            'state_distribution': state_distribution,
+            'analyses': page_obj,
+            'page_obj': page_obj,
+            'is_paginated': paginator.num_pages > 1,
+        }
 
-    return render(request, 'accounts/history.html', context)
+        return render(request, 'accounts/history.html', context)
+
+    except DatabaseError as e:
+        logger.exception(f'Database error in history_view: {e}')
+        return render_error_page(
+            request,
+            "We're having trouble loading your history. Please try again.",
+            '/accounts/history/',
+        )
+    except Exception as e:
+        logger.exception(f'Unexpected error in history_view: {e}')
+        return render_error_page(
+            request,
+            'Something went wrong. Please try again.',
+            '/accounts/history/',
+            status=500,
+        )
+
+
+# ==============================================================================
+# CHART DATA API
+# ==============================================================================
 
 
 @login_required(login_url='accounts:login')
@@ -688,103 +834,177 @@ def history_view(request):
 def chart_data_api(request):
     """
     API endpoint to fetch chart data for mental health trends over time.
-
-    Query parameters:
-        - period: 'week', 'month', or 'all' (default: 'week')
-
-    Returns JSON with labels and datasets for Chart.js
     """
-    period = request.GET.get('period', 'week')
-    now = timezone.now()
+    try:
+        period = request.GET.get('period', 'week')
+        today = timezone.now().date()
+        yesterday = today - timedelta(days=1)
 
-    # Determine date range based on period
-    # More date labels for better visualization
-    if period == 'week':
-        start_date = now - timedelta(days=7)
-        # Generate daily labels for the past week (8 labels)
-        labels = [(start_date + timedelta(days=i)).strftime('%a %d') for i in range(8)]
-        group_days = 1
-    elif period == 'month':
-        start_date = now - timedelta(days=30)
-        # Generate labels for every 2 days (15 labels for better granularity)
-        labels = [
-            (start_date + timedelta(days=i * 2)).strftime('%b %d') for i in range(16)
-        ]
-        group_days = 2
-    else:  # 'all' - show last 90 days
-        start_date = now - timedelta(days=90)
-        # Generate labels for every 7 days (13 labels - about 3 months of weekly data)
-        labels = [
-            (start_date + timedelta(days=i * 7)).strftime('%b %d') for i in range(14)
-        ]
-        group_days = 7
-
-    # Query predictions within the date range for the current user
-    submissions = (
-        TextSubmission.objects.filter(
-            user=request.user, submitted_at__gte=start_date, submitted_at__lte=now
+        all_submissions = (
+            TextSubmission.objects.filter(user=request.user)
+            .select_related('predictionresult')
+            .order_by('submitted_at')
         )
-        .select_related('predictionresult')
-        .order_by('submitted_at')
-    )
 
-    # Initialize data structure for each mental state
-    mental_states = ['normal', 'depression', 'stress', 'suicidal']
-    chart_data = {state: [0] * len(labels) for state in mental_states}
+        if not all_submissions.exists():
+            return JsonResponse(
+                {
+                    'labels': [],
+                    'datasets': [
+                        {
+                            'label': 'Normal',
+                            'data': [],
+                            'borderColor': '#4A7C59',
+                            'backgroundColor': 'rgba(74, 124, 89, 0.1)',
+                        },
+                        {
+                            'label': 'Depression',
+                            'data': [],
+                            'borderColor': '#5B7C99',
+                            'backgroundColor': 'rgba(91, 124, 153, 0.1)',
+                        },
+                        {
+                            'label': 'Stress',
+                            'data': [],
+                            'borderColor': '#E07A5F',
+                            'backgroundColor': 'rgba(224, 122, 95, 0.1)',
+                        },
+                        {
+                            'label': 'Suicidal',
+                            'data': [],
+                            'borderColor': '#7B68A6',
+                            'backgroundColor': 'rgba(123, 104, 166, 0.1)',
+                        },
+                    ],
+                }
+            )
 
-    # Count occurrences for each mental state over time
-    for submission in submissions:
-        try:
-            prediction = submission.predictionresult
-            # Normalize mental_state to lowercase for consistent comparison
-            raw_state = prediction.mental_state or ''
-            state = raw_state.lower().strip()
+        first_submission_date = all_submissions.first().submitted_at.date()
 
-            if state not in mental_states:
+        today_has_data = all_submissions.filter(submitted_at__date=today).exists()
+
+        if today_has_data:
+            end_date = today
+        else:
+            end_date = yesterday
+
+        if period == 'week':
+            start_date = end_date - timedelta(days=6)
+        elif period == 'month':
+            start_date = end_date - timedelta(days=29)
+        else:
+            start_date = first_submission_date
+
+        mental_states = ['normal', 'depression', 'stress', 'suicidal']
+        daily_counts = defaultdict(lambda: {state: 0 for state in mental_states})
+
+        for submission in all_submissions:
+            sub_date = submission.submitted_at.date()
+
+            if sub_date < start_date or sub_date > end_date:
                 continue
 
-            # Determine which bucket this prediction falls into
-            days_diff = (submission.submitted_at.date() - start_date.date()).days
-            index = min(max(0, days_diff // group_days), len(labels) - 1)
+            try:
+                prediction = submission.predictionresult
+                raw_state = prediction.mental_state or ''
+                state = raw_state.lower().strip()
 
-            chart_data[state][index] += 1
+                if state in mental_states:
+                    daily_counts[sub_date][state] += 1
+            except PredictionResult.DoesNotExist:
+                continue
 
-        except PredictionResult.DoesNotExist:
-            continue
+        all_dates = []
+        current = start_date
+        while current <= end_date:
+            all_dates.append(current)
+            current += timedelta(days=1)
 
-    datasets = [
-        {
-            'label': 'Normal',
-            'data': chart_data['normal'],
-            'borderColor': '#4A7C59',
-            'backgroundColor': 'rgba(74, 124, 89, 0.1)',
-        },
-        {
-            'label': 'Depression',
-            'data': chart_data['depression'],
-            'borderColor': '#5B7C99',
-            'backgroundColor': 'rgba(91, 124, 153, 0.1)',
-        },
-        {
-            'label': 'Stress',
-            'data': chart_data['stress'],
-            'borderColor': '#E07A5F',
-            'backgroundColor': 'rgba(224, 122, 95, 0.1)',
-        },
-        {
-            'label': 'Suicidal',
-            'data': chart_data['suicidal'],
-            'borderColor': '#7B68A6',
-            'backgroundColor': 'rgba(123, 104, 166, 0.1)',
-        },
-    ]
+        total_days = len(all_dates)
 
-    return JsonResponse(
-        {
-            'labels': labels,
-            'datasets': datasets,
-        }
-    )
+        if total_days <= 14:
+            labels = [d.strftime('%b %d') for d in all_dates]
+            chart_data = {
+                state: [daily_counts[d][state] for d in all_dates]
+                for state in mental_states
+            }
+        elif total_days <= 60:
+            labels, chart_data = bucket_data(all_dates, daily_counts, mental_states, 2)
+        elif total_days <= 120:
+            labels, chart_data = bucket_data(all_dates, daily_counts, mental_states, 4)
+        else:
+            labels, chart_data = bucket_data(all_dates, daily_counts, mental_states, 7)
+
+        datasets = [
+            {
+                'label': 'Normal',
+                'data': chart_data['normal'],
+                'borderColor': '#4A7C59',
+                'backgroundColor': 'rgba(74, 124, 89, 0.1)',
+            },
+            {
+                'label': 'Depression',
+                'data': chart_data['depression'],
+                'borderColor': '#5B7C99',
+                'backgroundColor': 'rgba(91, 124, 153, 0.1)',
+            },
+            {
+                'label': 'Stress',
+                'data': chart_data['stress'],
+                'borderColor': '#E07A5F',
+                'backgroundColor': 'rgba(224, 122, 95, 0.1)',
+            },
+            {
+                'label': 'Suicidal',
+                'data': chart_data['suicidal'],
+                'borderColor': '#7B68A6',
+                'backgroundColor': 'rgba(123, 104, 166, 0.1)',
+            },
+        ]
+
+        return JsonResponse({'labels': labels, 'datasets': datasets})
+
+    except DatabaseError as e:
+        logger.exception(f'Database error in chart_data_api: {e}')
+        return JsonResponse(
+            {
+                'success': False,
+                'error': 'server_error',
+                'message': 'Service temporarily unavailable',
+            },
+            status=503,
+        )
+    except Exception as e:
+        logger.exception(f'Unexpected error in chart_data_api: {e}')
+        return JsonResponse(
+            {
+                'success': False,
+                'error': 'server_error',
+                'message': 'An unexpected error occurred',
+            },
+            status=500,
+        )
+
+
+def bucket_data(all_dates, daily_counts, mental_states, group_days):
+    """Helper function to bucket daily data into groups."""
+    labels = []
+    chart_data = {state: [] for state in mental_states}
+
+    for i in range(0, len(all_dates), group_days):
+        bucket_dates = all_dates[i : i + group_days]
+        labels.append(bucket_dates[0].strftime('%b %d'))
+
+        for state in mental_states:
+            total = sum(daily_counts[d][state] for d in bucket_dates)
+            chart_data[state].append(total)
+
+    return labels, chart_data
+
+
+# ==============================================================================
+# DELETE ANALYSIS API
+# ==============================================================================
 
 
 @login_required(login_url='accounts:login')
@@ -792,30 +1012,15 @@ def chart_data_api(request):
 def delete_analysis_api(request, analysis_id):
     """
     API endpoint to delete a single analysis.
-
-    This allows users to delete individual analyses from their history.
-    The analysis must belong to the current user.
-
-    Args:
-        request: The HTTP request
-        analysis_id: The ID of the PredictionResult to delete
-
-    Returns:
-        JSON response with success status and message
     """
     try:
-        # Find the prediction result and verify it belongs to the current user
         prediction = PredictionResult.objects.select_related('submission').get(
             id=analysis_id, submission__user=request.user
         )
 
-        # Get the associated submission
         submission = prediction.submission
 
-        # Delete the prediction (this will also cascade if set up that way)
         prediction.delete()
-
-        # Delete the submission
         submission.delete()
 
         return JsonResponse(
@@ -827,9 +1032,23 @@ def delete_analysis_api(request, analysis_id):
             {'success': False, 'error': 'Analysis not found or access denied'},
             status=404,
         )
-
+    except DatabaseError as e:
+        logger.exception(f'Database error in delete_analysis_api: {e}')
+        return JsonResponse(
+            {'success': False, 'error': 'Service temporarily unavailable'},
+            status=503,
+        )
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        logger.exception(f'Unexpected error in delete_analysis_api: {e}')
+        return JsonResponse(
+            {'success': False, 'error': 'An unexpected error occurred'},
+            status=500,
+        )
+
+
+# ==============================================================================
+# EXPORT DATA API
+# ==============================================================================
 
 
 @login_required(login_url='accounts:login')
@@ -839,17 +1058,15 @@ def export_data_api(request):
     API endpoint to export all user data in JSON format
     For GDPR compliance and user data portability
     """
-    user = request.user
-
     try:
-        # Export user profile data
+        user = request.user
+
         user_data = {
             'username': user.username,
             'email': user.email,
             'date_joined': user.date_joined.isoformat(),
         }
 
-        # Export consent data
         try:
             consent = UserConsent.objects.get(user=user)
             consent_data = {
@@ -864,7 +1081,6 @@ def export_data_api(request):
         except UserConsent.DoesNotExist:
             consent_data = None
 
-        # Export analysis history
         analysis_history = []
         submissions = (
             TextSubmission.objects.filter(user=user)
@@ -906,93 +1122,23 @@ def export_data_api(request):
         )
         return response
 
-    except Exception as e:
+    except DatabaseError as e:
+        logger.exception(f'Database error in export_data_api: {e}')
         return JsonResponse(
-            {'success': False, 'error': 'server_error', 'message': str(e)}, status=500
+            {
+                'success': False,
+                'error': 'server_error',
+                'message': 'Service temporarily unavailable',
+            },
+            status=503,
         )
-
-
-@login_required(login_url='accounts:login')
-@require_http_methods(['GET'])
-def analyses_list_api(request):
-    """
-    API endpoint to fetch paginated analyses for AJAX pagination.
-
-    Query parameters:
-        - page: Page number (default: 1)
-        - state: Filter by mental state (optional, 'all' for no filter)
-
-    Returns JSON with:
-        - analyses: List of analysis objects
-        - pagination: Pagination metadata
-    """
-    page_number = request.GET.get('page', 1)
-    state_filter = request.GET.get('state', 'all')
-
-    # Get all submissions for the user, ordered by date descending
-    submissions = (
-        TextSubmission.objects.filter(user=request.user)
-        .select_related('predictionresult')
-        .order_by('-submitted_at')
-    )
-
-    # Build analyses list
-    analyses = []
-    for submission in submissions:
-        try:
-            prediction = submission.predictionresult
-            raw_state = prediction.mental_state or ''
-            mental_state = raw_state.lower().strip()
-
-            # Apply state filter if specified
-            if state_filter != 'all' and mental_state != state_filter:
-                continue
-
-            # Format display name for mental state
-            state_display_map = {
-                'normal': 'Normal',
-                'depression': 'Depression',
-                'stress': 'Stress',
-                'suicidal': 'Suicidal',
-            }
-
-            analyses.append(
-                {
-                    'id': prediction.id,
-                    'text': submission.text_content,
-                    'mental_state': mental_state,
-                    'mental_state_display': state_display_map.get(
-                        mental_state, mental_state.title()
-                    ),
-                    'confidence': round(prediction.confidence * 100),
-                    'anxiety_level': prediction.anxiety_level or 0,
-                    'negativity_level': prediction.negativity_level or 0,
-                    'emotional_intensity': prediction.emotional_intensity or 0,
-                    'created_at': submission.submitted_at.strftime('%b %d, %Y - %H:%M'),
-                    'recommendations': prediction.recommendations,
-                }
-            )
-        except PredictionResult.DoesNotExist:
-            continue
-
-    # Pagination - 10 items per page
-    paginator = Paginator(analyses, 10)
-    page_obj = paginator.get_page(page_number)
-
-    # Build response
-    response_data = {
-        'analyses': list(page_obj),
-        'pagination': {
-            'current_page': page_obj.number,
-            'total_pages': paginator.num_pages,
-            'has_previous': page_obj.has_previous(),
-            'has_next': page_obj.has_next(),
-            'previous_page': page_obj.previous_page_number()
-            if page_obj.has_previous()
-            else None,
-            'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
-            'total_count': len(analyses),
-        },
-    }
-
-    return JsonResponse(response_data)
+    except Exception as e:
+        logger.exception(f'Unexpected error in export_data_api: {e}')
+        return JsonResponse(
+            {
+                'success': False,
+                'error': 'server_error',
+                'message': 'An unexpected error occurred',
+            },
+            status=500,
+        )
