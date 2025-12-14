@@ -65,9 +65,9 @@
 | Add confidence display for all labels, and refactor the results UI page | Claudia Sevilla Eslava | Yes | Yes | |
 | Connect training, evaluation and inference with UI | Marcus Berggren | Yes | Yes | |
 | Create diagrams of ML-pipeline | Marcus Berggren | Yes | Yes |  |
-| Prediction should run asynchronously in the background | Karl Byland | Yes | Yes | Refreshing the page / navigating away from the page doesn’t infinitely load if refreshed |
+| Prediction should run asynchronously in the background | Karl Byland | No | No | Refreshing the page / navigating away from the page doesn’t infinitely load if refreshed |
 | Refactor long strings into json file | Karl Byland | Yes | Yes | |
 | Update/fix any information inconsistencies in UI | Julia McCall | Yes | Yes |  |
 | Create presentation slides and roadmap | Julia McCall, Claudia Sevilla Eslava | Yes | Yes |  |
 | Integrate preprocessing branching and the unit tests for previously merged branches (cleaning, preprocessing, prediction) | Julia McCall | Yes | Yes | Integration carried over from previous week |
-| Add exceptions for prediction page | Claudia Sevilla Eslava | | | |
+| Add exceptions for prediction page | Claudia Sevilla Eslava | Yes | Yes | |
