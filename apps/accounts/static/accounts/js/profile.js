@@ -1,15 +1,7 @@
 // Author: Lian Shi
-// Disclaimer: LLM has used to help with deleting data/user accounts API handling*/
+// Disclaimer: LLM has used to help with deleting data/user accounts API handling
 
-// ===================================
-// Simple Profile Page
-// ===================================
-console.log('Toast element:', document.getElementById('dynamicToast'));
-console.log('Toast icon:', document.getElementById('toastIcon'));
-console.log('Toast title:', document.getElementById('toastTitle'));
-console.log('Toast message:', document.getElementById('toastMessage'));
-
-// Get CSRF token for Django
+// Get CSRF token
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -27,7 +19,7 @@ function getCookie(name) {
 
 const csrftoken = getCookie('csrftoken');
 
-// Show toast message - creates toast dynamically
+// Show toast message
 function showMessage(message, type = 'success') {
     // Remove any existing dynamic toast
     const existingToast = document.getElementById('dynamicToast');
@@ -90,12 +82,9 @@ function hideToast() {
 // Password validation
 function validatePassword(password) {
     const errors = [];
-
     if (password.length < 8) {
         errors.push('Password must be at least 8 characters');
     }
-
-
     return {
         isValid: errors.length === 0,
         errors: errors
@@ -152,18 +141,17 @@ document.getElementById('changePasswordForm')?.addEventListener('submit', async 
         const data = await response.json();
 
         if (response.ok) {
-            showMessage('✅ Password changed successfully!', 'success');
+            showMessage('Password changed successfully!', 'success');
             document.getElementById('changePasswordForm').reset();
         } else {
             if (data.error === 'incorrect_password') {
                 document.getElementById('currentPasswordError').textContent = 'Current password is incorrect';
             } else {
-                showMessage('❌ ' + (data.message || 'Failed to change password'), 'error');
+                showMessage(data.message || 'Failed to change password', 'error');
             }
         }
     } catch (error) {
-        console.error('Error:', error);
-        showMessage('❌ An error occurred. Please try again.', 'error');
+        showMessage('An error occurred. Please try again.', 'error');
     }
 });
 
@@ -224,14 +212,12 @@ document.getElementById('deleteDataForm')?.addEventListener('submit', async func
         } else {
             if (data.error === 'incorrect_password') {
                 showMessage('Incorrect password. Please try again.', 'error');
-                closeDeleteDataModal();
             } else {
                 showMessage(data.message || 'Failed to delete data', 'error');
-                closeDeleteDataModal();
             }
+            closeDeleteDataModal();
         }
     } catch (error) {
-        console.error('Error:', error);
         showMessage('An error occurred. Please try again.', 'error');
         closeDeleteDataModal();
     }
@@ -257,7 +243,6 @@ document.getElementById('deleteAccountConfirm')?.addEventListener('input', funct
 });
 
 // Delete Account Form
-// Uses DELETE HTTP method since this is a destructive operation
 document.getElementById('deleteAccountForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
@@ -272,7 +257,7 @@ document.getElementById('deleteAccountForm')?.addEventListener('submit', async f
 
     try {
         const response = await fetch('/accounts/api/delete-account/', {
-            method: 'DELETE', 
+            method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrftoken
@@ -288,18 +273,15 @@ document.getElementById('deleteAccountForm')?.addEventListener('submit', async f
             setTimeout(() => {
                 window.location.href = '/';
             }, 3000);
-
         } else {
             if (data.error === 'incorrect_password') {
                 showMessage('Incorrect password. Please try again.', 'error');
-                closeDeleteAccountModal();
             } else {
                 showMessage(data.message || 'Failed to delete account', 'error');
-                closeDeleteAccountModal();
             }
+            closeDeleteAccountModal();
         }
     } catch (error) {
-        console.error('Error:', error);
         showMessage('An error occurred. Please try again.', 'error');
         closeDeleteAccountModal();
     }

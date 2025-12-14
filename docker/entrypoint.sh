@@ -24,7 +24,7 @@ from google.cloud import storage
 import os
 
 bucket_name = os.environ.get('GCS_BUCKET', 'sentio-m_l-models')
-models_dir = '/app/ml_models'
+models_dir = '/app/ml-models'
 os.makedirs(models_dir, exist_ok=True)
 
 try:
@@ -34,7 +34,7 @@ try:
     blobs = bucket.list_blobs(prefix='models/')
     downloaded = 0
     for blob in blobs:
-        if blob.name.endswith('.pkl') or blob.name.endswith('.joblib'):
+        if blob.name.endswith('.pkl') or blob.name.endswith('.joblib') or blob.name.endswith('.pt'):
             filename = blob.name.split('/')[-1]
             local_path = f"{models_dir}/{filename}"
             blob.download_to_filename(local_path)
@@ -69,4 +69,4 @@ PYTHON_END
 fi
 
 echo "Starting Gunicorn"
-exec gunicorn sentio.wsgi:application --bind 0.0.0.0:8000 --timeout 300
+exec gunicorn sentio.wsgi:application --bind 0.0.0.0:8000 --timeout 300 --workers 4 --threads 2 --worker-class gthread --max-requests 1000 --max-requests-jitter 100

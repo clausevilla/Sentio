@@ -1,0 +1,66 @@
+/* Author: Lian Shi */
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Service Temporarily Unavailable - Sentio{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'predictions/css/service_busy.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container service-busy-container">
+
+    <!-- Icon -->
+    <div class="service-busy-icon">
+        <i class="far fa-clock"></i>
+    </div>
+
+    <!-- Heading -->
+    <h1 class="service-busy-title">We're Experiencing High Demand</h1>
+
+    <!-- Message -->
+    <p class="service-busy-message">
+        We're helping a lot of people right now and need a moment to catch up.
+        <br><br>
+        Please try again shortly. Thank you for your patience! 💚
+    </p>
+
+    <!-- Action Buttons -->
+    <div class="service-busy-buttons">
+        <a href="{% url 'predictions:input' %}" class="btn-retry">
+            <i class="fas fa-redo"></i>
+            Try Again
+        </a>
+
+        <a href="{% url 'home' %}" class="btn-home">
+            <i class="fas fa-home"></i>
+            Go Home
+        </a>
+    </div>
+
+    <!-- Auto-refresh hint -->
+    <p class="service-busy-hint">
+        <i class="fas fa-info-circle"></i>
+        This page will automatically retry in <span id="countdown" class="countdown">10</span> seconds
+    </p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let seconds = 10;
+    const countdownEl = document.getElementById('countdown');
+
+    const timer = setInterval(() => {
+        seconds--;
+        countdownEl.textContent = seconds;
+
+        if (seconds <= 0) {
+            clearInterval(timer);
+            window.location.href = "{% url 'predictions:input' %}";
+        }
+    }, 1000);
+</script>
+{% endblock %}

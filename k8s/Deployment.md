@@ -370,7 +370,17 @@ kubectl get pods -n sentio
 kubectl describe pod -n sentio <pod-name>
 ```
 
-### Accessing the Server Directly
+**Health check**
+
+```
+kubectl exec -n sentio deployment/sentio-web -c web -- python -c "
+import urllib.request
+print(urllib.request.urlopen('http://localhost:8000/health/live/').read().decode())
+print(urllib.request.urlopen('http://localhost:8000/health/ready/').read().decode())
+"
+```
+
+#### Accessing the Server Directly
 
 **Open a bash shell inside the Django container:**
 

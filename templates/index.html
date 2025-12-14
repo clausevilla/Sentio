@@ -1,4 +1,4 @@
-<!-- Author: Lian Shi -->
+<!-- Author: Lian Shi, Julia McCall -->
 <!-- Disclaimer: LLM has been used to help with page layout and manual adjustments were done after -->
 
 {% extends 'base.html' %}
@@ -25,17 +25,17 @@
 
     <div class="hero-content">
         <div class="hero-text">
-            <h1>Understand Your <span class="highlight">Mental Health</span> with AI</h1>
-            <p>Analyze text to detect mental health state and key emotional indicators. Get instant insights for better mental health awareness.</p>
+            <h1>Understand Your <span class="highlight">Mental State</span> with AI</h1>
+            <p>Analyze text to detect mental state and key emotional indicators. Get instant insights for better mental health awareness.</p>
             <div class="hero-buttons">
                 {% if user.is_authenticated %}
                     <a href="{% url 'predictions:input' %}" class="btn btn-primary">
-                        <i class="fas fa-chart-line"></i> Start Analysis
+                        <i class="fas fa-chart-line"></i> Analyze Now
                     </a>
-                    <a href="#how-it-works" class="btn btn-secondary">Learn More</a>
+                    <a href="#features" class="btn btn-secondary">Learn More</a>
                 {% else %}
                     <a href="{% url 'predictions:input' %}" class="btn btn-primary">
-                        <i class="fas fa-play-circle"></i> Try Now
+                        <i class="fas fa-chart-line"></i> Analyze Now
                     </a>
                     <a href="#how-it-works" class="btn btn-secondary"><i class="fas fa-book"></i>Learn More</a>
                 {% endif %}
@@ -48,55 +48,68 @@
 <section id="features" class="features-section">
     <div class="container">
         <h2 class="section-title">Why Choose Sentio?</h2>
-        <p class="section-subtitle">AI-powered insights for comprehensive mental health analysis</p>
+        <p class="section-subtitle">AI-powered insights for comprehensive mental state analysis</p>
 
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-robot"></i>
                 </div>
-                <h3>Accurate Detection</h3>
-                <p>Our ML model analyzes text to identify 7 different mental health states with 75% accuracy, trained on thousands of social media posts.</p>
+                <div class="feature-content">
+                    <h3>Accurate Detection</h3>
+                    <p>Our AI tool analyzes text to identify various mental states with over 75% accuracy,
+                        trained on thousands of social media posts and chatbot conversations.</p>
+                </div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-bullseye"></i>
                 </div>
-                <h3> Four Mental Health States</h3>
-                <p>Identifies Normal, Depression, Suicidal thoughts, and Stress indicators in your text.</p>
+                <div class="feature-content">
+                    <h3> Four Mental Health States</h3>
+                    <p>IIdentifies signs of normal mood, depression, and suicidal thoughts, and stress in your text</p>
+                </div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-lightbulb"></i>
                 </div>
-                <h3>Personalized Advice</h3>
-                <p>Receive category-specific recommendations and crisis resources when mental health concerns are detected.</p>
+                <div class="feature-content">
+                    <h3>Personalized Advice</h3>
+                    <p>Receive tailored recommendations and crisis resources when potential mental state concerns are detected.</p>
+                </div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-shield-alt"></i>
                 </div>
-                <h3>Privacy First</h3>
-                <p>Your data is secure and private. We take your mental health privacy seriously with encrypted storage.</p>
+                <div class="feature-content">
+                    <h3>Privacy First</h3>
+                    <p>Your data is secure and private. We don't use cookies, and we protect your mental state information with encrypted storage.</p>
+                </div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
-                <h3>Track Progress</h3>
-                <p>View your mental health history with visualizations to monitor patterns and changes across all categories over time.</p>
+                <div class="feature-content">
+                    <h3>Track Progress</h3>
+                    <p>View your mental state history with visualizations that help you track patterns and changes across over time.</p>
+                </div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-bolt"></i>
                 </div>
-                <h3>Instant Results</h3>
-                <p>Get predictions in under 2 seconds. Process up to 5000 characters quickly and efficiently.</p>
+                <div class="feature-content">
+                    <h3>Instant Results</h3>
+                    <p>Get results in just a few seconds and process up to 5000 characters quickly and efficiently.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -111,26 +124,34 @@
         <div class="steps-container">
             <div class="step">
                 <div class="step-number">1</div>
-                <h3>Paste Your Text</h3>
-                <p>Copy text from social media posts, messages, or write your own content (up to 5000 characters).</p>
+                <div class="step-content">
+                    <h3>Enter Your Text</h3>
+                    <p>Paste text from social media posts, messages, or write your own content.</p>
+                </div>
             </div>
 
             <div class="step">
                 <div class="step-number">2</div>
-                <h3>AI Analysis</h3>
-                <p>Our NLP model analyzes linguistic patterns and emotional content to classify your text into one of 4 mental health states.</p>
+                <div class="step-content">
+                    <h3>AI Analysis</h3>
+                    <p>Our system analyzes linguistic patterns and emotional cues to identify which of the four mental states best matches your text.</p>
+                </div>
             </div>
 
             <div class="step">
                 <div class="step-number">3</div>
-                <h3>Get Insights</h3>
-                <p>Receive your mental health classification, confidence scores, and personalized recommendations.</p>
+                <div class="step-content">
+                    <h3>Get Insights</h3>
+                    <p>Receive your mental state classification, confidence scores, and personalized recommendations.</p>
+                </div>
             </div>
 
             <div class="step">
                 <div class="step-number">4</div>
-                <h3>Track Trends</h3>
-                <p>Monitor your mental health patterns over time with visual charts showing state distribution and trends (optional account).</p>
+                <div class="step-content">
+                    <h3>Track Trends</h3>
+                    <p>Monitor your mental state patterns over time with visual charts and trend insights (by creating an optional account).</p>
+                </div>
             </div>
         </div>
     </div>
@@ -142,7 +163,7 @@
         <div class="stats-grid">
             <div class="stat">
                 <h3>4</h3>
-                <p>Mental Health Categories</p>
+                <p>Mental State Categories</p>
             </div>
             <div class="stat">
                 <h3>75%</h3>
@@ -163,15 +184,15 @@
 <!-- CTA Section -->
 <section class="cta-section">
     <div class="container">
-        <h2>Ready to Understand Your Mental Health?</h2>
-        <p>Start analyzing your text in seconds</p>
+        <h2>Ready to Understand Your Mental State?</h2>
+        <p>Start analyzing your text and gain insights in just a few seconds</p>
         {% if user.is_authenticated %}
             <a href="{% url 'predictions:input' %}" class="btn btn-primary">
-                <i class="fas fa-chart-line"></i> Analysis Now
+                <i class="fas fa-chart-line"></i> Analyze Now
             </a>
         {% else %}
             <a href="{% url 'accounts:register' %}" class="btn btn-primary">
-                <i class="fas fa-user-plus"></i> Get Started Free
+                <i class="fas fa-user-plus"></i> Get Started for Free
             </a>
         {% endif %}
     </div>
@@ -188,7 +209,7 @@
         </p>
         <p>
             The classification results are based on text analysis and may not accurately reflect your actual mental
-            health state. Many factors influence mental health that cannot be determined from text alone.
+            state. Many factors influence mental health that cannot be determined from text alone.
         </p>
         <p>
             <strong><i class="fas fa-exclamation-triangle" style="margin-right: 10px;"></i> If you are experiencing any of the following, please seek immediate help:</strong>
@@ -203,9 +224,9 @@
             <strong><i class="fas fa-phone" style="margin-right: 10px;"></i>Crisis Resources (Available 24/7):</strong>
         </p>
         <ul>
-            <li><strong>Sweden Suicide Prevention:</strong> Call 90101 or visit <a href="https://mind.se"
+            <li><strong>Suicide Prevention (Sweden):</strong> Call 90101 or visit <a href="https://mind.se"
                     target="_blank">mind.se</a></li>
-            <li><strong>Sweden Healthcare Advice:</strong> Call 1177</li>
+            <li><strong>Healthcare Advice (Sweden):</strong> Call 1177</li>
             <li><strong>Emergency (Sweden):</strong> Call 112</li>
             <li><strong>International Crisis Lines:</strong> <a href="https://findahelpline.com"
                     target="_blank">findahelpline.com</a></li>

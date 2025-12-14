@@ -1,8 +1,19 @@
 # Author: Marcus Berggren, Lian Shi
 
+from django.shortcuts import render
 from django.urls import path
 
 from apps.accounts import views
+
+
+def test_error_page(request):
+    return render(
+        request,
+        'accounts/error.html',
+        {'message': 'This is a test error message!', 'retry_url': '/'},
+        status=503,
+    )
+
 
 app_name = 'accounts'
 
@@ -27,7 +38,12 @@ urlpatterns = [
         views.delete_analysis_api,
         name='delete_analysis_api',
     ),
+    # Registration validation APIs (real-time validation)
+    path('api/check-username/', views.check_username_api, name='check_username_api'),
+    path('api/check-email/', views.check_email_api, name='check_email_api'),
+    path('api/register/', views.register_api, name='register_api'),
     # Consent and privacy URLs
     path('consent/', views.consent_view, name='consent'),
     path('privacy/', views.privacy_policy_view, name='privacy_policy'),
+    path('test-error/', test_error_page, name='test_error'),  # For test only
 ]

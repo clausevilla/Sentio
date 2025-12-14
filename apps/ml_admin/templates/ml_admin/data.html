@@ -34,7 +34,6 @@
         <h3><i class="fas fa-upload"></i> Upload Dataset</h3>
     </div>
     <div class="card-body">
-        <!-- TODO: Pipeline Selection -->
         <!--PLEASE REMEMBER LATER IF FIX IS NEEDED FOR CHANING THE NAME OF DIFFERENT PIPELINE NAMES-->
         <div class="pipeline-section">
             <label class="pipeline-label">Preprocessing Pipeline</label>
@@ -173,7 +172,7 @@
                             <span><i class="fas fa-calendar"></i> {{ item.upload.uploaded_at|date:"M d, Y H:i" }}</span>
                             <span><i class="fas fa-user"></i> {{ item.upload.uploaded_by.username|default:"—" }}</span>
                             <span><i class="fas fa-table"></i> {{ item.upload.row_count|default:0 }} rows</span>
-                            <!-- TODO: Pipeline Badge (CHECK NAME LATER TO MATCH) -->
+
                             {% if item.upload.pipeline_type %}
                             <span class="pipeline-badge {{ item.upload.pipeline_type }}">
                                 {% if item.upload.pipeline_type == 'raw' %}

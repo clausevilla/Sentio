@@ -20,7 +20,7 @@ from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from .models import DatasetRecord, DataUpload, ModelVersion, TrainingJob
+from .models import DatasetRecord, DataUpload, ModelVersion, Parameter, TrainingJob
 
 # Import full pipeline (cleaning + preprocessing)
 try:
@@ -689,46 +689,46 @@ def get_dataset_distribution_api(request, upload_id):
 def _get_model_training_params(model):
     """
     Get saved training parameters for a model.
-    Returns params dict from TrainingConfig if available, else None.
+    Returns params dict from Parameter thas is connected to a ModelVersion
     """
     try:
-        job = TrainingJob.objects.filter(resulting_model=model).first()
-        if job and hasattr(job, 'config'):
-            config = job.config
-            # Build params dict from config fields
-            params = {}
+        param = Parameter.objects.filter(model_version=model).first()
 
-            # Neural network params
-            if config.embed_dim:
-                params['embed_dim'] = config.embed_dim
-            if config.hidden_dim:
-                params['hidden_dim'] = config.hidden_dim
-            if config.num_layers:
-                params['num_layers'] = config.num_layers
-            if config.dropout is not None:
-                params['dropout'] = float(config.dropout)
-            if config.max_seq_length:
-                params['max_seq_length'] = config.max_seq_length
-            if config.vocab_size:
-                params['vocab_size'] = config.vocab_size
-            if config.learning_rate:
-                params['learning_rate'] = float(config.learning_rate)
-            if config.batch_size:
-                params['batch_size'] = config.batch_size
-            if config.epochs:
-                params['epochs'] = config.epochs
-            if config.patience:
-                params['patience'] = config.patience
+        if not param:
+            return None
 
-            # Transformer specific
-            if config.d_model:
-                params['d_model'] = config.d_model
-            if config.n_head:
-                params['n_head'] = config.n_head
-            if config.dim_feedforward:
-                params['dim_feedforward'] = config.dim_feedforward
+        # Build params dict from config fields
+        params = {}
 
-            return params if params else None
+        # Neural network params
+        if param.embed_dim:
+            params['embed_dim'] = param.embed_dim
+        if param.hidden_dim:
+            params['hidden_dim'] = param.hidden_dim
+        if param.num_layers:
+            params['num_layers'] = param.num_layers
+        if param.dropout is not None:
+            params['dropout'] = float(param.dropout)
+        if param.max_seq_length:
+            params['max_seq_length'] = param.max_seq_length
+        if param.vocab_size:
+            params['vocab_size'] = param.vocab_size
+        if param.learning_rate:
+            params['learning_rate'] = float(param.learning_rate)
+        if param.batch_size:
+            params['batch_size'] = param.batch_size
+        if param.epochs:
+            params['epochs'] = param.epochs
+
+        # Transformer specific
+        if param.d_model:
+            params['d_model'] = param.d_model
+        if param.n_head:
+            params['n_head'] = param.n_head
+        if param.dim_feedforward:
+            params['dim_feedforward'] = param.dim_feedforward
+
+        return params
     except Exception as e:
         logger.warning(f'Failed to get training params for model {model.id}: {e}')
     return None
@@ -1065,7 +1065,7 @@ def models_view(request):
 
 
 @staff_member_required
-@require_http_methods(['POST'])
+@require_http_methods(['PATCH'])
 def activate_model_api(request, model_id):
     try:
         model = get_object_or_404(ModelVersion, id=model_id)
@@ -1080,7 +1080,7 @@ def activate_model_api(request, model_id):
 
 
 @staff_member_required
-@require_http_methods(['POST'])
+@require_http_methods(['DELETE'])
 def delete_model_api(request, model_id):
     try:
         model = get_object_or_404(ModelVersion, id=model_id)
