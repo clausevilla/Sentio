@@ -4,7 +4,6 @@
 // ===================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Sentio main.js loaded');
 
     // ========================================
     // MOBILE MENU TOGGLE
@@ -194,8 +193,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         }, 5000);
     });
-
-    console.log('Sentio main.js initialized');
 });
 
 // ========================================

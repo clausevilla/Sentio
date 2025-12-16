@@ -581,9 +581,6 @@ function resumePendingUploads() {
 
 // Upload File
 async function uploadFile() {
-    console.log('uploadFile() called');
-    console.log('selectedFile:', selectedFile);
-    console.log('URLS:', URLS);
 
     if (!selectedFile) {
         toast('Please select a file first', 'error');
@@ -600,9 +597,6 @@ async function uploadFile() {
     const pipelineInput = document.querySelector('input[name="pipeline"]:checked');
     const pipelineType = pipelineInput ? pipelineInput.value : 'full';
 
-    console.log('Uploading:', fileName, 'as', datasetType, 'with pipeline:', pipelineType);
-    console.log('Upload URL:', URLS.uploadCsv);
-
     // Create FormData with the file BEFORE clearing
     const formData = new FormData();
     formData.append('csv_file', fileToUpload);
@@ -616,18 +610,13 @@ async function uploadFile() {
     try {
         updateTaskStage(taskId, 'upload', 'Uploading...', 10);
 
-        console.log('Making fetch request to:', URLS.uploadCsv);
-
         const response = await fetch(URLS.uploadCsv, {
             method: 'POST',
             headers: { 'X-CSRFToken': getCSRF() },
             body: formData,
         });
 
-        console.log('Response status:', response.status);
-
         const data = await response.json();
-        console.log('Response data:', data);
 
         if (data.success) {
             activeTasks[taskId].uploadId = data.upload_id;
@@ -649,7 +638,6 @@ async function uploadFile() {
     }
 }
 
-// Delete Dataset
 // Delete Dataset
 async function deleteDataset(id, name) {
     const confirmed = await showConfirm({
