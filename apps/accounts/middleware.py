@@ -1,7 +1,11 @@
 # Author: Lian Shi
 # Disclaimer: LLM has been used to debug consent middleware implementation while it is not working properly to check user consent status and redirect to consent page accordingly. Manual adjustment was done to fix the issues.
 
+import logging
+
 from django.shortcuts import redirect
+
+logger = logging.getLogger(__name__)
 
 
 class ConsentMiddleware:
@@ -59,9 +63,8 @@ class ConsentMiddleware:
             except UserConsent.DoesNotExist:
                 # No consent record exists - redirect to consent page
                 return redirect('accounts:consent')
-            except Exception as e:
+            except Exception:
                 # Log the error but let the request through to avoid blocking users
-                print(f'[ConsentMiddleware] Error checking consent: {e}')
-                pass
+                logger.exception('Error checking consent for user %s', request.user.id)
 
         return self.get_response(request)

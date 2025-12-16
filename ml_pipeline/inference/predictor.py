@@ -25,9 +25,9 @@ class Predictor:
         predictor.load('transformer_v1.pt')
 
         result = predictor.predict("I feel anxious and stressed")
-        print(result['label'])         # 'Stress'
-        print(result['confidence'])    # 0.87
-        print(result['probabilities']) # {'Depression': 0.05, 'Normal': 0.03, ...}
+        result['label']         -> 'Stress'
+        result['confidence']    -> 0.87
+        result['probabilities'] -> {'Depression': 0.05, 'Normal': 0.03, ...}
     """
 
     PYTORCH_MODELS = {
