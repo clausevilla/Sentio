@@ -30,7 +30,6 @@ Usage:
 
 import random
 import re
-# ... rest of your code
 
 import string
 
