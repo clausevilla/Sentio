@@ -43,11 +43,11 @@ venv/
 # Database
 *.sqlite3
 
-# Project specific
-sentio_results/
-ml-models/
-.pt
-#*.pkl
+# Files tied to dataset or models made
+*.pt
+*.pkl
+*.joblib
+*.csv
 
 # K8s secrets
 k8s/secrets.yaml
