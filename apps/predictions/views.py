@@ -1,7 +1,11 @@
 # Author: Marcus Berggren, Lian Shi, Karl Byland, Claudia Sevilla
 
+import json
 import logging
+from pathlib import Path
 
+from django.conf import settings
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
 from apps.predictions.services import get_prediction_result
@@ -26,11 +30,9 @@ def result_view(request):
     if not user_text:
         return redirect('predictions:input')
 
-    # Get logged-in user or None
     user = request.user if request.user.is_authenticated else None
 
     try:
-        # Attempt prediction - may fail under heavy load
         (
             prediction,
             confidence_percentage,
@@ -40,6 +42,7 @@ def result_view(request):
             emotional_intensity,
             word_count,
             char_count,
+            all_confidences,
         ) = get_prediction_result(user, user_text)
 
         return render(
@@ -55,11 +58,11 @@ def result_view(request):
                 'emotional_intensity': emotional_intensity,
                 'word_count': word_count,
                 'char_count': char_count,
+                'all_confidences': all_confidences,
             },
         )
 
     except Exception as e:
-        # Log the error for debugging
         logger.error(f'Prediction failed: {e}', exc_info=True)
 
         # Show friendly "service busy" page
