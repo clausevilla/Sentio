@@ -17,38 +17,7 @@ python manage.py migrate
 echo "Collecting static files"
 python manage.py collectstatic --no-input
 
-# Download models from GCS
-echo "Downloading ML models from GCS..."
-python << PYTHON_END
-from google.cloud import storage
-import os
-
-bucket_name = os.environ.get('GCS_BUCKET', 'sentio-m_l-models')
-models_dir = '/app/ml-models'
-os.makedirs(models_dir, exist_ok=True)
-
-try:
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-
-    blobs = bucket.list_blobs(prefix='models/')
-    downloaded = 0
-    for blob in blobs:
-        if blob.name.endswith('.pkl') or blob.name.endswith('.joblib') or blob.name.endswith('.pt'):
-            filename = blob.name.split('/')[-1]
-            local_path = f"{models_dir}/{filename}"
-            blob.download_to_filename(local_path)
-            print(f"Downloaded: {blob.name} -> {local_path}")
-            downloaded += 1
-
-    if downloaded == 0:
-        print("No models found in GCS. Will use local models if available.")
-    else:
-        print(f"Downloaded {downloaded} models from GCS")
-except Exception as e:
-    print(f"Warning: Could not download models from GCS: {e}")
-    print("Will use local models if available")
-PYTHON_END
+# No longer download models from GCS (active model is stored in memory)
 
 # Create superuser if needed
 if [ -n "$DJANGO_SUPERUSER_USERNAME" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ]; then

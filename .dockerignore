@@ -68,3 +68,9 @@ media/
 *.zip
 *.tar
 *.gz
+
+# Storage folders
+data/
+ml-models/
+**/scripts/
+sentio_results/

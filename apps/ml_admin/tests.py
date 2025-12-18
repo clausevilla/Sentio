@@ -98,7 +98,6 @@ class DataCleaningTests(TestCase):
             initial_row_count = len(
                 test_df
             )  # Keep track of the row count before processing
-            print(f'{initial_row_count} rows before cleaning')
 
             # Run pipeline
             cleaner = DataCleaningPipeline()
@@ -116,8 +115,6 @@ class DataCleaningTests(TestCase):
                 initial_row_count,
                 'Error: row count should decrease after cleaning',
             )
-
-            print(f'{len(df_cleaned)} records successfully processed')
 
         finally:
             if os.path.exists(temp_file_path):
@@ -148,8 +145,6 @@ class DataCleaningTests(TestCase):
                     column in df_cleaned.columns, f'Missing field(s): {column}'
                 )
 
-            print('Correct Schema: All expected columns are present')
-
         finally:
             if os.path.exists(temp_file_path):
                 os.unlink(temp_file_path)
@@ -174,8 +169,6 @@ class DataCleaningTests(TestCase):
                 )  # Min words
                 self.assertLessEqual(len(text), self.max_text_length)  # Max chars
 
-            print('Text validation passed: Correct word length for every record')
-
         finally:
             if os.path.exists(temp_file_path):
                 os.unlink(temp_file_path)
@@ -195,7 +188,6 @@ class DataCleaningTests(TestCase):
             self.assertEqual(
                 len(duplicate_texts), 0, f'Error: Found duplicates: {duplicate_texts}'
             )
-            print('Text validation passed: No duplicates')
 
         finally:
             if os.path.exists(temp_file_path):
@@ -226,8 +218,6 @@ class DataCleaningTests(TestCase):
             labels = df_cleaned['label'].tolist()  # Check for any Anxiety label
             self.assertNotIn('Anxiety', labels)
 
-            print('Labelling correct: All labels are valid')
-
         finally:
             if os.path.exists(temp_file_path):
                 os.unlink(temp_file_path)
@@ -245,8 +235,6 @@ class DataCleaningTests(TestCase):
                 self.assertNotIn('Ã¼', text)
                 self.assertNotIn('\u2026', text)
                 self.assertNotIn('\x00', text)
-
-            print(f'Correct encoding: {len(df_cleaned)} records cleaned')
 
         finally:
             if os.path.exists(temp_file_path):
@@ -291,8 +279,6 @@ class DataPreprocessingTests(TestCase):
             self.assertTrue(os.path.exists(temp_file_path), 'CSV not found')
 
             df = pd.read_csv(temp_file_path)
-            initial_row_count = len(df)
-            print(f'{initial_row_count} rows before preprocessing')
 
             df_processed, report = self.pipeline.preprocess_dataframe(
                 df, model_type='traditional'
@@ -300,8 +286,6 @@ class DataPreprocessingTests(TestCase):
 
             self.assertTrue(len(df_processed) > 0, 'Pipeline execution failed')
             self.assertIn('text_preprocessed', df_processed.columns)
-
-            print(f'{len(df_processed)} rows processed')
 
         finally:
             if os.path.exists(temp_file_path):
@@ -323,8 +307,6 @@ class DataPreprocessingTests(TestCase):
 
             for col in expected_columns:
                 self.assertIn(col, df_processed.columns, f'Missing field: {col}')
-
-            print('Correct schema validated')
 
         finally:
             if os.path.exists(temp_file_path):

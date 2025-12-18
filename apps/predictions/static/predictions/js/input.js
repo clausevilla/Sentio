@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     const response = await fetch("/predictions/api/strings/");
     const strings = await response.json();
 
-    console.log(strings)
     // Example texts for different mental states
     const examples = {
         depression: strings["example_texts"][0],

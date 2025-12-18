@@ -2,6 +2,7 @@
 Google Cloud Storage utilities for ML models
 """
 
+import logging
 import os
 
 import joblib
@@ -9,6 +10,8 @@ from google.cloud import storage
 
 BUCKET_NAME = os.environ.get('GCS_BUCKET', 'sentio-m_l-models')
 LOCAL_MODELS_DIR = '/app/ml-models'
+
+logger = logging.getLogger(__name__)
 
 
 def upload_model(model, model_name):
@@ -25,7 +28,7 @@ def upload_model(model, model_name):
     # Save locally first
     local_path = f'{LOCAL_MODELS_DIR}/{model_name}'
     joblib.dump(model, local_path)
-    print(f'Saved model locally: {local_path}')
+    logger.info('Saved model locally: %s', local_path)
 
     # Upload to GCS
     try:
@@ -33,9 +36,9 @@ def upload_model(model, model_name):
         bucket = client.bucket(BUCKET_NAME)
         blob = bucket.blob(f'models/{model_name}')
         blob.upload_from_filename(local_path)
-        print(f'Uploaded to GCS: gs://{BUCKET_NAME}/models/{model_name}')
-    except Exception as e:
-        print(f'Warning: Could not upload to GCS: {e}')
+        logger.info('Uploaded to GCS: gs://%s/models/%s', BUCKET_NAME, model_name)
+    except Exception:
+        logger.exception('Could not upload to GCS')
 
 
 def download_model(model_name):
@@ -53,7 +56,7 @@ def download_model(model_name):
 
     # Check if already downloaded
     if os.path.exists(local_path):
-        print(f'Using cached model: {local_path}')
+        logger.info('Using cached model: %s', local_path)
         return joblib.load(local_path)
 
     # Download from GCS
@@ -62,10 +65,10 @@ def download_model(model_name):
         bucket = client.bucket(BUCKET_NAME)
         blob = bucket.blob(f'models/{model_name}')
         blob.download_to_filename(local_path)
-        print(f'Downloaded from GCS: {model_name}')
+        logger.info('Downloaded from GCS: %s', model_name)
         return joblib.load(local_path)
-    except Exception as e:
-        print(f'Error downloading model: {e}')
+    except Exception:
+        logger.exception('Error downloading model')
         raise
 
 
@@ -79,6 +82,6 @@ def list_models():
             blob.name for blob in blobs if blob.name.endswith(('.pkl', '.joblib'))
         ]
         return models
-    except Exception as e:
-        print(f'Error listing models: {e}')
+    except Exception:
+        logger.exception('Error listing models')
         return []
