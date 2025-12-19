@@ -808,6 +808,7 @@ def history_view(request):
         # Determine if alerts should be shown
         show_suicidal_alert = suicidal_recent_count >= 5
         show_depression_alert = depression_recent_count >= 5
+        show_combined_alert = show_suicidal_alert and show_depression_alert
 
         paginator = Paginator(analyses, 10)
         page_number = request.GET.get('page', 1)
@@ -826,6 +827,7 @@ def history_view(request):
             'depression_recent_count': depression_recent_count,
             'show_suicidal_alert': show_suicidal_alert,
             'show_depression_alert': show_depression_alert,
+            'show_combined_alert': show_combined_alert,
         }
 
         return render(request, 'accounts/history.html', context)

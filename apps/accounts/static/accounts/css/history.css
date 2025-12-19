@@ -319,6 +319,58 @@
     animation: slideInRight 0.5s ease-out;
 }
 
+/* Combined Alert for Both Conditions */
+.alert-both {
+    border-left: 4px solid #dc3545;
+    background: linear-gradient(135deg,
+        rgba(157, 109, 196, 0.1) 0%,
+        rgba(90, 139, 191, 0.1) 100%);
+    position: relative;
+}
+
+.alert-both .alert-header i {
+    color: #dc3545;
+    animation: gentlePulse 2s infinite;
+}
+
+.alert-both .resource-card:hover {
+    border-color: #dc3545;
+}
+
+.alert-both .resource-number {
+    color: #dc3545;
+    font-weight: 800;
+}
+
+/* Animation for urgent alert */
+@keyframes pulseBackground {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes gentlePulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+}
+
+.alert-both .alert-header h3 {
+    color: #dc3545;
+}
+
+.alert-both .alert-footer {
+    background: rgba(220, 53, 69, 0.05);
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid rgba(220, 53, 69, 0.1);
+    margin-top: 1.5rem;
+}
+
 /* ===================================
    Responsive Design for Alerts
    =================================== */

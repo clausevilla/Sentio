@@ -68,8 +68,46 @@
         {% if show_suicidal_alert or show_depression_alert %}
         <div class="support-alerts-section">
 
+            {% if show_combined_alert %}
+            <div class="alert alert-persistent alert-both">
+                <div class="alert-header">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <h3>Important: Multiple Concerns Detected</h3>
+                </div>
+                <p>You've submitted <strong>{{ suicidal_recent_count }} texts</strong> flagged for suicidal thoughts
+                and <strong>{{ depression_recent_count }} texts</strong> indicating depression in the past month.
+                This combination suggests you may be experiencing significant distress.</p>
+
+                <div class="alert-resources">
+                    <div class="resource-grid">
+                       <div class="resource-card">
+                            <div class="resource-name">Emergency Services</div>
+                            <div class="resource-number">112</div>
+                            <div class="resource-description">Call immediately if there is imminent danger to life, property and environment.</div>
+                        </div>
+                        <div class="resource-card">
+                            <div class="resource-name">1177 Vårdguiden</div>
+                            <div class="resource-number">1177</div>
+                            <div class="resource-description">24/7 healthcare advice and guidance on mental health and crisis services.</div>
+                        </div>
+                        <div class="resource-card">
+                            <div class="resource-name">Mind - Självmordslinjen</div>
+                            <div class="resource-number">90 101</div>
+                            <div class="resource-description">24/7 confidential support for emotional distress and suicidal thoughts (phone and chat).</div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="alert-footer">
+                    <strong>Do not hesitate to reach out.</strong> Speaking with a professional
+                    can help you navigate both depression and suicidal thoughts. These services are
+                    designed to support people experiencing exactly what you're going through.
+                </p>
+            </div>
+            {% endif %}
+
             <!-- Suicidal Alert -->
-            {% if show_suicidal_alert %}
+            {% if show_suicidal_alert and not show_combined_alert %}
             <div class="alert alert-persistent alert-suicidal">
                 <div class="alert-header">
                     <i class="fas fa-hand-holding-heart"></i>
@@ -83,7 +121,7 @@
                         <div class="resource-card">
                             <div class="resource-name">Emergency Services</div>
                             <div class="resource-number">112</div>
-                            <div class="resource-description">Call immediately if there is imminent danger to life.</div>
+                            <div class="resource-description">Call immediately if there is imminent danger to life, property and environment.</div>
                         </div>
                         <div class="resource-card">
                             <div class="resource-name">1177 Vårdguiden</div>
@@ -91,7 +129,7 @@
                             <div class="resource-description">24/7 healthcare advice and guidance on mental health and crisis services.</div>
                         </div>
                         <div class="resource-card">
-                            <div class="resource-name">Bris - Barnens rätt i samhället</div>
+                            <div class="resource-name">Children's Rights in Society (Bris)</div>
                             <div class="resource-number">116 111</div>
                             <div class="resource-description">Free, confidential support for children and young people experiencing emotional distress or suicidal thoughts.</div>
                         </div>
@@ -103,7 +141,7 @@
             {% endif %}
 
             <!-- Depression Alert -->
-            {% if show_depression_alert %}
+            {% if show_depression_alert and not show_combined_alert %}
             <div class="alert alert-persistent alert-depression">
                 <div class="alert-header">
                     <i class="fas fa-hand-holding-heart"></i>
