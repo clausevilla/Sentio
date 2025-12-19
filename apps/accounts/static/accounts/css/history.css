@@ -1,4 +1,4 @@
-/* Author: Lian Shi */
+/* Author: Lian Shi, Claudia Sevilla */
 /* Disclaimer: LLM has helped with designing css styling for thie page and manual adjustment is made */
 
 /* ===================================
@@ -165,6 +165,244 @@
 .card-content {
     padding: 1.25rem;
     background: var(--color-bg-white);
+}
+
+/* ===================================
+   Mental Health Support Alerts
+   =================================== */
+.support-alerts-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.alert.alert-persistent {
+    background:  #F8F9FA;
+    border-radius: var(--radius-sm);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.alert-suicidal {
+    border-left: 4px solid var(--color-state-suicidal);
+    background: linear-gradient(135deg, rgba(157, 109, 196, 0.05) 0%, rgba(157, 109, 196, 0.02) 100%);
+}
+
+.alert-depression {
+    border-left: 4px solid var(--color-state-depression);
+    background: linear-gradient(135deg, rgba(90, 139, 191, 0.05) 0%, rgba(90, 139, 191, 0.02) 100%);
+}
+
+.alert-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.alert-header i {
+    font-size: 1.5rem;
+    color: var(--color-text-dark);
+}
+
+.alert-suicidal .alert-header i {
+    color: var(--color-state-suicidal);
+}
+
+.alert-depression .alert-header i {
+    color: var(--color-state-depression);
+}
+
+.alert-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+
+.alert p {
+    color: var(--color-text);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+    font-size: 1rem;
+}
+
+.alert p strong {
+    color: var(--color-text-dark);
+    font-weight: 600;
+}
+
+.alert-resources {
+    margin: 1.5rem 0;
+}
+
+.resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.resource-card {
+    background: var(--color-bg-white);
+    border-radius: 8px;
+    padding: 1.25rem;
+    border: 1px solid var(--color-bg-sage);
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.resource-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary-lighter);
+}
+
+.alert-suicidal .resource-card:hover {
+    border-color: var(--color-state-suicidal);
+}
+
+.alert-depression .resource-card:hover {
+    border-color: var(--color-state-depression);
+}
+
+.resource-name {
+    font-weight: 600;
+    color: var(--color-text-dark);
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+}
+
+.resource-number {
+    font-family: monospace;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
+}
+
+.alert-suicidal .resource-number {
+    color: var(--color-state-suicidal);
+}
+
+.alert-depression .resource-number {
+    color: var(--color-state-depression);
+}
+
+.resource-description {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+    line-height: 1.4;
+}
+
+.alert-footer {
+    color: var(--color-text);
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--color-bg-sage);
+}
+
+/* Animation for alert entrance */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.alert.alert-persistent {
+    animation: slideInRight 0.5s ease-out;
+}
+
+/* ===================================
+   Responsive Design for Alerts
+   =================================== */
+@media (max-width: 768px) {
+    .support-alerts-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .alert.alert-persistent {
+        padding: 1.25rem;
+    }
+
+    .alert-header {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .alert-header i {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .alert-header h3 {
+        font-size: 1.1rem;
+        flex: 1;
+        margin: 0;
+        white-space: normal;
+        word-wrap: break-word;
+    }
+
+    .alert p {
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
+    .resource-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .resource-card {
+        padding: 1rem;
+    }
+
+    .resource-name {
+        font-size: 0.9rem;
+    }
+
+    .resource-number {
+        font-size: 1.1rem;
+    }
+
+    .resource-description {
+        font-size: 0.8rem;
+    }
+
+    .alert-footer {
+        font-size: 0.85rem;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .alert.alert-persistent {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .alert-header h3 {
+        font-size: 1rem;
+    }
+
+    .alert p {
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .resource-card {
+        padding: 0.875rem;
+    }
 }
 
 /* ===================================

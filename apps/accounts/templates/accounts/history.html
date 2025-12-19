@@ -1,4 +1,4 @@
-<!-- Author: Lian Shi -->
+<!-- Author: Lian Shi, Claudia Sevilla -->
 <!-- Disclaimer: LLM has been used to generate chart display and manual fine tuning was done to different elements -->
 
 {% extends 'base.html' %}
@@ -63,6 +63,81 @@
         </div>
 
         {% if total_analyses > 0 %}
+
+        <!-- Mental Health Support Alerts -->
+        {% if show_suicidal_alert or show_depression_alert %}
+        <div class="support-alerts-section">
+
+            <!-- Suicidal Alert -->
+            {% if show_suicidal_alert %}
+            <div class="alert alert-persistent alert-suicidal">
+                <div class="alert-header">
+                    <i class="fas fa-hand-holding-heart"></i>
+                    <h3>Support is Available</h3>
+                </div>
+                <p>You've submitted <strong>{{ suicidal_recent_count }} texts</strong> flagged for suicidal thoughts in the past month.
+                Please know that help is available 24/7. You're not alone.</p>
+
+                <div class="alert-resources">
+                    <div class="resource-grid">
+                        <div class="resource-card">
+                            <div class="resource-name">Emergency Services</div>
+                            <div class="resource-number">112</div>
+                            <div class="resource-description">Call immediately if there is imminent danger to life.</div>
+                        </div>
+                        <div class="resource-card">
+                            <div class="resource-name">1177 Vårdguiden</div>
+                            <div class="resource-number">1177</div>
+                            <div class="resource-description">24/7 healthcare advice and guidance on mental health and crisis services.</div>
+                        </div>
+                        <div class="resource-card">
+                            <div class="resource-name">Bris - Barnens rätt i samhället</div>
+                            <div class="resource-number">116 111</div>
+                            <div class="resource-description">Free, confidential support for children and young people experiencing emotional distress or suicidal thoughts.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="alert-footer">These services are confidential, free, and available 24 hours a day.</p>
+            </div>
+            {% endif %}
+
+            <!-- Depression Alert -->
+            {% if show_depression_alert %}
+            <div class="alert alert-persistent alert-depression">
+                <div class="alert-header">
+                    <i class="fas fa-hand-holding-heart"></i>
+                    <h3>Depression Support Resources</h3>
+                </div>
+                <p>You've submitted <strong>{{ depression_recent_count }} texts</strong> indicating depression in the past month.
+                Depression is treatable, and help is available.</p>
+
+                <div class="alert-resources">
+                    <div class="resource-grid">
+                        <div class="resource-card">
+                            <div class="resource-name">Mind - Självmordslinjen</div>
+                            <div class="resource-number">90 101</div>
+                            <div class="resource-description">24/7 confidential support for emotional distress and suicidal thoughts (phone and chat).</div>
+                        </div>
+                        <div class="resource-card">
+                            <div class="resource-name">1177 Vårdguiden</div>
+                            <div class="resource-number">1177</div>
+                            <div class="resource-description">24/7 healthcare advice and guidance on mental health and crisis services.</div>
+                        </div>
+                        <div class="resource-card">
+                            <div class="resource-name">Jourhavande Medmänniska</div>
+                            <div class="resource-number">08-702 16 80</div>
+                            <div class="resource-description">Confidential emotional support during night hours (21:00-06:00)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="alert-footer">Speaking with a mental health professional can make a significant difference.</p>
+            </div>
+            {% endif %}
+
+        </div>
+        {% endif %}
         <!-- State Distribution -->
         <div class="chart-card">
             <h2 class="section-title"><i class="fas fa-chart-pie"></i>State Distribution</h2>
