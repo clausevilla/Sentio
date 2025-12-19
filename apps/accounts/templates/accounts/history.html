@@ -69,108 +69,136 @@
         <div class="support-alerts-section">
 
             {% if show_combined_alert %}
-            <div class="alert alert-persistent alert-both">
+            <div class="alert alert-persistent alert-both alert-expanded">
                 <div class="alert-header">
-                    <i class="fas fa-triangle-exclamation"></i>
-                    <h3>Important: Multiple Concerns Detected</h3>
+                    <div class="alert-header-left">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <h3>Important: Multiple Concerns Detected</h3>
+                    </div>
+                    <button class="alert-toggle-btn">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
                 </div>
-                <p>You've submitted <strong>{{ suicidal_recent_count }} texts</strong> flagged for suicidal thoughts
-                and <strong>{{ depression_recent_count }} texts</strong> indicating depression in the past month.
-                This combination suggests you may be experiencing significant distress.</p>
 
-                <div class="alert-resources">
-                    <div class="resource-grid">
-                       <div class="resource-card">
-                            <div class="resource-name">Emergency Services</div>
-                            <div class="resource-number">112</div>
-                            <div class="resource-description">Call immediately if there is imminent danger to life, property and environment.</div>
-                        </div>
-                        <div class="resource-card">
-                            <div class="resource-name">1177 Vårdguiden</div>
-                            <div class="resource-number">1177</div>
-                            <div class="resource-description">24/7 healthcare advice and guidance on mental health and crisis services.</div>
-                        </div>
-                        <div class="resource-card">
-                            <div class="resource-name">Mind - Självmordslinjen</div>
-                            <div class="resource-number">90 101</div>
-                            <div class="resource-description">24/7 confidential support for emotional distress and suicidal thoughts (phone and chat).</div>
+                <div class="alert-preview">
+                    <p>You've submitted <strong>{{ suicidal_recent_count }} texts</strong> flagged for suicidal thoughts
+                    and <strong>{{ depression_recent_count }} texts</strong> indicating depression in the past month.</p>
+                </div>
+
+                <div class="alert-content">
+                    <div class="alert-resources">
+                        <div class="resource-grid">
+                           <div class="resource-card">
+                                <div class="resource-name">Emergency Services</div>
+                                <div class="resource-number">112</div>
+                                <div class="resource-description">Call immediately if there is imminent danger to life, property and environment.</div>
+                            </div>
+                            <div class="resource-card">
+                                <div class="resource-name">1177 Vårdguiden</div>
+                                <div class="resource-number">1177</div>
+                                <div class="resource-description">24/7 healthcare advice and guidance on mental health and crisis services.</div>
+                            </div>
+                            <div class="resource-card">
+                                <div class="resource-name">Mind - Självmordslinjen</div>
+                                <div class="resource-number">90 101</div>
+                                <div class="resource-description">24/7 confidential support for emotional distress and suicidal thoughts (phone and chat).</div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <p class="alert-footer">
-                    <strong>Do not hesitate to reach out.</strong> Speaking with a professional
-                    can help you navigate both depression and suicidal thoughts. These services are
-                    designed to support people experiencing exactly what you're going through.
-                </p>
+                    <p class="alert-footer">
+                        <strong>Do not hesitate to reach out.</strong> Speaking with a professional
+                        can help you navigate both depression and suicidal thoughts. These services are
+                        designed to support people experiencing exactly what you're going through.
+                    </p>
+                </div>
             </div>
             {% endif %}
 
             <!-- Suicidal Alert -->
             {% if show_suicidal_alert and not show_combined_alert %}
-            <div class="alert alert-persistent alert-suicidal">
+            <div class="alert alert-persistent alert-suicidal alert-expanded">
                 <div class="alert-header">
-                    <i class="fas fa-hand-holding-heart"></i>
-                    <h3>Support is Available</h3>
+                    <div class="alert-header-left">
+                        <i class="fas fa-hand-holding-heart"></i>
+                        <h3>Support is Available</h3>
+                    </div>
+                    <button class="alert-toggle-btn">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
                 </div>
-                <p>You've submitted <strong>{{ suicidal_recent_count }} texts</strong> flagged for suicidal thoughts in the past month.
-                Please know that help is available 24/7. You're not alone.</p>
 
-                <div class="alert-resources">
-                    <div class="resource-grid">
-                        <div class="resource-card">
-                            <div class="resource-name">Emergency Services</div>
-                            <div class="resource-number">112</div>
-                            <div class="resource-description">Call immediately if there is imminent danger to life, property and environment.</div>
-                        </div>
-                        <div class="resource-card">
-                            <div class="resource-name">1177 Vårdguiden</div>
-                            <div class="resource-number">1177</div>
-                            <div class="resource-description">24/7 healthcare advice and guidance on mental health and crisis services.</div>
-                        </div>
-                        <div class="resource-card">
-                            <div class="resource-name">Children's Rights in Society (Bris)</div>
-                            <div class="resource-number">116 111</div>
-                            <div class="resource-description">Free, confidential support for children and young people experiencing emotional distress or suicidal thoughts.</div>
+                <div class="alert-preview">
+                    <p>You've submitted <strong>{{ suicidal_recent_count }} texts</strong> flagged for suicidal thoughts in the past month.
+                Please know that help is available 24/7. You're not alone.</p>
+                </div>
+
+                <div class="alert-content">
+                    <div class="alert-resources">
+                        <div class="resource-grid">
+                            <div class="resource-card">
+                                <div class="resource-name">Emergency Services</div>
+                                <div class="resource-number">112</div>
+                                <div class="resource-description">Call immediately if there is imminent danger to life, property and environment.</div>
+                            </div>
+                            <div class="resource-card">
+                                <div class="resource-name">1177 Vårdguiden</div>
+                                <div class="resource-number">1177</div>
+                                <div class="resource-description">24/7 healthcare advice and guidance on mental health and crisis services.</div>
+                            </div>
+                            <div class="resource-card">
+                                <div class="resource-name">Children's Rights in Society (Bris)</div>
+                                <div class="resource-number">116 111</div>
+                                <div class="resource-description">Free, confidential support for children and young people experiencing emotional distress or suicidal thoughts.</div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <p class="alert-footer">These services are confidential, free, and available 24 hours a day.</p>
+                    <p class="alert-footer">These services are confidential, free, and available 24 hours a day.</p>
+                </div>
             </div>
             {% endif %}
 
             <!-- Depression Alert -->
             {% if show_depression_alert and not show_combined_alert %}
-            <div class="alert alert-persistent alert-depression">
+            <div class="alert alert-persistent alert-depression alert-expanded">
                 <div class="alert-header">
-                    <i class="fas fa-hand-holding-heart"></i>
-                    <h3>Depression Support Resources</h3>
+                    <div class="alert-header-left">
+                        <i class="fas fa-hand-holding-heart"></i>
+                        <h3>Support is Available</h3>
+                    </div>
+                    <button class="alert-toggle-btn">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
                 </div>
-                <p>You've submitted <strong>{{ depression_recent_count }} texts</strong> indicating depression in the past month.
-                Depression is treatable, and help is available.</p>
 
-                <div class="alert-resources">
-                    <div class="resource-grid">
-                        <div class="resource-card">
-                            <div class="resource-name">Mind - Självmordslinjen</div>
-                            <div class="resource-number">90 101</div>
-                            <div class="resource-description">24/7 confidential support for emotional distress and suicidal thoughts (phone and chat).</div>
-                        </div>
-                        <div class="resource-card">
-                            <div class="resource-name">1177 Vårdguiden</div>
-                            <div class="resource-number">1177</div>
-                            <div class="resource-description">24/7 healthcare advice and guidance on mental health and crisis services.</div>
-                        </div>
-                        <div class="resource-card">
-                            <div class="resource-name">Jourhavande Medmänniska</div>
-                            <div class="resource-number">08-702 16 80</div>
-                            <div class="resource-description">Confidential emotional support during night hours (21:00-06:00)</div>
+                <div class="alert-preview">
+                    <p>You've submitted <strong>{{ depression_recent_count }} texts</strong> indicating depression in the past month.</p>
+                </div>
+
+                <div class="alert-content">
+                    <div class="alert-resources">
+                        <div class="resource-grid">
+                            <div class="resource-card">
+                                <div class="resource-name">Mind - Självmordslinjen</div>
+                                <div class="resource-number">90 101</div>
+                                <div class="resource-description">24/7 confidential support for emotional distress and suicidal thoughts (phone and chat).</div>
+                            </div>
+                            <div class="resource-card">
+                                <div class="resource-name">1177 Vårdguiden</div>
+                                <div class="resource-number">1177</div>
+                                <div class="resource-description">24/7 healthcare advice and guidance on mental health and crisis services.</div>
+                            </div>
+                            <div class="resource-card">
+                                <div class="resource-name">Jourhavande Medmänniska</div>
+                                <div class="resource-number">08-702 16 80</div>
+                                <div class="resource-description">Confidential emotional support during night hours (21:00-06:00)</div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <p class="alert-footer">Speaking with a mental health professional can make a significant difference.</p>
+                    <p class="alert-footer">Speaking with a mental health professional can make a significant difference. Depression is treatable, and help is available.</p>
+                </div>
             </div>
             {% endif %}
 

@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setupExpandableText();
     setupPagination();
     animateStats();
+    initializeCollapsibleAlerts();
 });
 
 /**
@@ -696,6 +697,63 @@ function showToast(message, type, duration) {
             }, 300);
         }
     }, duration);
+}
+
+/**
+ * Set up collapsible alerts
+ */
+
+function initializeCollapsibleAlerts() {
+    const alerts = document.querySelectorAll('.alert.alert-persistent');
+    if (alerts.length === 0) return;
+
+    alerts.forEach(alert => {
+        const toggleBtn = alert.querySelector('.alert-toggle-btn');
+        const alertContent = alert.querySelector('.alert-content');
+
+        if (alert.classList.contains('alert-expanded')) {
+            alertContent.style.display = 'block';
+        }
+
+        // Toggle on button click
+        toggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent alert click from firing
+
+            if (alert.classList.contains('alert-expanded')) {
+                // Collapse
+                alert.classList.remove('alert-expanded');
+                alert.classList.add('alert-collapsed');
+                alertContent.style.display = 'none';
+                this.innerHTML = '<i class="fas fa-chevron-down"></i>';
+
+            } else {
+                // Expand
+                alert.classList.remove('alert-collapsed');
+                alert.classList.add('alert-expanded');
+                alertContent.style.display = 'block';
+                this.innerHTML = '<i class="fas fa-chevron-up"></i>';
+            }
+        });
+
+        // Checks for clicks anywhere in the card
+        alert.addEventListener('click', function(e) {
+            if (e.target.closest('.alert-toggle-btn')) return;
+
+            if (alert.classList.contains('alert-expanded')) {
+                // Collapse
+                alert.classList.remove('alert-expanded');
+                alert.classList.add('alert-collapsed');
+                alertContent.style.display = 'none';
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-down"></i>';
+            } else {
+                // Expand
+                alert.classList.remove('alert-collapsed');
+                alert.classList.add('alert-expanded');
+                alertContent.style.display = 'block';
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-up"></i>';
+            }
+        });
+    });
 }
 
 /**
