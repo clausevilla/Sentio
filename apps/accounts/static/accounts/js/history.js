@@ -1,4 +1,4 @@
-// Author: Lian Shi
+// Author: Lian Shi, Claudia Sevilla
 // Disclaimer: LLM has been used to generate chart display and fine tuning was done manually
 
 /**

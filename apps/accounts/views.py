@@ -791,7 +791,7 @@ def history_view(request):
         }
 
         # ============ SECTION FOR ALERTS ============
-        thirty_days_ago = timezone.now() - timedelta(days=30)    # 30-day window
+        thirty_days_ago = timezone.now() - timedelta(days=30)  # 30-day window
 
         # Initialize counters
         suicidal_recent_count = 0
