@@ -1,4 +1,4 @@
-# Author: Lian Shi
+# Author: Lian Shi, Claudia Sevilla
 # Disclaimer: LLM has been used to help generate changepassword and delete account API endpoints.
 
 import json
@@ -790,6 +790,26 @@ def history_view(request):
             },
         }
 
+        # ============ SECTION FOR ALERTS ============
+        thirty_days_ago = timezone.now() - timedelta(days=30)  # 30-day window
+
+        # Initialize counters
+        suicidal_recent_count = 0
+        depression_recent_count = 0
+
+        # Count recent suicidal and depression analyses
+        for analysis in analyses:
+            if analysis['created_at'] >= thirty_days_ago:
+                if analysis['mental_state'] == 'suicidal':
+                    suicidal_recent_count += 1
+                elif analysis['mental_state'] == 'depression':
+                    depression_recent_count += 1
+
+        # Determine if alerts should be shown
+        show_suicidal_alert = suicidal_recent_count >= 5
+        show_depression_alert = depression_recent_count >= 5
+        show_combined_alert = show_suicidal_alert and show_depression_alert
+
         paginator = Paginator(analyses, 10)
         page_number = request.GET.get('page', 1)
         page_obj = paginator.get_page(page_number)
@@ -803,6 +823,11 @@ def history_view(request):
             'analyses': page_obj,
             'page_obj': page_obj,
             'is_paginated': paginator.num_pages > 1,
+            'suicidal_recent_count': suicidal_recent_count,
+            'depression_recent_count': depression_recent_count,
+            'show_suicidal_alert': show_suicidal_alert,
+            'show_depression_alert': show_depression_alert,
+            'show_combined_alert': show_combined_alert,
         }
 
         return render(request, 'accounts/history.html', context)

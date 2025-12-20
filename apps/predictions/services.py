@@ -289,17 +289,17 @@ def calculate_metrics(text: str, negative_words):
     # Anxiety: Ellipses weighted heavier than periods (uncertainty, trailing thoughts)
     anxiety_score = (
         (ellipsis_count * 20)
-        + (period_count * 3)
-        + (word_density * 15)
-        + (capital_count * 0.5)
+        + (period_count * 5)
+        + (word_density * 20)
+        + (capital_count * 2.5)
     )
 
     # Emotional intensity: Exclamations > Questions (strong emotion > curiosity)
     emotional_score = (
-        (exclamation_count * 8)
-        + (question_count * 5)
-        + (capital_count * 4)
-        + (word_density * 10)
+        (exclamation_count * 14)
+        + (question_count * 8)
+        + (capital_count * 6)
+        + (word_density * 13)
     )
 
     anxiety_level = min(int(anxiety_score), 100)
