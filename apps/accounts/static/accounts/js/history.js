@@ -734,25 +734,6 @@ function initializeCollapsibleAlerts() {
                 this.innerHTML = '<i class="fas fa-chevron-up"></i>';
             }
         });
-
-        // Checks for clicks anywhere in the card
-        alert.addEventListener('click', function(e) {
-            if (e.target.closest('.alert-toggle-btn')) return;
-
-            if (alert.classList.contains('alert-expanded')) {
-                // Collapse
-                alert.classList.remove('alert-expanded');
-                alert.classList.add('alert-collapsed');
-                alertContent.style.display = 'none';
-                toggleBtn.innerHTML = '<i class="fas fa-chevron-down"></i>';
-            } else {
-                // Expand
-                alert.classList.remove('alert-collapsed');
-                alert.classList.add('alert-expanded');
-                alertContent.style.display = 'block';
-                toggleBtn.innerHTML = '<i class="fas fa-chevron-up"></i>';
-            }
-        });
     });
 }
 
