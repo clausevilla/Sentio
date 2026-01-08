@@ -20,6 +20,7 @@
 
 ## Table of Contents
 - [Description](#description)
+- [User Interface Examples](#user-interface-examples)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Environment Settings](#environment-settings)
@@ -31,6 +32,34 @@
 
 ## Description
 Sentio is a mental state analysis system that examines how interactions and content on social platforms impact users' mental health. Using natural language processing and sentiment analysis, the system evaluates the tone and emotional content of text from Reddit, Twitter etc., to detect stress, depression and suicidal tendencies and provide personalized mental health recommendations.
+
+## User Interface Examples
+
+<details>
+<summary>Click to expand</summary>
+
+### Entry page
+![image](./docs/images/home_screen.png)
+
+### Analysis Result
+![image](./docs/images/analysis_result.png)
+
+### Analysis History
+![image](./docs/images/analysis_history.png)
+
+### Admin Dashboard
+![image](./docs/images/admin_dashboard.png)
+
+### Admin Training Center
+![image](./docs/images/training_center.png)
+
+### Admin Model Versions
+![image](./docs/images/model_versions.png)
+
+### Admin Analytics
+![image](./docs/images/user_analytics.png)
+
+</details>
 
 ## Installation
 
