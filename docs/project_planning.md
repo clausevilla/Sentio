@@ -74,3 +74,28 @@
 | Add exceptions for account service and error page for system | Lian Shi | Yes | Yes | |
 | Connect history page to backend | Lian Shi | Yes | Yes | |
 | Fix UI to make it fully responsive | Lian Shi | Yes | Yes | |
+
+## Week 7-8-9
+| Feature Description | Responsible | Delivered | Integrated | Notes |
+|---------------------|-------------|-----------|------------|-------|
+| Implement load testing | Lian | Yes | Yes | |
+| Clean up codebase, remove csv and model files from git history that are no longer in use or were accidentally committed | Marcus | Yes | Yes | Size from 900 to 100 MB |
+| Report section 3 | Julia, Claudia | No | No | Not yet done |
+| Report section 4 | Marcus, Karl, Lian | No | No | Not yet done |
+| Report section 5 | Lian | No | No | Not yet done |
+| Report section 6 | All | No | No | Not yet done |
+| Report section 7 | Marcus | No | No | Not yet done |
+| Rewrite section 1 and 2 | Julia | No | No | Not yet done |
+| Implement pop up in case of severe depression or suicidal behaviors | Claudia | Yes | Yes |  |
+| Update README with info & diagrams | Marcus | No | No | Not yet done |
+
+## Week 10
+| Feature Description | Responsible | Delivered | Integrated | Notes |
+|---------------------|-------------|-----------|------------|-------|
+| Report section 3 | Julia, Claudia | Yes | Yes |  |
+| Report section 4 | Marcus, Karl, Lian | Yes | Yes |  |
+| Report section 5 | Lian | Yes | Yes |  |
+| Report section 6 | All | Yes | Yes |  |
+| Report section 7 | Marcus | Yes | Yes |  |
+| Rewrite section 1 and 2 | Julia | Yes | Yes |  |
+| Update README with info & diagrams | Marcus | Yes | Yes |  |
