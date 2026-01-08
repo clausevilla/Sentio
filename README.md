@@ -109,16 +109,16 @@ DJANGO_SETTINGS_MODULE=sentio.settings.production python manage.py runserver
 <summary>Click to expand</summary>
 
 ### Database Schema
-![image](./docs/database_schema.png)
+![image](./docs/images/database_schema.png)
 
 ### ML Pipeline Dataflow
-![image](./docs/ml_pipeline_dataflow.png)
+![image](./docs/images/ml_pipeline_dataflow.png)
 
 ### Transformer Training Pipeline
-![image](./docs/transformer_training_pipeline.png)
+![image](./docs/images/transformer_training_pipeline.png)
 
 ### Google Kubernetes Engine
-![image](./docs/kubernetes_gke.png)
+![image](./docs/images/kubernetes_gke.png)
 
 </details>
 
