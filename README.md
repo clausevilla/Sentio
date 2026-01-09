@@ -20,21 +20,56 @@
 
 ## Table of Contents
 - [Description](#description)
+- [User Interface Examples](#user-interface-examples)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Environment Settings](#environment-settings)
+- [Architecture Design](#architecture-design)
 - [Authors](#authors)
 - [Project Planning](#project-planning)
 - [License](#license)
 
 
 ## Description
-Sentio is a stress analysis system that examines how interactions and content on social platforms impact users' mental health. Using natural language processing and sentiment analysis, the system evaluates the tone and emotional content of text from Reddit posts to detect stress levels and provide personalized mental health recommendations.
+Sentio is a mental state analysis system that examines how interactions and content on social platforms impact users' mental health. Using natural language processing and sentiment analysis, the system evaluates the tone and emotional content of text from Reddit, Twitter etc., to detect stress, depression and suicidal tendencies and provide personalized mental health recommendations.
+
+## User Interface Examples
+
+<details>
+<summary>Click to expand</summary>
+
+### Entry page
+![image](./docs/images/home_screen.png)
+
+### Analysis Result
+![image](./docs/images/analysis_result.png)
+
+### Analysis History
+![image](./docs/images/analysis_history.png)
+
+### Admin Dashboard
+![image](./docs/images/admin_dashboard.png)
+
+### Admin Training Center
+![image](./docs/images/training_center.png)
+
+### Admin Model Versions
+![image](./docs/images/model_versions.png)
+
+### Admin Analytics
+![image](./docs/images/user_analytics.png)
+
+</details>
 
 ## Installation
 
+<details>
+<summary>Click to expand</summary>
+
 ### Prerequisits
-TBD
+Anaconda / Miniconda, although you can use venv or similar of your choice.
+
+Python 3.13 has been used throughout the project and support for anything under 3.12 is not guaranteed.
 
 ### Setup
 1. Clone the repository:
@@ -60,14 +95,16 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-5. Run the development server:
+</details>
+
+## Usage
+
+### Run application (in development mode)
 ```bash
 python manage.py runserver
 ```
 
 The application will be available at `http://127.0.0.1:8000/`
-
-## Usage
 
 ### Running Tests
 ```bash
@@ -95,6 +132,24 @@ To use a specific setting:
 ```bash
 DJANGO_SETTINGS_MODULE=sentio.settings.production python manage.py runserver
 ```
+
+## Architecture Design
+<details>
+<summary>Click to expand</summary>
+
+### Database Schema
+![image](./docs/images/database_schema.png)
+
+### ML Pipeline Dataflow
+![image](./docs/images/ml_pipeline_dataflow.png)
+
+### Transformer Training Pipeline
+![image](./docs/images/transformer_training_pipeline.png)
+
+### Google Kubernetes Engine
+![image](./docs/images/kubernetes_gke.png)
+
+</details>
 
 ## Authors
 - Marcus Berggren
